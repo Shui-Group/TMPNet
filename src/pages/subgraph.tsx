@@ -6,7 +6,7 @@ import NetworkGraph from "@/components/NetworkGraph";
 import SearchBar from "@/components/SearchBar";
 import DataTable from "@/components/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { SubgraphData } from "@/lib/types";
+import type { LayoutPayload, SubgraphData } from "@/lib/types";
 import type { CytoscapeElements } from "@/lib/graphUtils";
 import { toCytoscapeElements } from "@/lib/graphUtils";
 import { coseLayout } from "@/lib/cytoscape-config";
@@ -20,6 +20,7 @@ export default function SubgraphPage() {
   const [error, setError] = useState<string | null>(null);
   const [graphElements, setGraphElements] = useState<CytoscapeElements>([]);
   const [graphError, setGraphError] = useState<string | null>(null);
+  const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
 
   const handleGraphError = useCallback((err: unknown) => {
     const message =
@@ -136,11 +137,19 @@ export default function SubgraphPage() {
 
         const subgraphData = (await response.json()) as SubgraphData;
         setData(subgraphData);
+        setGraphLayout(subgraphData.layout ?? null);
 
-        // Convert to Cytoscape elements
+        const layoutPositions = subgraphData.layout?.positions.reduce<
+          Record<string, { x: number; y: number }>
+        >((acc, pos) => {
+          acc[pos.nodeId] = { x: pos.x, y: pos.y };
+          return acc;
+        }, {});
+
         const elements = toCytoscapeElements({
           nodes: subgraphData.nodes,
           edges: subgraphData.edges,
+          layoutPositions,
         });
         setGraphElements(elements);
       } catch (err) {
@@ -304,6 +313,7 @@ export default function SubgraphPage() {
                   isLoading={false}
                   onError={handleGraphError}
                   layout={coseLayout}
+                  layoutMetadata={graphLayout}
                 />
                 <div className="pointer-events-auto absolute top-4 right-4 z-20">
                   <Legend />

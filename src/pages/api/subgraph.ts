@@ -1,11 +1,23 @@
 // API endpoint for fetching subgraph data (query proteins + 1-hop neighbors)
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
-import { Node, Edge, SubgraphData } from "@/lib/types";
+import type {
+  Node,
+  Edge,
+  SubgraphData,
+  LayoutPayload,
+  LayoutCacheRecord,
+} from "@/lib/types";
 import {
   transformNodeToResponse,
   transformEdgeToResponse,
 } from "@/lib/transforms";
+import {
+  buildGraphKey,
+  CURRENT_LAYOUT_VERSION,
+  buildLayoutPayload,
+  mapLayoutRowsToPositions,
+} from "@/lib/layoutCache";
 
 /**
  * GET /api/subgraph?proteins=P12345,Q67890
@@ -303,6 +315,61 @@ export default async function handler(
       nodes,
       edges: edgesResp,
     };
+
+    const graphKey = buildGraphKey({
+      namespace: "subgraph",
+      nodeIds: nodes.map((node) => node.id),
+      edgeIds: edgesResp.map((edge) => edge.id),
+      params: {
+        queryProteins,
+        minProb,
+        preferExperimental,
+        maxEdges,
+        maxNodes,
+      },
+    });
+
+    let layout: LayoutPayload | undefined;
+    try {
+      const {
+        data: layoutRows,
+        error: layoutError,
+      } = await supabase
+        .from("graph_layout_cache")
+        .select("graph_key,node_id,x,y,layout_version,updated_at")
+        .eq("graph_key", graphKey)
+        .eq("layout_version", CURRENT_LAYOUT_VERSION);
+
+      if (layoutError) {
+        console.warn("Layout cache lookup error (subgraph):", layoutError);
+        layout = buildLayoutPayload(graphKey, [], nodes.length);
+      } else if (Array.isArray(layoutRows) && layoutRows.length > 0) {
+        const positions = mapLayoutRowsToPositions(
+          layoutRows as LayoutCacheRecord[]
+        );
+        layout = buildLayoutPayload(graphKey, positions, nodes.length);
+      } else {
+        layout = buildLayoutPayload(graphKey, [], nodes.length);
+      }
+
+      if (layout.positions.length === nodes.length) {
+        console.info(
+          `[layout-cache] hit graph=${graphKey} nodes=${nodes.length} (subgraph)`
+        );
+      } else {
+        console.info(
+          `[layout-cache] miss graph=${graphKey} nodes=${nodes.length} (subgraph)`
+        );
+      }
+    } catch (layoutException) {
+      console.warn(
+        "Unexpected layout cache error (subgraph):",
+        layoutException
+      );
+      layout = buildLayoutPayload(graphKey, [], nodes.length);
+    }
+
+    response.layout = layout;
 
     // Add truncation metadata if applicable
     if (nodesTruncated || edgesTruncated) {

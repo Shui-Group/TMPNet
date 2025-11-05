@@ -106,6 +106,36 @@ This document analyzes how the network graph is assembled, rendered, and control
 - Client caching:
   - Response cache keyed by querystring to avoid recomputation and re-layout when toggling back.
 
+### Fixed Layout Rollout Tasks
+
+1. Backend layout cache foundation
+   - Add a `graph_layout_cache` table in Supabase with columns: `graph_key` (PK), `node_id`, `x`, `y`, `layout_version`, `updated_at`.
+   - Extend `/api/network` and `/api/subgraph` to compute a deterministic `graph_key` (hash of sorted node and edge ids plus query params) and read cached coordinates in the response payload when available.
+   - Expose a new POST endpoint `/api/layout-cache` that accepts `{ graphKey, positions: Array<{ id, x, y }>, layoutVersion }` and upserts rows.
+   - Emit structured logs for cache hits/misses and POST writes, ensuring request duration metrics include cache lookup time.
+
+2. Client capture & save pipeline
+   - Update `NetworkGraph.tsx` to detect when elements include `position` data and skip running Cytoscape layouts, applying `preset` positions directly.
+   - After the first `layoutstop` with uncached graphs, collect node coordinates and POST them to `/api/layout-cache`; include guard rails to avoid duplicate submissions.
+   - Set `cy.autolock(true)` and `cy.autoungrabify(true)` once positions are loaded to prevent user dragging while keeping pan/zoom enabled.
+   - When cache positions are present, bypass progressive edge batching and add the full edge set immediately to reduce reflow cost.
+
+3. Shared utilities & data flow
+   - Extend `graphUtils.ts` (or a new helper) to merge `position` into node definitions when supplied from the API, reusing existing element creation logic.
+   - Update transforms or API response assembly to include `positionsNeeded` boolean when cache is cold so the client can decide whether to run layouts.
+   - Document the graph key generation and layout versioning scheme in `architecture.md` to aid future migrations.
+
+4. Validation & operations
+   - Add Jest tests covering the new API contract (layout cache fetch/write) with Supabase mocks, plus client unit tests ensuring layout skip logic triggers only when all nodes have coordinates.
+   - Instrument analytics dashboards or logs to track cache hit rate, average load time before/after rollout, and any `positionsNeeded` fallbacks.
+   - Provide a manual invalidation mechanism (e.g., POST `/api/layout-cache` with `refresh=true` or admin UI toggle) documented for data updates.
+
+**Acceptance criteria**
+- Cold requests still compute layouts once, then subsequent identical queries reuse cached coordinates without rerunning layouts.
+- Nodes stay fixed during interaction; only pan/zoom remains available.
+- Cache API endpoints return 2xx responses under load tests (10 concurrent warm requests) and maintain <50 ms overhead on cache hits.
+- Automated tests cover cache hit/miss logic and client skip behavior with 100% pass rate in CI.
+
 ### Bottlenecks and Risks
 
 - Layout scale limits:

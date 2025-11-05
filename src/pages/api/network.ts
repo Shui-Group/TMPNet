@@ -4,6 +4,8 @@ import { performance } from "perf_hooks";
 import { supabase } from "@/lib/supabase";
 import type {
   Edge,
+  LayoutCacheRecord,
+  LayoutPayload,
   NetworkData,
   NetworkMeta,
   NetworkTimings,
@@ -15,6 +17,12 @@ import {
 } from "@/lib/transforms";
 import type { CytoscapeElements } from "@/lib/graphUtils";
 import { toCytoscapeElements } from "@/lib/graphUtils";
+import {
+  CURRENT_LAYOUT_VERSION,
+  buildGraphKey,
+  buildLayoutPayload,
+  mapLayoutRowsToPositions,
+} from "@/lib/layoutCache";
 
 /**
  * GET /api/network
@@ -356,6 +364,59 @@ export default async function handler(
     const edgesResp = includeEdges ? edges.map(transformEdgeToResponse) : [];
     const transformMs = performance.now() - transformStart;
 
+    const graphKey = buildGraphKey({
+      namespace: "network",
+      nodeIds: nodes.map((node) => node.id),
+      edgeIds: edgesResp.map((edge) => edge.id),
+      params: {
+        positiveTypes,
+        minProb,
+        maxEdges,
+        nodeIds,
+        includeEdges,
+        format,
+        preferExperimental,
+      },
+    });
+
+    let layout: LayoutPayload | undefined;
+
+    try {
+      const {
+        data: layoutRows,
+        error: layoutError,
+      } = await supabase
+        .from("graph_layout_cache")
+        .select("graph_key,node_id,x,y,layout_version,updated_at")
+        .eq("graph_key", graphKey)
+        .eq("layout_version", CURRENT_LAYOUT_VERSION);
+
+      if (layoutError) {
+        console.warn("Layout cache lookup error:", layoutError);
+        layout = buildLayoutPayload(graphKey, [], nodes.length);
+      } else if (Array.isArray(layoutRows) && layoutRows.length > 0) {
+        const positions = mapLayoutRowsToPositions(
+          layoutRows as LayoutCacheRecord[]
+        );
+        layout = buildLayoutPayload(graphKey, positions, nodes.length);
+      } else {
+        layout = buildLayoutPayload(graphKey, [], nodes.length);
+      }
+
+      if (layout.positions.length === nodes.length) {
+        console.info(
+          `[layout-cache] hit graph=${graphKey} nodes=${nodes.length}`
+        );
+      } else {
+        console.info(
+          `[layout-cache] miss graph=${graphKey} nodes=${nodes.length}`
+        );
+      }
+    } catch (layoutException) {
+      console.warn("Unexpected layout cache error:", layoutException);
+      layout = buildLayoutPayload(graphKey, [], nodes.length);
+    }
+
     const timings: NetworkTimings = {
       fetchNodesMs: toMs(fetchNodesMs),
       fetchEdgesMs: includeEdges ? toMs(fetchEdgesMs) : undefined,
@@ -375,11 +436,28 @@ export default async function handler(
     res.setHeader("Cache-Control", CACHE_CONTROL_HEADER);
 
     if (format === "cyto") {
-      const elements = toCytoscapeElements({ nodes, edges: edgesResp });
-      return res.status(200).json({ elements, meta });
+      const layoutPositionMap =
+        layout &&
+        !layout.positionsNeeded &&
+        layout.positions.length === nodes.length
+          ? layout.positions.reduce<Record<string, { x: number; y: number }>>(
+              (acc, pos) => {
+                acc[pos.nodeId] = { x: pos.x, y: pos.y };
+                return acc;
+              },
+              {}
+            )
+          : undefined;
+
+      const elements = toCytoscapeElements({
+        nodes,
+        edges: edgesResp,
+        layoutPositions: layoutPositionMap,
+      });
+      return res.status(200).json({ elements, meta, layout });
     }
 
-    return res.status(200).json({ nodes, edges: edgesResp, meta });
+    return res.status(200).json({ nodes, edges: edgesResp, meta, layout });
   } catch (error) {
     console.error("Unexpected error in /api/network:", error);
     return res.status(500).json({ error: "Internal server error" });

@@ -33,6 +33,7 @@ Enables Row Level Security (RLS) on both tables and creates public read-only acc
 1. `01_create_tables.sql` - Create schema
 2. Import CSV data (via Dashboard or SQL)
 3. `03_enable_rls.sql` - Enable security
+4. `04_graph_layout_cache.sql` - Provision layout cache table
 
 ## Testing
 
@@ -57,6 +58,7 @@ To start over:
 
 ```sql
 DROP TABLE IF EXISTS edges CASCADE;
+DROP TABLE IF EXISTS graph_layout_cache CASCADE;
 DROP TABLE IF EXISTS nodes CASCADE;
 ```
 

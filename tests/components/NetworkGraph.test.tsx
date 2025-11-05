@@ -23,10 +23,13 @@ const createCoreMock = () => {
       length: 0,
       style: jest.fn(),
       connectedEdges: jest.fn(() => connectedEdgesMock),
+      map: jest.fn(() => []),
     })),
     resize: jest.fn(),
     fit: jest.fn(),
     $: jest.fn(() => ({ unselect: jest.fn() })),
+    autolock: jest.fn(),
+    autoungrabify: jest.fn(),
   };
 
   return core;

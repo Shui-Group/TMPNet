@@ -5,7 +5,12 @@ import Legend from "@/components/Legend";
 import NetworkGraph from "@/components/NetworkGraph";
 import SearchBar from "@/components/SearchBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { NetworkData, NetworkMeta, NetworkStats } from "@/lib/types";
+import type {
+  LayoutPayload,
+  NetworkData,
+  NetworkMeta,
+  NetworkStats,
+} from "@/lib/types";
 import type { CytoscapeElements } from "@/lib/graphUtils";
 import { toCytoscapeElements } from "@/lib/graphUtils";
 
@@ -17,6 +22,7 @@ export default function Home() {
   const [graphLoading, setGraphLoading] = useState<boolean>(true);
   const [graphError, setGraphError] = useState<string | null>(null);
   const [graphMeta, setGraphMeta] = useState<NetworkMeta | null>(null);
+  const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
   const [filters, setFilters] = useState({
     positiveTypes: ["experiment"],
     maxEdges: 50_000,
@@ -64,6 +70,36 @@ export default function Home() {
     fetchStats();
   }, []);
 
+  const layoutToPositionMap = useCallback(
+    (layout: LayoutPayload | null | undefined) => {
+      if (!layout || layout.positions.length === 0) return undefined;
+      return layout.positions.reduce<Record<string, { x: number; y: number }>>(
+        (acc, pos) => {
+          acc[pos.nodeId] = { x: pos.x, y: pos.y };
+          return acc;
+        },
+        {}
+      );
+    },
+    []
+  );
+
+  const applyNetworkData = useCallback(
+    (network: NetworkData) => {
+      const layout = network.layout ?? null;
+      setGraphLayout(layout);
+      setGraphMeta(network.meta ?? null);
+      setGraphElements(
+        toCytoscapeElements({
+          nodes: network.nodes,
+          edges: network.edges,
+          layoutPositions: layoutToPositionMap(layout),
+        })
+      );
+    },
+    [layoutToPositionMap]
+  );
+
   useEffect(() => {
     let cancelled = false;
     const cacheKey = queryString || "__default__";
@@ -71,8 +107,7 @@ export default function Home() {
       try {
         const cached = networkCacheRef.current.get(cacheKey);
         if (cached) {
-          setGraphElements(toCytoscapeElements(cached));
-          setGraphMeta(cached.meta ?? null);
+          applyNetworkData(cached);
           setGraphLoading(false);
         } else {
           setGraphLoading(true);
@@ -87,9 +122,7 @@ export default function Home() {
         const data = (await response.json()) as NetworkData;
         if (cancelled) return;
         networkCacheRef.current.set(cacheKey, data);
-        setGraphElements(toCytoscapeElements(data));
-        const meta = data.meta ?? null;
-        setGraphMeta(meta);
+        applyNetworkData(data);
       } catch (err) {
         if (cancelled) return;
         const message =
@@ -143,6 +176,7 @@ export default function Home() {
               elements={graphElements}
               isLoading={graphLoading}
               onError={handleGraphError}
+              layoutMetadata={graphLayout}
             />
             <div className="pointer-events-auto absolute top-4 right-4 z-20">
               <Legend />

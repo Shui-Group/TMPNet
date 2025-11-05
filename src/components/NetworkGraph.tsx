@@ -22,6 +22,7 @@ import {
   rendererOptions,
 } from "@/lib/cytoscape-config";
 import type { CytoscapeElements } from "@/lib/graphUtils";
+import type { LayoutPayload } from "@/lib/types";
 
 type CytoscapeWithExtensions = cytoscapeType & {
   use: (extension: unknown) => void;
@@ -62,6 +63,7 @@ interface NetworkGraphProps {
   } | null;
   onError?: (err: unknown) => void;
   layout?: LayoutOptions;
+  layoutMetadata?: LayoutPayload | null;
 }
 
 export default function NetworkGraph({
@@ -70,6 +72,7 @@ export default function NetworkGraph({
   progress,
   onError,
   layout = fcoseLayout,
+  layoutMetadata = null,
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<cytoscapeType.Core | null>(null);
@@ -80,6 +83,7 @@ export default function NetworkGraph({
     y: 0,
     label: "",
   });
+  const postedLayoutsRef = useRef<Set<string>>(new Set());
 
   const ensureQueryPriority = useCallback(() => {
     const cy = cyRef.current;
@@ -163,6 +167,25 @@ export default function NetworkGraph({
     setTooltip((prev) => (prev.visible ? { ...prev, visible: false } : prev));
   }, []);
 
+  const shouldSkipLayout = useMemo(() => {
+    const layoutPositionsKnown =
+      layoutMetadata &&
+      !layoutMetadata.positionsNeeded &&
+      layoutMetadata.positions.length > 0;
+    if (!layoutPositionsKnown) return false;
+    const nodeElements = elements.filter(isNodeElement);
+    if (nodeElements.length === 0) return false;
+    return nodeElements.every((node) => {
+      const pos = node.position as
+        | { x: number; y: number }
+        | undefined;
+      return (
+        typeof pos?.x === "number" && Number.isFinite(pos.x) &&
+        typeof pos?.y === "number" && Number.isFinite(pos.y)
+      );
+    });
+  }, [elements, layoutMetadata]);
+
   // apply elements and run layout (progressive: nodes + seed edges first)
   useEffect(() => {
     if (!ready || !cyRef.current) return;
@@ -174,27 +197,86 @@ export default function NetworkGraph({
     cy.startBatch();
     cy.elements().remove();
     cy.add(nodeElements);
-    cy.add(edgeElements.slice(0, Math.min(seedEdges, edgeElements.length)));
+    if (shouldSkipLayout) {
+      cy.add(edgeElements);
+    } else {
+      cy.add(edgeElements.slice(0, Math.min(seedEdges, edgeElements.length)));
+    }
     cy.endBatch();
     ensureQueryPriority();
     cy.resize();
     hideTooltip();
+    if (shouldSkipLayout) {
+      cy.fit(undefined, 30);
+      cy.autolock(true);
+      cy.autoungrabify(true);
+      return;
+    }
+
+    cy.autolock(false);
+    cy.autoungrabify(false);
+
+    const runLayout = (options: LayoutOptions) => {
+      const layoutInstance = cy.layout(options);
+      layoutInstance.one?.("layoutstop", () => {
+        ensureQueryPriority();
+        cy.autolock(true);
+        cy.autoungrabify(true);
+
+        const graphKey = layoutMetadata?.graphKey;
+        const layoutVersion = layoutMetadata?.layoutVersion;
+        const needsPositions = layoutMetadata?.positionsNeeded;
+
+        if (
+          graphKey &&
+          layoutVersion &&
+          needsPositions &&
+          !postedLayoutsRef.current.has(graphKey)
+        ) {
+          const positions = cy
+            .nodes()
+            .map((node) => ({
+              id: node.id(),
+              x: node.position("x"),
+              y: node.position("y"),
+            }))
+            .filter((pos) =>
+              Number.isFinite(pos.x) && Number.isFinite(pos.y)
+            );
+
+          if (positions.length === nodeElements.length) {
+            postedLayoutsRef.current.add(graphKey);
+            void fetch("/api/layout-cache", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                graphKey,
+                layoutVersion,
+                positions,
+              }),
+            }).catch((err) => {
+              postedLayoutsRef.current.delete(graphKey);
+              console.error("Failed to persist layout cache", err);
+              onError?.(err);
+            });
+          }
+        }
+      });
+      layoutInstance.run();
+    };
 
     try {
-      const layoutInstance = cy.layout(layout);
-      layoutInstance.one?.("layoutstop", ensureQueryPriority);
-      layoutInstance.run();
+      runLayout(layout);
     } catch {
-      // fallback to built-in cose if layout fails
       const fallbackLayout: LayoutOptions = {
         name: "cose",
         animate: false,
         fit: true,
         padding: 30,
       };
-      const fallbackInstance = cy.layout(fallbackLayout);
-      fallbackInstance.one?.("layoutstop", ensureQueryPriority);
-      fallbackInstance.run();
+      runLayout(fallbackLayout);
     }
     cy.fit(undefined, 30);
 
@@ -211,7 +293,16 @@ export default function NetworkGraph({
       if (added < edgeElements.length) setTimeout(addMore, 0);
     }
     setTimeout(addMore, 0);
-  }, [elements, ready, layout, ensureQueryPriority, hideTooltip, largeGraph]);
+  }, [
+    elements,
+    ready,
+    layout,
+    ensureQueryPriority,
+    hideTooltip,
+    largeGraph,
+    layoutMetadata,
+    shouldSkipLayout,
+  ]);
 
   useEffect(() => {
     if (!ready || !cyRef.current) return;

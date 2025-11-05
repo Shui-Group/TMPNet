@@ -88,6 +88,18 @@ describe("/api/subgraph integration", () => {
         };
       }
 
+      if (table === "graph_layout_cache") {
+        const chain: any = {
+          eq: jest.fn(() => chain),
+          data: [],
+          error: null,
+        };
+
+        return {
+          select: jest.fn(() => chain),
+        };
+      }
+
       return { select: jest.fn().mockResolvedValue({ data: [], error: null }) };
     });
 
@@ -108,5 +120,7 @@ describe("/api/subgraph integration", () => {
     expect(queryNode?.isQuery).toBe(true);
     expect(neighborNode?.isQuery).toBe(false);
     expect(payload.edges).toHaveLength(1);
+    expect(payload.layout.graphKey).toBeDefined();
+    expect(payload.layout.positionsNeeded).toBe(true);
   });
 });

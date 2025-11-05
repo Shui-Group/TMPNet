@@ -75,6 +75,17 @@ describe("/api/network integration (cyto format)", () => {
         };
       }
 
+      if (table === "graph_layout_cache") {
+        const chain: any = {
+          eq: jest.fn(() => chain),
+          data: [],
+          error: null,
+        };
+        return {
+          select: jest.fn(() => chain),
+        };
+      }
+
       return {
         select: jest.fn(() => Promise.resolve({ data: null, error: null })),
       };
@@ -97,5 +108,7 @@ describe("/api/network integration (cyto format)", () => {
     expect(nodeElement).toBeDefined();
     expect(nodeElement.data.tooltip).toContain("PROT1_HUMAN");
     expect(payload.meta.totalNodes).toBe(1);
+    expect(payload.layout.graphKey).toBeDefined();
+    expect(payload.layout.positionsNeeded).toBe(true);
   });
 });

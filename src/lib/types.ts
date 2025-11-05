@@ -83,6 +83,7 @@ export interface NetworkData {
   nodes: NodeResponse[];
   edges: EdgeResponse[];
   meta?: NetworkMeta;
+  layout?: LayoutPayload;
 }
 
 /**
@@ -97,6 +98,7 @@ export interface SubgraphData {
     nodes: boolean;
     edges: boolean;
   };
+  layout?: LayoutPayload;
 }
 
 /**
@@ -106,3 +108,25 @@ export type SupabaseResponse<T> = {
   data: T | null;
   error: Error | null;
 };
+
+export interface LayoutPosition {
+  nodeId: string;
+  x: number;
+  y: number;
+}
+
+export interface LayoutPayload {
+  graphKey: string;
+  layoutVersion: string;
+  positions: LayoutPosition[];
+  positionsNeeded: boolean;
+}
+
+export interface LayoutCacheRecord {
+  graph_key: string;
+  node_id: string;
+  x: number;
+  y: number;
+  layout_version: string;
+  updated_at: string;
+}

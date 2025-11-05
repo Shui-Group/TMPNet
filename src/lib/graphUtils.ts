@@ -82,8 +82,20 @@ export function edgesToCy(edges: EdgeResponse[]): CytoscapeEdge[] {
 type GraphLikeData = {
   nodes: NodeResponse[];
   edges: EdgeResponse[];
+  layoutPositions?: Record<string, { x: number; y: number }>;
 };
 
 export function toCytoscapeElements(data: GraphLikeData): CytoscapeElements {
-  return [...nodesToCy(data.nodes), ...edgesToCy(data.edges)];
+  const positions = data.layoutPositions;
+  const nodeElements = nodesToCy(data.nodes).map((node) => {
+    if (positions && positions[node.data.id]) {
+      return {
+        ...node,
+        position: positions[node.data.id],
+        locked: true,
+      };
+    }
+    return node;
+  });
+  return [...nodeElements, ...edgesToCy(data.edges)];
 }
