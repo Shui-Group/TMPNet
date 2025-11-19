@@ -12,6 +12,7 @@ type LayoutCacheRequestBody = {
   graphKey?: string;
   layoutVersion?: string;
   positions?: PositionPayload[];
+  refresh?: boolean;
 };
 
 const isFiniteNumber = (value: unknown): value is number =>
@@ -32,10 +33,49 @@ export default async function handler(
     return res.status(400).json({ error: "Invalid payload" });
   }
 
-  const { graphKey, layoutVersion, positions } = body;
+  const { graphKey, layoutVersion, positions, refresh } = body;
 
   if (!graphKey || typeof graphKey !== "string") {
     return res.status(400).json({ error: "graphKey is required" });
+  }
+
+  const wantsRefresh = Boolean(refresh);
+
+  if (wantsRefresh) {
+    try {
+      let deleteQuery = supabase
+        .from("graph_layout_cache")
+        // @ts-expect-error Runtime chaining provided by Supabase client
+        .delete()
+        .eq("graph_key", graphKey);
+
+      if (layoutVersion) {
+        // @ts-expect-error Runtime chaining provided by Supabase client
+        deleteQuery = deleteQuery.eq("layout_version", layoutVersion);
+      }
+
+      const { error, count } = await deleteQuery.select("node_id", {
+        count: "exact",
+      });
+
+      if (error) {
+        console.error("Layout cache refresh error:", error);
+        return res.status(500).json({ error: "Failed to refresh layout cache" });
+      }
+
+      console.info(
+        `[layout-cache] invalidated graph=${graphKey} version=${layoutVersion ?? "*"} removed=${count ?? 0}`
+      );
+
+      return res.status(200).json({
+        graphKey,
+        layoutVersion: layoutVersion ?? null,
+        removed: count ?? 0,
+      });
+    } catch (err) {
+      console.error("Unexpected layout cache refresh error:", err);
+      return res.status(500).json({ error: "Unexpected error" });
+    }
   }
 
   if (!layoutVersion || layoutVersion !== CURRENT_LAYOUT_VERSION) {

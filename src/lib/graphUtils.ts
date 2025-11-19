@@ -6,7 +6,7 @@ import type {
   ElementDefinition,
   NodeDefinition,
 } from "cytoscape";
-import { EdgeResponse, NodeResponse } from "./types";
+import { EdgeResponse, LayoutPayload, NodeResponse } from "./types";
 
 export type CytoscapeNode = NodeDefinition;
 export type CytoscapeEdge = EdgeDefinition;
@@ -40,6 +40,18 @@ export function getEdgeColor(edge: EdgeResponse): string {
   return edgeColors.predicted;
 }
 
+export type LayoutPositionMap = Record<string, { x: number; y: number }>;
+
+export function layoutPayloadToPositionMap(
+  layout?: LayoutPayload | null
+): LayoutPositionMap | undefined {
+  if (!layout || layout.positions.length === 0) return undefined;
+  return layout.positions.reduce<LayoutPositionMap>((acc, pos) => {
+    acc[pos.nodeId] = { x: pos.x, y: pos.y };
+    return acc;
+  }, {});
+}
+
 export function nodesToCy(nodes: NodeResponse[]): CytoscapeNode[] {
   return nodes.map((node) => {
     const isQuery = Boolean(node.isQuery);
@@ -58,6 +70,15 @@ export function nodesToCy(nodes: NodeResponse[]): CytoscapeNode[] {
           .join(" · "),
       },
     };
+    const position = node.position;
+    if (
+      position &&
+      Number.isFinite(position.x) &&
+      Number.isFinite(position.y)
+    ) {
+      nodeDef.position = position;
+      nodeDef.locked = true;
+    }
     return nodeDef;
   });
 }
@@ -82,16 +103,22 @@ export function edgesToCy(edges: EdgeResponse[]): CytoscapeEdge[] {
 type GraphLikeData = {
   nodes: NodeResponse[];
   edges: EdgeResponse[];
-  layoutPositions?: Record<string, { x: number; y: number }>;
+  layoutPositions?: LayoutPositionMap;
 };
 
 export function toCytoscapeElements(data: GraphLikeData): CytoscapeElements {
   const positions = data.layoutPositions;
   const nodeElements = nodesToCy(data.nodes).map((node) => {
-    if (positions && positions[node.data.id]) {
+    const hasPreset =
+      Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y);
+    if (hasPreset || !positions) {
+      return node;
+    }
+    const position = positions[node.data.id];
+    if (position) {
       return {
         ...node,
-        position: positions[node.data.id],
+        position,
         locked: true,
       };
     }

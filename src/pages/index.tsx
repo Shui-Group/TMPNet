@@ -12,7 +12,10 @@ import type {
   NetworkStats,
 } from "@/lib/types";
 import type { CytoscapeElements } from "@/lib/graphUtils";
-import { toCytoscapeElements } from "@/lib/graphUtils";
+import {
+  layoutPayloadToPositionMap,
+  toCytoscapeElements,
+} from "@/lib/graphUtils";
 
 export default function Home() {
   const [stats, setStats] = useState<NetworkStats | null>(null);
@@ -70,34 +73,21 @@ export default function Home() {
     fetchStats();
   }, []);
 
-  const layoutToPositionMap = useCallback(
-    (layout: LayoutPayload | null | undefined) => {
-      if (!layout || layout.positions.length === 0) return undefined;
-      return layout.positions.reduce<Record<string, { x: number; y: number }>>(
-        (acc, pos) => {
-          acc[pos.nodeId] = { x: pos.x, y: pos.y };
-          return acc;
-        },
-        {}
-      );
-    },
-    []
-  );
-
   const applyNetworkData = useCallback(
     (network: NetworkData) => {
       const layout = network.layout ?? null;
       setGraphLayout(layout);
       setGraphMeta(network.meta ?? null);
+      const layoutPositions = layoutPayloadToPositionMap(layout);
       setGraphElements(
         toCytoscapeElements({
           nodes: network.nodes,
           edges: network.edges,
-          layoutPositions: layoutToPositionMap(layout),
+          layoutPositions,
         })
       );
     },
-    [layoutToPositionMap]
+    []
   );
 
   useEffect(() => {

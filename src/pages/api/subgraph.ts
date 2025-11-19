@@ -12,6 +12,7 @@ import {
   transformNodeToResponse,
   transformEdgeToResponse,
 } from "@/lib/transforms";
+import { layoutPayloadToPositionMap } from "@/lib/graphUtils";
 import {
   buildGraphKey,
   CURRENT_LAYOUT_VERSION,
@@ -301,7 +302,7 @@ export default async function handler(
 
     // Step 5: Transform and mark nodes
     const queryProteinsSet = new Set(queryProteins);
-    const nodes = (nodesData as Node[]).map((node) => ({
+    const nodeResponses = (nodesData as Node[]).map((node) => ({
       ...transformNodeToResponse(node),
       isQuery: queryProteinsSet.has(node.protein),
     }));
@@ -312,13 +313,13 @@ export default async function handler(
     // Build response with truncation metadata
     const response: SubgraphData = {
       query: queryProteins,
-      nodes,
+      nodes: nodeResponses,
       edges: edgesResp,
     };
 
     const graphKey = buildGraphKey({
       namespace: "subgraph",
-      nodeIds: nodes.map((node) => node.id),
+      nodeIds: nodeResponses.map((node) => node.id),
       edgeIds: edgesResp.map((edge) => edge.id),
       params: {
         queryProteins,
@@ -342,23 +343,23 @@ export default async function handler(
 
       if (layoutError) {
         console.warn("Layout cache lookup error (subgraph):", layoutError);
-        layout = buildLayoutPayload(graphKey, [], nodes.length);
+        layout = buildLayoutPayload(graphKey, [], nodeResponses.length);
       } else if (Array.isArray(layoutRows) && layoutRows.length > 0) {
         const positions = mapLayoutRowsToPositions(
           layoutRows as LayoutCacheRecord[]
         );
-        layout = buildLayoutPayload(graphKey, positions, nodes.length);
+        layout = buildLayoutPayload(graphKey, positions, nodeResponses.length);
       } else {
-        layout = buildLayoutPayload(graphKey, [], nodes.length);
+        layout = buildLayoutPayload(graphKey, [], nodeResponses.length);
       }
 
-      if (layout.positions.length === nodes.length) {
+      if (layout.positions.length === nodeResponses.length) {
         console.info(
-          `[layout-cache] hit graph=${graphKey} nodes=${nodes.length} (subgraph)`
+          `[layout-cache] hit graph=${graphKey} nodes=${nodeResponses.length} (subgraph)`
         );
       } else {
         console.info(
-          `[layout-cache] miss graph=${graphKey} nodes=${nodes.length} (subgraph)`
+          `[layout-cache] miss graph=${graphKey} nodes=${nodeResponses.length} (subgraph)`
         );
       }
     } catch (layoutException) {
@@ -366,7 +367,19 @@ export default async function handler(
         "Unexpected layout cache error (subgraph):",
         layoutException
       );
-      layout = buildLayoutPayload(graphKey, [], nodes.length);
+      layout = buildLayoutPayload(graphKey, [], nodeResponses.length);
+    }
+
+    const layoutPositionMap = layoutPayloadToPositionMap(layout);
+    if (layoutPositionMap) {
+      response.nodes = nodeResponses.map((node) =>
+        layoutPositionMap[node.id]
+          ? {
+              ...node,
+              position: layoutPositionMap[node.id],
+            }
+          : node
+      );
     }
 
     response.layout = layout;

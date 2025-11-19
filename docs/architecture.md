@@ -127,6 +127,14 @@ Supabase Tables:
 API Route → Supabase Client → PostgreSQL Query → JSON Response
 ```
 
+### Layout Caching & Versions
+
+- **Graph key generation:** `buildGraphKey` concatenates the cache namespace, the active `CURRENT_LAYOUT_VERSION`, sorted node IDs, sorted edge IDs, and request parameters into a stable SHA-256 hash. Any change to those inputs yields a new key, isolating cache entries per query shape.
+- **Layout versioning:** `CURRENT_LAYOUT_VERSION` in `src/lib/layoutCache.ts` is the single bump point for cache invalidation. Updating the string (e.g. after layout tweaks) forces downstream fetches to skip stale coordinates while preserving historical rows for auditing.
+- **Payload contract:** API routes return a `layout` object containing the `graphKey`, `layoutVersion`, concrete node positions, and a `positionsNeeded` boolean. When `positionsNeeded` is `true`, the client runs Cytoscape layouts and posts fresh coordinates back to `/api/layout-cache`.
+- **Position hydration:** On warm cache hits the API injects cached `{x, y}` positions into each `NodeResponse`. Client utilities (`toCytoscapeElements`) lock those nodes via preset positions, avoiding redundant layout work on repeat views.
+- **Manual refresh:** To force a recompute for a specific graph, POST to `/api/layout-cache` with `{ "graphKey": "<hash>", "refresh": true }`. Supplying `layoutVersion` scopes the deletion to that version; omitting it removes every version of the cached layout, letting the next request repopulate coordinates.
+
 ---
 
 ## Dependencies

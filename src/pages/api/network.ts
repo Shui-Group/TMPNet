@@ -16,7 +16,7 @@ import {
   transformNodeToResponse,
 } from "@/lib/transforms";
 import type { CytoscapeElements } from "@/lib/graphUtils";
-import { toCytoscapeElements } from "@/lib/graphUtils";
+import { layoutPayloadToPositionMap, toCytoscapeElements } from "@/lib/graphUtils";
 import {
   CURRENT_LAYOUT_VERSION,
   buildGraphKey,
@@ -360,13 +360,13 @@ export default async function handler(
     }
 
     const transformStart = performance.now();
-    const nodes = (nodesData as Node[]).map(transformNodeToResponse);
+    const nodeResponses = (nodesData as Node[]).map(transformNodeToResponse);
     const edgesResp = includeEdges ? edges.map(transformEdgeToResponse) : [];
     const transformMs = performance.now() - transformStart;
 
     const graphKey = buildGraphKey({
       namespace: "network",
-      nodeIds: nodes.map((node) => node.id),
+      nodeIds: nodeResponses.map((node) => node.id),
       edgeIds: edgesResp.map((edge) => edge.id),
       params: {
         positiveTypes,
@@ -393,29 +393,41 @@ export default async function handler(
 
       if (layoutError) {
         console.warn("Layout cache lookup error:", layoutError);
-        layout = buildLayoutPayload(graphKey, [], nodes.length);
+        layout = buildLayoutPayload(graphKey, [], nodeResponses.length);
       } else if (Array.isArray(layoutRows) && layoutRows.length > 0) {
         const positions = mapLayoutRowsToPositions(
           layoutRows as LayoutCacheRecord[]
         );
-        layout = buildLayoutPayload(graphKey, positions, nodes.length);
+        layout = buildLayoutPayload(graphKey, positions, nodeResponses.length);
       } else {
-        layout = buildLayoutPayload(graphKey, [], nodes.length);
+        layout = buildLayoutPayload(graphKey, [], nodeResponses.length);
       }
 
-      if (layout.positions.length === nodes.length) {
+      if (layout.positions.length === nodeResponses.length) {
         console.info(
-          `[layout-cache] hit graph=${graphKey} nodes=${nodes.length}`
+          `[layout-cache] hit graph=${graphKey} nodes=${nodeResponses.length}`
         );
       } else {
         console.info(
-          `[layout-cache] miss graph=${graphKey} nodes=${nodes.length}`
+          `[layout-cache] miss graph=${graphKey} nodes=${nodeResponses.length}`
         );
       }
     } catch (layoutException) {
       console.warn("Unexpected layout cache error:", layoutException);
-      layout = buildLayoutPayload(graphKey, [], nodes.length);
+      layout = buildLayoutPayload(graphKey, [], nodeResponses.length);
     }
+
+    const layoutPositionMap = layoutPayloadToPositionMap(layout);
+    const nodesWithPositions = layoutPositionMap
+      ? nodeResponses.map((node) =>
+          layoutPositionMap[node.id]
+            ? {
+                ...node,
+                position: layoutPositionMap[node.id],
+              }
+            : node
+        )
+      : nodeResponses;
 
     const timings: NetworkTimings = {
       fetchNodesMs: toMs(fetchNodesMs),
@@ -436,28 +448,17 @@ export default async function handler(
     res.setHeader("Cache-Control", CACHE_CONTROL_HEADER);
 
     if (format === "cyto") {
-      const layoutPositionMap =
-        layout &&
-        !layout.positionsNeeded &&
-        layout.positions.length === nodes.length
-          ? layout.positions.reduce<Record<string, { x: number; y: number }>>(
-              (acc, pos) => {
-                acc[pos.nodeId] = { x: pos.x, y: pos.y };
-                return acc;
-              },
-              {}
-            )
-          : undefined;
-
       const elements = toCytoscapeElements({
-        nodes,
+        nodes: nodesWithPositions,
         edges: edgesResp,
         layoutPositions: layoutPositionMap,
       });
       return res.status(200).json({ elements, meta, layout });
     }
 
-    return res.status(200).json({ nodes, edges: edgesResp, meta, layout });
+    return res
+      .status(200)
+      .json({ nodes: nodesWithPositions, edges: edgesResp, meta, layout });
   } catch (error) {
     console.error("Unexpected error in /api/network:", error);
     return res.status(500).json({ error: "Internal server error" });

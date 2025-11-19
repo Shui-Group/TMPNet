@@ -36,6 +36,10 @@ export interface NodeResponse {
   family: string; // Protein family
   expressionTissue: string[]; // Parsed tissue array
   isQuery?: boolean; // Flag for queried nodes in subgraph
+  position?: {
+    x: number;
+    y: number;
+  };
 }
 
 /**

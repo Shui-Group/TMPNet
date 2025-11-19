@@ -8,7 +8,10 @@ import DataTable from "@/components/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { LayoutPayload, SubgraphData } from "@/lib/types";
 import type { CytoscapeElements } from "@/lib/graphUtils";
-import { toCytoscapeElements } from "@/lib/graphUtils";
+import {
+  layoutPayloadToPositionMap,
+  toCytoscapeElements,
+} from "@/lib/graphUtils";
 import { coseLayout } from "@/lib/cytoscape-config";
 
 export default function SubgraphPage() {
@@ -139,17 +142,10 @@ export default function SubgraphPage() {
         setData(subgraphData);
         setGraphLayout(subgraphData.layout ?? null);
 
-        const layoutPositions = subgraphData.layout?.positions.reduce<
-          Record<string, { x: number; y: number }>
-        >((acc, pos) => {
-          acc[pos.nodeId] = { x: pos.x, y: pos.y };
-          return acc;
-        }, {});
-
         const elements = toCytoscapeElements({
           nodes: subgraphData.nodes,
           edges: subgraphData.edges,
-          layoutPositions,
+          layoutPositions: layoutPayloadToPositionMap(subgraphData.layout),
         });
         setGraphElements(elements);
       } catch (err) {
