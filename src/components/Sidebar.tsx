@@ -90,11 +90,10 @@ export default function Sidebar({
                   <button
                     key={option.value}
                     type="button"
-                    className={`px-3 py-1.5 text-sm rounded-full border transition ${
-                      selected
+                    className={`px-3 py-1.5 text-sm rounded-full border transition ${selected
                         ? "bg-blue-100 text-blue-700 border-blue-300"
                         : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-                    }`}
+                      }`}
                     onClick={() => handleTogglePositiveType(option.value)}
                   >
                     {option.label}
@@ -202,17 +201,28 @@ export default function Sidebar({
           <div className="space-y-2">
             {Object.entries(stats.familyCounts)
               .sort((a, b) => b[1] - a[1])
-              .map(([family, count]) => (
-                <div
-                  key={family}
-                  className="flex justify-between text-sm text-gray-700"
-                >
-                  <span>{family}</span>
-                  <span className="font-semibold">
-                    {count.toLocaleString()}
-                  </span>
-                </div>
-              ))}
+              .map(([family, count]) => {
+                // Map family names to abbreviated labels matching the legend
+                const familyLabelMap: Record<string, string> = {
+                  GPCR: "GPCRs",
+                  "Ion-channels": "ICs",
+                  Transporter: "Trans",
+                  "Catalytic receptors": "CRs",
+                  "Other TMPs": "Others",
+                };
+                const displayLabel = familyLabelMap[family] || family;
+                return (
+                  <div
+                    key={family}
+                    className="flex justify-between text-sm text-gray-700"
+                  >
+                    <span>{displayLabel}</span>
+                    <span className="font-semibold">
+                      {count.toLocaleString()}
+                    </span>
+                  </div>
+                );
+              })}
           </div>
         ) : (
           <p className="text-sm text-gray-500">No family data available</p>

@@ -8,15 +8,14 @@ interface LegendItem {
 
 export default function Legend() {
   const nodeItems: LegendItem[] = [
-    { color: familyColorMap.TM, label: "TM" },
-    { color: familyColorMap.TF, label: "TF" },
-    { color: familyColorMap.Kinase, label: "Kinase" },
-    { color: familyColorMap.Receptor, label: "Receptor" },
-    { color: familyColorMap.Other, label: "Other" },
+    { color: familyColorMap.GPCR, label: "GPCRs" },
+    { color: familyColorMap["Ion-channels"], label: "Ion-channels(IC)" },
+    { color: familyColorMap.Transporter, label: "Transporters(Trans)" },
+    { color: familyColorMap["Catalytic receptors"], label: "Catalytic receptors(CR)" },
+    { color: familyColorMap["Other TMPs"], label: "Other TMPs(Others)" },
   ];
   const edgeItems: LegendItem[] = [
     { color: edgeColors.experimental, label: "Experimental" },
-    { color: edgeColors.enriched, label: "Enriched" },
     { color: edgeColors.predicted, label: "Predicted/Other" },
   ];
 

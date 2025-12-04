@@ -12,13 +12,14 @@ export type CytoscapeNode = NodeDefinition;
 export type CytoscapeEdge = EdgeDefinition;
 export type CytoscapeElements = ElementDefinition[];
 
-// Cool neutral palette only (no red/green/yellow)
+// Family color palette matching the design image
 export const familyColorMap: Record<string, string> = {
-  TM: "#93B4E5",
-  TF: "#A7C5EB",
-  Kinase: "#CBD5E1",
-  Receptor: "#B6C2D9",
-  Other: "#D1D5DB",
+  GPCR: "#E8A87C", // salmon/orange for GPCRs
+  "Ion-channels": "#8B7BC7", // purple for Ion-channels
+  Transporter: "#7EC4A0", // teal/green for Transporters
+  "Catalytic receptors": "#B5D4A3", // light green for Catalytic receptors
+  "Other TMPs": "#D1D5DB", // light gray for Other TMPs
+  Other: "#D1D5DB", // fallback
 };
 
 export function getFamilyColor(family?: string | null): string {
@@ -26,17 +27,16 @@ export function getFamilyColor(family?: string | null): string {
   return familyColorMap[family] || familyColorMap.Other;
 }
 
-// Edge color shades (all blue family, translucent-friendly)
+// Edge color shades (only experimental and predicted)
 export const edgeColors = {
   experimental: "#4C6FB9",
-  enriched: "#7DA6E8",
   predicted: "#C9DBF8",
 };
 
 export function getEdgeColor(edge: EdgeResponse): string {
-  if (edge.positiveType?.toLowerCase() === "experimental")
+  // Check if positiveType contains "experiment" (handles "experiment" and "prediction & experiment")
+  if (edge.positiveType?.toLowerCase().includes("experiment"))
     return edgeColors.experimental;
-  if (edge.enrichedTissue) return edgeColors.enriched;
   return edgeColors.predicted;
 }
 

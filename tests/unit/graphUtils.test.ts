@@ -12,7 +12,7 @@ import type { EdgeResponse, NodeResponse } from "@/lib/types";
 describe("graphUtils", () => {
   describe("getFamilyColor", () => {
     it("returns mapped color for known family", () => {
-      expect(getFamilyColor("TM")).toBe(familyColorMap.TM);
+      expect(getFamilyColor("GPCR")).toBe(familyColorMap.GPCR);
     });
 
     it("falls back to Other for unknown family", () => {
@@ -32,15 +32,12 @@ describe("graphUtils", () => {
       positiveType: "prediction",
     };
 
-    it("uses experimental color when positiveType=experimental", () => {
-      expect(getEdgeColor({ ...baseEdge, positiveType: "experimental" })).toBe(
+    it("uses experimental color when positiveType contains experiment", () => {
+      expect(getEdgeColor({ ...baseEdge, positiveType: "experiment" })).toBe(
         edgeColors.experimental
       );
-    });
-
-    it("uses enriched color when enriched tissue present", () => {
-      expect(getEdgeColor({ ...baseEdge, enrichedTissue: "Brain" })).toBe(
-        edgeColors.enriched
+      expect(getEdgeColor({ ...baseEdge, positiveType: "prediction & experiment" })).toBe(
+        edgeColors.experimental
       );
     });
 
@@ -54,8 +51,8 @@ describe("graphUtils", () => {
       id: "P12345",
       label: "PROT_HUMAN",
       description: "Protein description",
-      geneNames: "GENE1",
-      family: "TF",
+      geneSymbol: "GENE1",
+      family: "GPCR",
       expressionTissue: ["Brain", "Liver"],
       isQuery: true,
     };
@@ -67,7 +64,7 @@ describe("graphUtils", () => {
         label: "PROT_HUMAN",
         color: "#1E3A8A",
         isQuery: true,
-        geneNames: "GENE1",
+        geneSymbol: "GENE1",
         expressionTissue: ["Brain", "Liver"],
       });
       expect(typeof nodeElement.data?.tooltip).toBe("string");
@@ -85,8 +82,8 @@ describe("graphUtils", () => {
       id: "P12345",
       label: "PROT_HUMAN",
       description: "Protein description",
-      geneNames: "GENE1",
-      family: "TF",
+      geneSymbol: "GENE1",
+      family: "GPCR",
       expressionTissue: ["Brain"],
     };
 
@@ -106,7 +103,7 @@ describe("graphUtils", () => {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        color: edgeColors.enriched,
+        color: edgeColors.predicted,
       });
     });
 
