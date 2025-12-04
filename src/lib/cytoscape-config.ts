@@ -2,7 +2,8 @@
 
 import type cytoscape from "cytoscape";
 
-export const subgraphStyles: cytoscape.Stylesheet[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const subgraphStyles: any[] = [
   {
     selector: "node",
     style: {
@@ -82,7 +83,8 @@ export const subgraphStyles: cytoscape.Stylesheet[] = [
   },
 ];
 
-export const cyStyles: cytoscape.Stylesheet[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const cyStyles: any[] = [
   {
     selector: "node",
     style: {
@@ -173,11 +175,9 @@ export const concentricLayout: cytoscape.LayoutOptions = {
   boundingBox: undefined, // Constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
   avoidOverlap: true, // Prevent node overlap
   nodeDimensionsIncludeLabels: false, // Exclude labels from node dimensions
-  // @ts-expect-error Cytoscape types missing 'concentric' function definition for sorting
   concentric: function (node: cytoscape.NodeSingular) {
     return node.degree(false);
   },
-  // @ts-expect-error Cytoscape types missing 'levelWidth' function
   levelWidth: function (nodes: cytoscape.NodeCollection) {
     // Heuristic: more nodes = more levels.
     // This function returns the variation in "concentric" value for each level.
@@ -185,7 +185,8 @@ export const concentricLayout: cytoscape.LayoutOptions = {
   },
 };
 
-export const fcoseLayout: cytoscape.LayoutOptions = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const fcoseLayout: any = {
   name: "fcose",
   quality: "default",
   randomize: true,
@@ -194,7 +195,6 @@ export const fcoseLayout: cytoscape.LayoutOptions = {
   fit: true,
   padding: 30,
   nodeRepulsion: 6500,
-  // @ts-expect-error fcose supports function for idealEdgeLength but types might not reflect it
   idealEdgeLength: () => 60 + Math.random() * 120,
   gravity: 0.2,
   numIter: 2500,
@@ -214,15 +214,6 @@ export const coseLayout: cytoscape.LayoutOptions = {
   gravity: 0.5,
   numIter: 1000,
   randomize: false,
-};
-
-const defaultPixelRatio =
-  typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1;
-
-export const rendererOptions: cytoscape.CytoscapeOptions["renderer"] = {
-  name: "canvas",
-  pixelRatio: defaultPixelRatio,
-  showFps: false,
 };
 
 export const largeGraphThreshold = 75000;

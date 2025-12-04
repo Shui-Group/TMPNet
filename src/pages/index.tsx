@@ -1,190 +1,152 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useState, useEffect } from "react";
+import Head from "next/head";
 import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
-import Legend from "@/components/Legend";
-import NetworkGraph from "@/components/NetworkGraph";
 import SearchBar from "@/components/SearchBar";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import type {
-  LayoutPayload,
-  NetworkData,
-  NetworkMeta,
-  NetworkStats,
-} from "@/lib/types";
-import type { CytoscapeElements } from "@/lib/graphUtils";
-import {
-  layoutPayloadToPositionMap,
-  toCytoscapeElements,
-} from "@/lib/graphUtils";
+import type { NetworkStats } from "@/lib/types";
 
 export default function Home() {
-  const [stats, setStats] = useState<NetworkStats | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [graphElements, setGraphElements] = useState<CytoscapeElements>([]);
-  const [graphLoading, setGraphLoading] = useState<boolean>(true);
-  const [graphError, setGraphError] = useState<string | null>(null);
-  const [graphMeta, setGraphMeta] = useState<NetworkMeta | null>(null);
-  const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
-  const [filters, setFilters] = useState({
-    positiveTypes: ["experiment", "prediction"],
-    maxEdges: 50_000,
-    onlyVisibleEdges: false,
-  });
-  const networkCacheRef = useRef<Map<string, NetworkData>>(new Map());
+    const [stats, setStats] = useState<NetworkStats | null>(null);
+    const [searchValue, setSearchValue] = useState("");
 
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("maxEdges", String(filters.maxEdges));
-    if (filters.positiveTypes.length > 0) {
-      params.set("positiveType", filters.positiveTypes.join(","));
-    }
-    return params.toString();
-  }, [filters.maxEdges, filters.positiveTypes]);
-
-  const handleGraphError = useCallback((err: unknown) => {
-    const message =
-      err instanceof Error
-        ? err.message
-        : "Failed to initialise network viewer";
-    setGraphError(message);
-    console.error("Error initialising Cytoscape:", err);
-  }, []);
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await fetch("/api/network/stats");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch statistics: ${response.statusText}`);
+    useEffect(() => {
+        async function fetchStats() {
+            try {
+                const response = await fetch("/api/network/stats");
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats(data);
+                }
+            } catch (err) {
+                console.error("Error fetching stats:", err);
+            }
         }
-        const data = await response.json();
-        setStats(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-        console.error("Error fetching network stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
+        fetchStats();
+    }, []);
 
-    fetchStats();
-  }, []);
-
-  const applyNetworkData = useCallback(
-    (network: NetworkData) => {
-      const layout = network.layout ?? null;
-      setGraphLayout(layout);
-      setGraphMeta(network.meta ?? null);
-      const layoutPositions = layoutPayloadToPositionMap(layout);
-      setGraphElements(
-        toCytoscapeElements({
-          nodes: network.nodes,
-          edges: network.edges,
-          layoutPositions,
-        })
-      );
-    },
-    []
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    const cacheKey = queryString || "__default__";
-    async function fetchNetwork() {
-      try {
-        const cached = networkCacheRef.current.get(cacheKey);
-        if (cached) {
-          applyNetworkData(cached);
-          setGraphLoading(false);
-        } else {
-          setGraphLoading(true);
-        }
-        setGraphError(null);
-        const response = await fetch(
-          `/api/network${queryString ? `?${queryString}` : ""}`
-        );
-        if (!response.ok) {
-          throw new Error(`Failed to fetch network: ${response.statusText}`);
-        }
-        const data = (await response.json()) as NetworkData;
-        if (cancelled) return;
-        networkCacheRef.current.set(cacheKey, data);
-        applyNetworkData(data);
-      } catch (err) {
-        if (cancelled) return;
-        const message =
-          err instanceof Error ? err.message : "Failed to fetch network";
-        setGraphError(message);
-        console.error("Error fetching network:", err);
-      } finally {
-        if (!cancelled) {
-          setGraphLoading(false);
-        }
-      }
-    }
-
-    fetchNetwork();
-    return () => {
-      cancelled = true;
+    const handleExampleClick = (example: string) => {
+        setSearchValue(example);
     };
-  }, [queryString]);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex flex-col lg:flex-row">
-        {loading ? (
-          <div className="w-full lg:w-80 bg-white border-r border-gray-200 p-6 flex items-center justify-center">
-            <LoadingSpinner label="Loading network statistics..." />
-          </div>
-        ) : error ? (
-          <div className="w-full lg:w-80 bg-white border-r border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Network Statistics
-            </h2>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-800">
-                <span className="font-semibold">Error:</span> {error}
-              </p>
-            </div>
-          </div>
-        ) : stats ? (
-          <Sidebar
-            stats={stats}
-            meta={graphMeta}
-            filters={filters}
-            onChange={setFilters}
-          />
-        ) : null}
+    // Default stats if API is not available
+    const displayStats = {
+        proteins: stats?.totalNodes ?? 2686,
+        interactions: stats?.totalEdges ?? 980393,
+        tissues: 22,
+    };
 
-        <main className="flex-1 p-6">
-          <div className="relative h-[calc(100vh-64px-48px)]">
-            <NetworkGraph
-              elements={graphElements}
-              isLoading={graphLoading}
-              onError={handleGraphError}
-              layoutMetadata={graphLayout}
-            />
-            <div className="pointer-events-auto absolute top-4 right-4 z-20">
-              <Legend />
+    return (
+        <>
+            <Head>
+                <title>MemPPI - Endogenous TMP-TMP Interaction Networks</title>
+                <meta
+                    name="description"
+                    content="Explore endogenous transmembrane protein-protein interaction networks"
+                />
+            </Head>
+
+            <div className="min-h-screen flex flex-col">
+                <Header />
+
+                {/* Hero Section with Background */}
+                <main
+                    className="flex-1 relative flex flex-col items-center justify-center"
+                    style={{
+                        backgroundImage: "url(/background.png)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundColor: "#a8c4e8",
+                    }}
+                >
+                    {/* Semi-transparent overlay for better text readability */}
+                    <div className="absolute inset-0 bg-[#a8c4e8]/70"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 text-center px-4 py-16 max-w-4xl mx-auto">
+                        {/* Title */}
+                        <h1 className="text-4xl md:text-5xl font-bold text-blue-600 mb-12">
+                            Endogenous TMP -TMP interaction Networks
+                        </h1>
+
+                        {/* Stats Section */}
+                        <div className="flex justify-center items-center gap-0 mb-16">
+                            <div className="text-center px-8 border-r border-gray-500">
+                                <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    PROTEINS
+                                </p>
+                                <p className="text-4xl font-bold text-white mt-1">
+                                    {displayStats.proteins.toLocaleString()}
+                                </p>
+                            </div>
+                            <div className="text-center px-8 border-r border-gray-500">
+                                <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    INTERACTIONS
+                                </p>
+                                <p className="text-4xl font-bold text-white mt-1">
+                                    {displayStats.interactions.toLocaleString()}
+                                </p>
+                            </div>
+                            <div className="text-center px-8">
+                                <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    TISSUES
+                                </p>
+                                <p className="text-4xl font-bold text-white mt-1">
+                                    {displayStats.tissues}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Search Box */}
+                        <div className="mb-4">
+                            <SearchBar
+                                className=""
+                                initialValue={searchValue}
+                                placeholder="Search for Gene Symbol or Uniprot id"
+                            />
+                        </div>
+
+                        {/* Examples and Guide */}
+                        <div className="text-center mt-6">
+                            <p className="text-sm text-gray-700">
+                                Example:{" "}
+                                <button
+                                    onClick={() => handleExampleClick("GLP1R")}
+                                    className="text-red-500 hover:underline font-medium"
+                                >
+                                    GLP1R
+                                </button>
+                                {" ,"}
+                                <button
+                                    onClick={() => handleExampleClick("ADGRE5")}
+                                    className="text-red-500 hover:underline font-medium"
+                                >
+                                    ADGRE5
+                                </button>
+                                {","}
+                                <button
+                                    onClick={() => handleExampleClick("EGFR")}
+                                    className="text-red-500 hover:underline font-medium"
+                                >
+                                    EGFR
+                                </button>
+                            </p>
+                            <p className="text-sm text-gray-600 mt-2">
+                                To query <span className="font-semibold">multiple proteins</span>,
+                                separate gene symbols with (&quot;,&quot;).{" "}
+                                <span className="text-blue-500 cursor-not-allowed">See help</span>
+                            </p>
+                        </div>
+                    </div>
+                </main>
+
+                {/* Footer */}
+                <footer className="bg-white border-t border-gray-200 py-4 text-center">
+                    <p className="text-sm text-gray-600">
+                        If you use images or data from this web application, please{" "}
+                        <span className="text-red-500 font-medium">cite</span> these papers:
+                        XXXXXXXXXXXXXXXXX
+                    </p>
+                </footer>
             </div>
-            {graphError && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center">
-                <div className="max-w-sm rounded-lg border border-red-200 bg-white/90 p-4 text-center shadow">
-                  <p className="text-sm font-semibold text-red-600">
-                    Unable to load network
-                  </p>
-                  <p className="mt-2 text-xs text-red-500">{graphError}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-      <SearchBar />
-    </div>
-  );
+        </>
+    );
 }

@@ -117,7 +117,7 @@ export default function SubgraphPage() {
       try {
         const proteinParam = Array.isArray(proteins) ? proteins[0] : proteins;
         const response = await fetch(
-          `/api/subgraph?proteins=${encodeURIComponent(proteinParam)}`
+          `/api/subgraph?proteins=${encodeURIComponent(proteinParam ?? "")}`
         );
 
         if (response.status === 404) {

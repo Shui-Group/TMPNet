@@ -45,18 +45,14 @@ export default async function handler(
     try {
       let deleteQuery = supabase
         .from("graph_layout_cache")
-        // @ts-expect-error Runtime chaining provided by Supabase client
         .delete()
         .eq("graph_key", graphKey);
 
       if (layoutVersion) {
-        // @ts-expect-error Runtime chaining provided by Supabase client
         deleteQuery = deleteQuery.eq("layout_version", layoutVersion);
       }
 
-      const { error, count } = await deleteQuery.select("node_id", {
-        count: "exact",
-      });
+      const { error, count } = await deleteQuery.select("node_id");
 
       if (error) {
         console.error("Layout cache refresh error:", error);

@@ -137,8 +137,8 @@ const clampMaxEdges = (value: number) => {
 
 const applyNodeFilter = <T>(query: T, nodeIds: string[]): T => {
   if (nodeIds.length === 0) return query;
-  // @ts-expect-error Supabase builder chaining at runtime
-  return query.in("protein1", nodeIds).in("protein2", nodeIds);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (query as any).in("protein1", nodeIds).in("protein2", nodeIds);
 };
 
 const countEdgesByType = async (
@@ -151,8 +151,8 @@ const countEdgesByType = async (
     .eq("positive_type", type === "experiment" ? "experiment" : "prediction");
 
   if (type === "prediction") {
-    // @ts-expect-error Supabase builder chaining at runtime
-    query = query.gte("fusion_pred_prob", filters.minProb);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = (query as any).gte("fusion_pred_prob", filters.minProb);
   }
 
   query = applyNodeFilter(query, filters.nodeIds);
@@ -177,23 +177,23 @@ const fetchEdgeSlice = async (
     .eq("positive_type", type === "experiment" ? "experiment" : "prediction");
 
   if (type === "prediction") {
-    // @ts-expect-error Supabase builder chaining at runtime
-    query = query
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = (query as any)
       .gte("fusion_pred_prob", filters.minProb)
       .order("fusion_pred_prob", {
         ascending: false,
-        nullsLast: true,
+        nullsFirst: false,
       });
   } else {
     // Stable ordering for experimental edges
-    // @ts-expect-error Supabase builder chaining at runtime
-    query = query.order("edge", { ascending: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = (query as any).order("edge", { ascending: true });
   }
 
   query = applyNodeFilter(query, filters.nodeIds);
 
-  // @ts-expect-error Supabase builder chaining at runtime
-  query = query.range(start, end);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query = (query as any).range(start, end);
 
   const { data, error } = await query;
   return { data: (data ?? []) as Edge[], error };
@@ -420,13 +420,13 @@ export default async function handler(
     const layoutPositionMap = layoutPayloadToPositionMap(layout);
     const nodesWithPositions = layoutPositionMap
       ? nodeResponses.map((node) =>
-          layoutPositionMap[node.id]
-            ? {
-                ...node,
-                position: layoutPositionMap[node.id],
-              }
-            : node
-        )
+        layoutPositionMap[node.id]
+          ? {
+            ...node,
+            position: layoutPositionMap[node.id],
+          }
+          : node
+      )
       : nodeResponses;
 
     const timings: NetworkTimings = {

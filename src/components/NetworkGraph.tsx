@@ -19,12 +19,11 @@ import {
   cyStyles,
   fcoseLayout,
   largeGraphThreshold,
-  rendererOptions,
 } from "@/lib/cytoscape-config";
 import type { CytoscapeElements } from "@/lib/graphUtils";
 import type { LayoutPayload } from "@/lib/types";
 
-type CytoscapeWithExtensions = cytoscapeType & {
+type CytoscapeWithExtensions = typeof cytoscapeType & {
   use: (extension: unknown) => void;
 };
 
@@ -64,7 +63,8 @@ interface NetworkGraphProps {
   onError?: (err: unknown) => void;
   layout?: LayoutOptions;
   layoutMetadata?: LayoutPayload | null;
-  customStyles?: cytoscapeType.Stylesheet[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  customStyles?: any[];
 }
 
 export default function NetworkGraph({
@@ -127,7 +127,6 @@ export default function NetworkGraph({
           userPanningEnabled: true,
           minZoom: 0.05,
           maxZoom: 6,
-          renderer: rendererOptions,
           motionBlur: true,
           motionBlurOpacity: 0.2,
         });
@@ -400,7 +399,7 @@ export default function NetworkGraph({
                         Math.round(
                           (progress.edgesLoaded /
                             Math.max(1, progress.edgesTotal)) *
-                            100
+                          100
                         )
                       )}%`,
                     }}
@@ -423,9 +422,8 @@ export default function NetworkGraph({
       />
       {tooltip.visible && (
         <div
-          className={`pointer-events-none absolute z-20 max-w-xs rounded-md border border-gray-200 bg-white/95 p-3 text-left shadow-lg transition ${
-            tooltip.isQuery ? "ring-2 ring-blue-200" : ""
-          }`}
+          className={`pointer-events-none absolute z-20 max-w-xs rounded-md border border-gray-200 bg-white/95 p-3 text-left shadow-lg transition ${tooltip.isQuery ? "ring-2 ring-blue-200" : ""
+            }`}
           style={{ left: tooltip.x, top: tooltip.y }}
         >
           <p className="text-sm font-semibold text-gray-900">{tooltip.label}</p>

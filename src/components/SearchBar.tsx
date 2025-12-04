@@ -1,21 +1,32 @@
-import { useState, FormEvent, KeyboardEvent } from "react";
+import { useState, FormEvent, KeyboardEvent, useEffect } from "react";
 import { useRouter } from "next/router";
 
 interface SearchBarProps {
   placeholder?: string;
+  className?: string;
+  initialValue?: string;
 }
 
 export default function SearchBar({
-  placeholder = "Search by protein ID, e.g., A0A1B0GTQ4 or A0A1B0GTQ4,A0AV02",
+  placeholder = "Search for Gene Symbol or Uniprot id",
+  className = "fixed bottom-8 left-1/2 transform -translate-x-1/2 z-10",
+  initialValue = "",
 }: SearchBarProps) {
   const router = useRouter();
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialValue);
   const [error, setError] = useState("");
 
-  const validateProteinIds = (ids: string[]): boolean => {
-    // UniProt ID pattern: starts with letter, followed by at least 5 alphanumeric chars
-    const proteinIdPattern = /^[A-Z][A-Z0-9]{5,}$/;
-    return ids.every((id) => proteinIdPattern.test(id));
+  useEffect(() => {
+    if (initialValue) {
+      setInput(initialValue);
+    }
+  }, [initialValue]);
+
+  const validateInput = (ids: string[]): boolean => {
+    // Allow alphanumeric characters (Gene symbols or UniProt IDs)
+    // Basic check: length > 0 and alphanumeric
+    const pattern = /^[A-Z0-9]+$/i;
+    return ids.every((id) => pattern.test(id));
   };
 
   const handleSubmit = (e?: FormEvent) => {
@@ -29,25 +40,27 @@ export default function SearchBar({
     // Clear previous error
     setError("");
 
-    // Parse and validate protein IDs
-    const proteinIds = input
+    // Parse and validate IDs
+    const ids = input
       .split(",")
-      .map((id) => id.trim().toUpperCase())
+      .map((id) => id.trim())
       .filter((id) => id.length > 0);
 
-    if (proteinIds.length === 0) {
+    if (ids.length === 0) {
       return;
     }
 
-    if (!validateProteinIds(proteinIds)) {
+    if (!validateInput(ids)) {
       setError(
-        "Invalid protein ID format. Please use valid UniProt IDs (e.g., A0A1B0GTQ4)"
+        "Invalid format. Please use valid Gene Symbols or UniProt IDs (alphanumeric)."
       );
       return;
     }
 
     // Navigate to subgraph page with query params
-    const queryString = proteinIds.join(",");
+    // Convert to uppercase for consistency if needed, or keep as is?
+    // UniProt IDs are uppercase, Gene symbols often uppercase. Let's uppercase.
+    const queryString = ids.map(id => id.toUpperCase()).join(",");
     router.push(`/subgraph?proteins=${queryString}`);
   };
 
@@ -66,7 +79,7 @@ export default function SearchBar({
   };
 
   return (
-    <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+    <div className={className}>
       <div className="flex flex-col items-center">
         <form onSubmit={handleSubmit} className="w-full">
           <div className="bg-white rounded-full shadow-lg border border-gray-300 flex items-center px-4 py-3 w-[600px] max-w-[90vw]">
@@ -77,7 +90,7 @@ export default function SearchBar({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               className="flex-1 outline-none text-gray-700 text-sm"
-              aria-label="Search proteins by ID"
+              aria-label="Search proteins"
             />
             <button
               type="submit"

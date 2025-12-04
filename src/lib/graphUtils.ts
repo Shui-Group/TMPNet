@@ -114,7 +114,11 @@ export function toCytoscapeElements(data: GraphLikeData): CytoscapeElements {
     if (hasPreset || !positions) {
       return node;
     }
-    const position = positions[node.data.id];
+    const nodeId = node.data.id;
+    if (typeof nodeId !== "string") {
+      return node;
+    }
+    const position = positions[nodeId];
     if (position) {
       return {
         ...node,
