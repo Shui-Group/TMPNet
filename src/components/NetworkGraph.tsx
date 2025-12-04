@@ -64,6 +64,7 @@ interface NetworkGraphProps {
   onError?: (err: unknown) => void;
   layout?: LayoutOptions;
   layoutMetadata?: LayoutPayload | null;
+  customStyles?: cytoscapeType.Stylesheet[];
 }
 
 export default function NetworkGraph({
@@ -73,6 +74,7 @@ export default function NetworkGraph({
   onError,
   layout = fcoseLayout,
   layoutMetadata = null,
+  customStyles,
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<cytoscapeType.Core | null>(null);
@@ -113,7 +115,7 @@ export default function NetworkGraph({
         const instance = cytoscapeFactory({
           container: containerRef.current,
           elements: [],
-          style: cyStyles,
+          style: customStyles || cyStyles,
           layout: { name: "preset" },
           textureOnViewport: true,
           wheelSensitivity: 0.2,
@@ -391,7 +393,7 @@ export default function NetworkGraph({
               <div className="mt-4 w-64 text-left">
                 <div className="mb-2 h-2 w-full overflow-hidden rounded bg-gray-200">
                   <div
-                    className="h-2 bg-blue-600"
+                    className="h-2 bg-blue-600 transition-all duration-300 ease-out"
                     style={{
                       width: `${Math.min(
                         100,

@@ -66,16 +66,26 @@ export default async function handler(
     const preferExperimental =
       (req.query.preferExperimental as string) !== "false";
     const maxEdges = Math.min(
-      parseInt((req.query.maxEdges as string) || "5000", 10),
-      20000 // Hard cap
+      parseInt((req.query.maxEdges as string) || "100000", 10),
+      500000 // Hard cap
     );
     const maxNodes = Math.min(
-      parseInt((req.query.maxNodes as string) || "1000", 10),
-      5000 // Hard cap
+      parseInt((req.query.maxNodes as string) || "10000", 10),
+      50000 // Hard cap
     );
 
     const edgeSelect =
       "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,tissue_enriched_confidence,positive_type";
+
+    // Helper to chunk arrays for batching queries
+    const chunkArray = <T>(arr: T[], size: number): T[][] => {
+      const chunks: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    };
+    const BATCH_SIZE = 200;
 
     // Step 1: Query edges where protein1 OR protein2 matches any query protein
     let edges: Edge[] = [];
@@ -216,6 +226,8 @@ export default async function handler(
     }
 
     // Step 3b: Fetch additional edges where both endpoints are within the limited node set
+    // Skipped to show "star-like" topology where only edges connected to query nodes are shown.
+    /*
     const limitedProteinIdsSet = new Set(limitedProteinIds);
     const existingEdgeIds = new Set(edges.map((edge) => edge.edge));
     let remainingEdgeCapacity = Math.max(0, maxEdges - edges.length);
@@ -241,63 +253,91 @@ export default async function handler(
 
     if (remainingEdgeCapacity > 0) {
       if (preferExperimental) {
-        const { data: intraExperimental, error: intraExperimentalErr } =
-          await supabase
+        const chunks = chunkArray(limitedProteinIds, BATCH_SIZE);
+        const experimentalPromises = chunks.map((chunk) =>
+          supabase
             .from("edges")
             .select(edgeSelect)
             .eq("positive_type", "experimental")
-            .in("protein1", limitedProteinIds)
-            .in("protein2", limitedProteinIds)
-            .limit(remainingEdgeCapacity);
+            .in("protein1", chunk)
+            // We omit .in("protein2", limitedProteinIds) to avoid URL overflow
+            // We will filter the results in memory.
+            .limit(remainingEdgeCapacity) 
+        );
 
-        if (intraExperimentalErr) {
-          console.warn(
-            "Experimental intra-subgraph edges query error:",
-            intraExperimentalErr
-          );
+        const experimentalResults = await Promise.all(experimentalPromises);
+        
+        // Flatten and process results
+        let allExperimentalEdges: Edge[] = [];
+        for (const { data, error } of experimentalResults) {
+            if (error) {
+                console.warn("Experimental intra-subgraph batch error:", error);
+                continue;
+            }
+            if (data) {
+                allExperimentalEdges = allExperimentalEdges.concat(data as Edge[]);
+            }
         }
-
-        addEdges(intraExperimental as Edge[] | null | undefined);
+        // Now filter for P2 in limitedProteinIds
+        const validExperimental = allExperimentalEdges.filter(e => limitedProteinIdsSet.has(e.protein2));
+        addEdges(validExperimental);
       }
 
       if (remainingEdgeCapacity > 0) {
-        const { data: intraPredicted, error: intraPredictedErr } =
-          await supabase
+         // Same strategy for predicted edges
+         const chunks = chunkArray(limitedProteinIds, BATCH_SIZE);
+         const predictedPromises = chunks.map((chunk) =>
+          supabase
             .from("edges")
             .select(edgeSelect)
             .gte("fusion_pred_prob", minProb)
-            .in("protein1", limitedProteinIds)
-            .in("protein2", limitedProteinIds)
+            .in("protein1", chunk)
             .order("fusion_pred_prob", { ascending: false })
-            .limit(remainingEdgeCapacity);
+            .limit(remainingEdgeCapacity)
+        );
 
-        if (intraPredictedErr) {
-          console.warn(
-            "Predicted intra-subgraph edges query error:",
-            intraPredictedErr
-          );
+        const predictedResults = await Promise.all(predictedPromises);
+        
+        let allPredictedEdges: Edge[] = [];
+        for (const { data, error } of predictedResults) {
+            if (error) {
+                console.warn("Predicted intra-subgraph batch error:", error);
+                continue;
+            }
+            if (data) {
+                allPredictedEdges = allPredictedEdges.concat(data as Edge[]);
+            }
         }
-
-        addEdges(intraPredicted as Edge[] | null | undefined);
+        const validPredicted = allPredictedEdges.filter(e => limitedProteinIdsSet.has(e.protein2));
+        addEdges(validPredicted);
       }
     }
+    */
 
     if (edges.length >= maxEdges) {
       edgesTruncated = true;
       edges = edges.slice(0, maxEdges);
     }
 
-    // Step 4: Query node details for all proteins
-    const { data: nodesData, error: nodesErr } = await supabase
-      .from("nodes")
-      .select("*")
-      .in("protein", limitedProteinIds);
+    // Step 4: Query node details for all proteins (Batched)
+    const nodeChunks = chunkArray(limitedProteinIds, BATCH_SIZE);
+    const nodePromises = nodeChunks.map((chunk) =>
+      supabase.from("nodes").select("*").in("protein", chunk)
+    );
 
-    if (nodesErr) {
-      console.error("Database error fetching nodes:", nodesErr);
-      return res
-        .status(500)
-        .json({ error: "Failed to fetch nodes from database" });
+    const nodeResults = await Promise.all(nodePromises);
+    let nodesData: Node[] = [];
+
+    for (const { data, error } of nodeResults) {
+      if (error) {
+        console.error("Database error fetching nodes batch:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to fetch nodes from database" });
+      }
+      if (data) {
+        nodesData = nodesData.concat(data as Node[]);
+      }
     }
 
     // Step 5: Transform and mark nodes
@@ -306,6 +346,13 @@ export default async function handler(
       ...transformNodeToResponse(node),
       isQuery: queryProteinsSet.has(node.protein),
     }));
+
+    // Sort nodes so that query proteins are at the top of the array
+    nodeResponses.sort((a, b) => {
+      if (a.isQuery && !b.isQuery) return -1;
+      if (!a.isQuery && b.isQuery) return 1;
+      return 0;
+    });
 
     // Transform edges
     const edgesResp = edges.map(transformEdgeToResponse);

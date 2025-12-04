@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { NetworkMeta, NetworkStats } from "@/lib/types";
-import StatCard from "./StatCard";
 
 type PositiveTypeOption = "experiment" | "prediction";
 
@@ -20,10 +19,10 @@ const POSITIVE_TYPE_OPTIONS: { value: PositiveTypeOption; label: string }[] = [
   { value: "prediction", label: "Predicted" },
 ];
 
-const MAX_EDGES_MIN = 1000;
+const MAX_EDGES_MIN = 0;
 const MAX_EDGES_STEP = 1000;
 const MAX_EDGES_DEFAULT = 50000;
-const MAX_EDGES_MAX = 100000;
+const MAX_EDGES_FALLBACK_MAX = 2000000;
 
 export default function Sidebar({
   stats,
@@ -50,8 +49,10 @@ export default function Sidebar({
     });
   };
 
+  const maxEdgesLimit = meta?.totalEdges ?? MAX_EDGES_FALLBACK_MAX;
+
   const handleMaxEdgesChange = (value: number) => {
-    const clamped = Math.min(Math.max(value, MAX_EDGES_MIN), MAX_EDGES_MAX);
+    const clamped = Math.min(Math.max(value, MAX_EDGES_MIN), maxEdgesLimit);
     onChange({
       ...filters,
       maxEdges: clamped,
@@ -111,7 +112,7 @@ export default function Sidebar({
             <input
               type="range"
               min={MAX_EDGES_MIN}
-              max={MAX_EDGES_MAX}
+              max={maxEdgesLimit}
               step={MAX_EDGES_STEP}
               value={filters.maxEdges}
               onChange={(event) =>
@@ -124,7 +125,7 @@ export default function Sidebar({
               <input
                 type="number"
                 min={MAX_EDGES_MIN}
-                max={MAX_EDGES_MAX}
+                max={maxEdgesLimit}
                 step={MAX_EDGES_STEP}
                 value={filters.maxEdges}
                 onChange={(event) =>
@@ -191,14 +192,6 @@ export default function Sidebar({
             )}
           </div>
         )}
-
-        <StatCard label="Total Nodes" value={stats.totalNodes} />
-        <StatCard label="Total Edges" value={stats.totalEdges} />
-        <StatCard
-          label="Enriched Edges"
-          value={stats.enrichedEdgeCount}
-          color="text-red-600"
-        />
       </div>
 
       <div className="pt-4 border-t border-gray-200">

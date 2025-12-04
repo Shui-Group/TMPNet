@@ -12,7 +12,7 @@ import {
   layoutPayloadToPositionMap,
   toCytoscapeElements,
 } from "@/lib/graphUtils";
-import { coseLayout } from "@/lib/cytoscape-config";
+import { coseLayout, subgraphStyles } from "@/lib/cytoscape-config";
 
 export default function SubgraphPage() {
   const router = useRouter();
@@ -310,6 +310,7 @@ export default function SubgraphPage() {
                   onError={handleGraphError}
                   layout={coseLayout}
                   layoutMetadata={graphLayout}
+                  customStyles={subgraphStyles}
                 />
                 <div className="pointer-events-auto absolute top-4 right-4 z-20">
                   <Legend />

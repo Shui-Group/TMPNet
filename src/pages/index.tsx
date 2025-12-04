@@ -27,7 +27,7 @@ export default function Home() {
   const [graphMeta, setGraphMeta] = useState<NetworkMeta | null>(null);
   const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
   const [filters, setFilters] = useState({
-    positiveTypes: ["experiment"],
+    positiveTypes: ["experiment", "prediction"],
     maxEdges: 50_000,
     onlyVisibleEdges: false,
   });
