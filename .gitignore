@@ -49,4 +49,4 @@ venv/
 # Data (tracked via Git LFS; see .gitattributes)
 datasets/
 data/supabase-import/
-data/edge_info_with_exp.csv.bak
+data/
