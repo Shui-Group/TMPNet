@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+- No duplicate code—reuse existing functions.
+- Extend existing files unless a new file is necessary.
+- Justify each dependency.
+- Prefer the smallest working solution, keep every module under 500 lines. If larger than 500 lines, refactor it into smaller components.
+- Consistent naming: camelCase for functions/vars, PascalCase for classes/components.
+- Prioritize clarity and readability over micro-optimizations.
+- Write correct, secure, up-to-date, bug-free code.
+- Treat users as experts; keep explanations brief and precise.
