@@ -94,46 +94,51 @@ export default function Home() {
                                 </p>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Search Box */}
-                        <div className="mb-4">
-                            <SearchBar
-                                className=""
-                                initialValue={searchValue}
-                                placeholder="Search for Gene Symbol or Uniprot id"
-                            />
-                        </div>
+                    {/* Search Box - Bottom Right */}
+                    <div className="absolute bottom-8 right-8 z-10">
+                        <div className="flex flex-col items-center">
+                            {/* Search Box */}
+                            <div className="mb-4">
+                                <SearchBar
+                                    className=""
+                                    initialValue={searchValue}
+                                    placeholder="Search for Gene Symbol or Uniprot id"
+                                />
+                            </div>
 
-                        {/* Examples and Guide */}
-                        <div className="text-center mt-6">
-                            <p className="text-sm text-gray-700">
-                                Example:{" "}
-                                <button
-                                    onClick={() => handleExampleClick("GLP1R")}
-                                    className="text-red-500 hover:underline font-medium"
-                                >
-                                    GLP1R
-                                </button>
-                                {" ,"}
-                                <button
-                                    onClick={() => handleExampleClick("ADGRE5")}
-                                    className="text-red-500 hover:underline font-medium"
-                                >
-                                    ADGRE5
-                                </button>
-                                {","}
-                                <button
-                                    onClick={() => handleExampleClick("EGFR")}
-                                    className="text-red-500 hover:underline font-medium"
-                                >
-                                    EGFR
-                                </button>
-                            </p>
-                            <p className="text-sm text-gray-600 mt-2">
-                                To query <span className="font-semibold">multiple proteins</span>,
-                                separate gene symbols with (&quot;,&quot;).{" "}
-                                <span className="text-blue-500 cursor-not-allowed">See help</span>
-                            </p>
+                            {/* Examples and Guide - centered with search box */}
+                            <div className="text-center">
+                                <p className="text-sm text-gray-700">
+                                    Example:{" "}
+                                    <button
+                                        onClick={() => handleExampleClick("GLP1R")}
+                                        className="text-red-500 hover:underline font-medium"
+                                    >
+                                        GLP1R
+                                    </button>
+                                    {" ,"}
+                                    <button
+                                        onClick={() => handleExampleClick("ADGRE5")}
+                                        className="text-red-500 hover:underline font-medium"
+                                    >
+                                        ADGRE5
+                                    </button>
+                                    {","}
+                                    <button
+                                        onClick={() => handleExampleClick("EGFR")}
+                                        className="text-red-500 hover:underline font-medium"
+                                    >
+                                        EGFR
+                                    </button>
+                                </p>
+                                <p className="text-sm text-gray-600 mt-2">
+                                    To query <span className="font-semibold">multiple proteins</span>,
+                                    separate gene symbols with (&quot;,&quot;).{" "}
+                                    <span className="text-blue-500 cursor-not-allowed">See help</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </main>

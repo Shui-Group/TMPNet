@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Legend from "@/components/Legend";
 import NetworkGraph from "@/components/NetworkGraph";
-import SearchBar from "@/components/SearchBar";
+
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type {
   LayoutPayload,
@@ -188,7 +188,6 @@ export default function Home() {
           </div>
         </main>
       </div>
-      <SearchBar />
     </div>
   );
 }
