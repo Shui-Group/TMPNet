@@ -349,7 +349,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein 1",
-        gene_names: "GENE1 ALIAS1",
+        gene_symbol: "GENE1 ALIAS1",
         family: "TM",
         expression_tissue: "Brain\\Kidney\\Liver",
       },
@@ -357,7 +357,7 @@ describe("/api/network", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Test protein 2",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Brain",
       },
@@ -371,7 +371,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experiment",
+        positive_type: "experiment", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -413,7 +413,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain\\Kidney",
       },
@@ -427,7 +427,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.85,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experiment",
+        positive_type: "experiment", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -449,7 +449,7 @@ describe("/api/network", () => {
     expect(data.nodes[0]).toMatchObject({
       id: "P12345",
       label: "PROT1_HUMAN",
-      geneNames: "GENE1",
+      geneSymbol: "GENE1",
     });
 
     // Check edge transformation
@@ -470,7 +470,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain\\Kidney\\Liver",
       },
@@ -503,7 +503,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "NA",
       },
@@ -532,7 +532,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -560,7 +560,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -593,7 +593,7 @@ describe("/api/network", () => {
         protein: "P12345",
         entry_name: null,
         description: null,
-        gene_names: null,
+        gene_symbol: null,
         family: null,
         expression_tissue: null,
       },
@@ -618,7 +618,7 @@ describe("/api/network", () => {
       id: "P12345",
       label: "P12345", // Falls back to protein ID when entry_name is null
       description: "",
-      geneNames: "",
+      geneSymbol: "",
       family: "",
       expressionTissue: [],
     });
@@ -639,7 +639,7 @@ describe("/api/network", () => {
         protein: "P00001",
         entry_name: "NODE1",
         description: null,
-        gene_names: null,
+        gene_symbol: null,
         family: null,
         expression_tissue: null,
       },
@@ -653,7 +653,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.9,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "experiment",
+        positive_type: "experiment", gene_symbol1: null, gene_symbol2: null,
       },
       {
         edge: "E2",
@@ -662,7 +662,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.8,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "experiment",
+        positive_type: "experiment", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -697,7 +697,7 @@ describe("/api/network", () => {
         protein: "P00001",
         entry_name: "NODE1",
         description: null,
-        gene_names: null,
+        gene_symbol: null,
         family: null,
         expression_tissue: null,
       },
@@ -711,7 +711,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.1,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "experiment",
+        positive_type: "experiment", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -723,7 +723,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "prediction",
+        positive_type: "prediction", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -757,7 +757,7 @@ describe("/api/network", () => {
         protein: "P00001",
         entry_name: "NODE1",
         description: null,
-        gene_names: null,
+        gene_symbol: null,
         family: null,
         expression_tissue: null,
       },
@@ -771,7 +771,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "prediction",
+        positive_type: "prediction", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -803,7 +803,7 @@ describe("/api/network", () => {
         protein: "P00001",
         entry_name: "NODE1",
         description: null,
-        gene_names: null,
+        gene_symbol: null,
         family: null,
         expression_tissue: null,
       },
@@ -817,7 +817,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "prediction",
+        positive_type: "prediction", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -848,7 +848,7 @@ describe("/api/network", () => {
         protein: "P00001",
         entry_name: "NODE1",
         description: null,
-        gene_names: null,
+        gene_symbol: null,
         family: null,
         expression_tissue: null,
       },
@@ -862,7 +862,7 @@ describe("/api/network", () => {
         fusion_pred_prob: 1,
         enriched_tissue: null,
         tissue_enriched_confidence: null,
-        positive_type: "prediction",
+        positive_type: "prediction", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 

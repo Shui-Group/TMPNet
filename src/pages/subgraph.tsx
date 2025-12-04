@@ -44,7 +44,7 @@ export default function SubgraphPage() {
       { key: "id", label: "Protein" },
       { key: "label", label: "Entry Name" },
       { key: "description", label: "Description" },
-      { key: "geneNames", label: "Gene Names" },
+      { key: "geneSymbol", label: "Gene Symbol" },
       { key: "family", label: "Family" },
       { key: "expressionTissue", label: "Expression Tissue" },
     ],
@@ -78,7 +78,7 @@ export default function SubgraphPage() {
       id: node.id,
       label: node.label,
       description: node.description,
-      geneNames: node.geneNames,
+      geneSymbol: node.geneSymbol,
       family: node.family,
       expressionTissue: node.expressionTissue.join(", "),
     }));

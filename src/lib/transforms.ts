@@ -19,7 +19,7 @@ export function transformNodeToResponse(dbNode: Node): NodeResponse {
     id: dbNode.protein,
     label: dbNode.entry_name || dbNode.protein,
     description: dbNode.description || "",
-    geneNames: dbNode.gene_names || "",
+    geneSymbol: dbNode.gene_symbol || "",
     family: dbNode.family || "",
     expressionTissue,
   };

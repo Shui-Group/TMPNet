@@ -33,7 +33,7 @@ type TooltipState = {
   y: number;
   label: string;
   family?: string;
-  geneNames?: string;
+  geneSymbol?: string;
   expression?: string[];
   isQuery?: boolean;
 };
@@ -326,7 +326,7 @@ export default function NetworkGraph({
       if (!node?.isNode?.()) return;
       const rendered = node.renderedPosition();
       const data = node.data() as NodeDefinition["data"] & {
-        geneNames?: string;
+        geneSymbol?: string;
         expressionTissue?: string[];
       };
       const container = containerRef.current;
@@ -350,7 +350,7 @@ export default function NetworkGraph({
         y: clampedY,
         label: (data.label as string) || (data.id as string) || "Protein",
         family: (data.family as string) || undefined,
-        geneNames: (data.geneNames as string) || undefined,
+        geneSymbol: (data.geneSymbol as string) || undefined,
         expression: Array.isArray(data.expressionTissue)
           ? data.expressionTissue
           : undefined,
@@ -427,10 +427,10 @@ export default function NetworkGraph({
           style={{ left: tooltip.x, top: tooltip.y }}
         >
           <p className="text-sm font-semibold text-gray-900">{tooltip.label}</p>
-          {tooltip.geneNames && (
+          {tooltip.geneSymbol && (
             <p className="mt-1 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">Genes:</span>{" "}
-              {tooltip.geneNames}
+              <span className="font-medium text-gray-700">Gene:</span>{" "}
+              {tooltip.geneSymbol}
             </p>
           )}
           {tooltip.family && (

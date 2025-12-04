@@ -14,7 +14,7 @@ const sampleNode: Node = {
   protein: "P12345",
   entry_name: "PROT1_HUMAN",
   description: "Test protein",
-  gene_names: "GENE1",
+  gene_symbol: "GENE1",
   family: "TM",
   expression_tissue: "Brain",
 };

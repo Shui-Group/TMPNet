@@ -123,7 +123,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Query protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -131,7 +131,7 @@ describe("/api/subgraph", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Neighbor protein",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Kidney",
       },
@@ -145,7 +145,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experimental",
+        positive_type: "experimental", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -173,7 +173,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Query protein 1",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -181,7 +181,7 @@ describe("/api/subgraph", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Query protein 2",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Kidney",
       },
@@ -189,7 +189,7 @@ describe("/api/subgraph", () => {
         protein: "R11111",
         entry_name: "PROT3_HUMAN",
         description: "Neighbor protein",
-        gene_names: "GENE3",
+        gene_symbol: "GENE3",
         family: "TM",
         expression_tissue: "Liver",
       },
@@ -203,7 +203,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experimental",
+        positive_type: "experimental", gene_symbol1: null, gene_symbol2: null,
       },
       {
         edge: "Q67890_R11111",
@@ -212,7 +212,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.88,
         enriched_tissue: "Kidney",
         tissue_enriched_confidence: "low confidence",
-        positive_type: "prediction",
+        positive_type: "prediction", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -237,7 +237,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Query protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -245,7 +245,7 @@ describe("/api/subgraph", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Neighbor protein",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Kidney",
       },
@@ -259,7 +259,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experimental",
+        positive_type: "experimental", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -285,7 +285,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Query protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -293,7 +293,7 @@ describe("/api/subgraph", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Neighbor protein",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Kidney",
       },
@@ -307,7 +307,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experimental",
+        positive_type: "experimental", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -330,7 +330,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Isolated protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -402,7 +402,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experimental",
+        positive_type: "experimental", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -430,7 +430,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Test protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain\\Kidney",
       },
@@ -438,7 +438,7 @@ describe("/api/subgraph", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Neighbor protein",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Liver",
       },
@@ -452,7 +452,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.87,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "prediction",
+        positive_type: "prediction", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 
@@ -470,7 +470,7 @@ describe("/api/subgraph", () => {
     expect(data.nodes[0]).toMatchObject({
       id: "P12345",
       label: "PROT1_HUMAN",
-      geneNames: "GENE1",
+      geneSymbol: "GENE1",
       expressionTissue: ["Brain", "Kidney"],
     });
 
@@ -492,7 +492,7 @@ describe("/api/subgraph", () => {
         protein: "P12345",
         entry_name: "PROT1_HUMAN",
         description: "Existing protein",
-        gene_names: "GENE1",
+        gene_symbol: "GENE1",
         family: "TM",
         expression_tissue: "Brain",
       },
@@ -500,7 +500,7 @@ describe("/api/subgraph", () => {
         protein: "Q67890",
         entry_name: "PROT2_HUMAN",
         description: "Neighbor protein",
-        gene_names: "GENE2",
+        gene_symbol: "GENE2",
         family: "TF",
         expression_tissue: "Kidney",
       },
@@ -514,7 +514,7 @@ describe("/api/subgraph", () => {
         fusion_pred_prob: 0.95,
         enriched_tissue: "Brain",
         tissue_enriched_confidence: "high confidence",
-        positive_type: "experimental",
+        positive_type: "experimental", gene_symbol1: null, gene_symbol2: null,
       },
     ];
 

@@ -7,9 +7,9 @@ export interface Node {
   protein: string; // UniProt accession (primary key)
   entry_name: string | null; // UniProt entry name
   description: string | null; // Functional description
-  gene_names: string | null; // Space-delimited gene symbols
   family: string | null; // Protein family (TM, TF, etc.)
   expression_tissue: string | null; // Backslash-delimited tissue list
+  gene_symbol: string | null; // Gene symbol for the protein
 }
 
 /**
@@ -22,7 +22,9 @@ export interface Edge {
   fusion_pred_prob: number | null; // Fusion prediction probability (0-1)
   enriched_tissue: string | null; // Tissue where interaction is enriched
   tissue_enriched_confidence: string | null; // Confidence level (high confidence, low confidence)
-  positive_type: string | null; // Source type (prediction, experimental)
+  positive_type: string | null; // Source type (prediction, experiment)
+  gene_symbol1: string | null; // Gene symbol for protein1
+  gene_symbol2: string | null; // Gene symbol for protein2
 }
 
 /**
@@ -32,7 +34,7 @@ export interface NodeResponse {
   id: string; // UniProt accession (matches protein)
   label: string; // Display label (entry_name or protein)
   description: string; // Functional description
-  geneNames: string; // Gene symbols
+  geneSymbol: string; // Gene symbol
   family: string; // Protein family
   expressionTissue: string[]; // Parsed tissue array
   isQuery?: boolean; // Flag for queried nodes in subgraph
