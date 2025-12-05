@@ -27,11 +27,14 @@ export default function Home() {
         setSearchValue(example);
     };
 
-    // Default stats if API is not available
-    const displayStats = {
-        proteins: stats?.totalNodes ?? 2686,
-        interactions: stats?.totalEdges ?? 980393,
-        tissues: 22,
+    // Loading placeholder component
+    const StatValue = ({ value }: { value: number | null }) => {
+        if (value === null) {
+            return (
+                <span className="inline-block animate-pulse">---</span>
+            );
+        }
+        return <>{value.toLocaleString()}</>;
     };
 
     return (
@@ -74,7 +77,7 @@ export default function Home() {
                                     PROTEINS
                                 </p>
                                 <p className="text-4xl font-bold text-white mt-1">
-                                    {displayStats.proteins.toLocaleString()}
+                                    <StatValue value={stats?.totalNodes ?? null} />
                                 </p>
                             </div>
                             <div className="text-center px-8 border-r border-gray-500">
@@ -82,7 +85,7 @@ export default function Home() {
                                     INTERACTIONS
                                 </p>
                                 <p className="text-4xl font-bold text-white mt-1">
-                                    {displayStats.interactions.toLocaleString()}
+                                    <StatValue value={stats?.totalEdges ?? null} />
                                 </p>
                             </div>
                             <div className="text-center px-8">
@@ -90,7 +93,7 @@ export default function Home() {
                                     TISSUES
                                 </p>
                                 <p className="text-4xl font-bold text-white mt-1">
-                                    {displayStats.tissues}
+                                    <StatValue value={stats ? 22 : null} />
                                 </p>
                             </div>
                         </div>
