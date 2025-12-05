@@ -32,6 +32,9 @@ type TooltipState = {
   x: number;
   y: number;
   label: string;
+  proteinId?: string;
+  entryName?: string;
+  description?: string;
   family?: string;
   geneSymbol?: string;
   expression?: string[];
@@ -327,6 +330,8 @@ export default function NetworkGraph({
       const rendered = node.renderedPosition();
       const data = node.data() as NodeDefinition["data"] & {
         geneSymbol?: string;
+        entryName?: string;
+        description?: string;
         expressionTissue?: string[];
       };
       const container = containerRef.current;
@@ -349,6 +354,9 @@ export default function NetworkGraph({
         x: clampedX,
         y: clampedY,
         label: (data.label as string) || (data.id as string) || "Protein",
+        proteinId: (data.id as string) || undefined,
+        entryName: (data.entryName as string) || undefined,
+        description: (data.description as string) || undefined,
         family: (data.family as string) || undefined,
         geneSymbol: (data.geneSymbol as string) || undefined,
         expression: Array.isArray(data.expressionTissue)
@@ -426,24 +434,19 @@ export default function NetworkGraph({
             }`}
           style={{ left: tooltip.x, top: tooltip.y }}
         >
-          <p className="text-sm font-semibold text-gray-900">{tooltip.label}</p>
           {tooltip.geneSymbol && (
-            <p className="mt-1 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">Gene:</span>{" "}
-              {tooltip.geneSymbol}
+            <p className="text-sm font-semibold text-gray-900">
+              {tooltip.geneSymbol} ({tooltip.proteinId})
             </p>
           )}
-          {tooltip.family && (
+          {tooltip.entryName && (
             <p className="mt-1 text-xs text-gray-600">
-              <span className="font-medium text-gray-700">Family:</span>{" "}
-              {tooltip.family}
+              {tooltip.entryName}
             </p>
           )}
-          {tooltip.expression && tooltip.expression.length > 0 && (
-            <p className="mt-1 text-xs text-gray-500">
-              <span className="font-medium text-gray-700">Expression:</span>{" "}
-              {tooltip.expression.slice(0, 3).join(", ")}
-              {tooltip.expression.length > 3 ? "…" : ""}
+          {tooltip.description && (
+            <p className="mt-1 text-xs text-gray-600">
+              {tooltip.description}
             </p>
           )}
         </div>

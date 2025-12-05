@@ -18,6 +18,7 @@ export function transformNodeToResponse(dbNode: Node): NodeResponse {
   return {
     id: dbNode.protein,
     label: dbNode.entry_name || dbNode.protein,
+    entryName: dbNode.entry_name || "",
     description: dbNode.description || "",
     geneSymbol: dbNode.gene_symbol || "",
     family: dbNode.family || "",

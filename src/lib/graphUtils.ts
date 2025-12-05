@@ -16,7 +16,7 @@ export type CytoscapeElements = ElementDefinition[];
 export const familyColorMap: Record<string, string> = {
   GPCR: "#E8A87C", // salmon/orange for GPCRs
   "Ion-channels": "#8B7BC7", // purple for Ion-channels
-  Transporter: "#7EC4A0", // teal/green for Transporters
+  Transporter: "#4C6FB9", // blue for Transporters
   "Catalytic receptors": "#B5D4A3", // light green for Catalytic receptors
   "Other TMPs": "#D1D5DB", // light gray for Other TMPs
   Other: "#D1D5DB", // fallback
@@ -62,6 +62,7 @@ export function nodesToCy(nodes: NodeResponse[]): CytoscapeNode[] {
         family: node.family || "Other",
         color: isQuery ? "#1E3A8A" : getFamilyColor(node.family),
         isQuery,
+        entryName: node.entryName,
         description: node.description,
         geneSymbol: node.geneSymbol,
         expressionTissue: node.expressionTissue,

@@ -33,6 +33,7 @@ export interface Edge {
 export interface NodeResponse {
   id: string; // UniProt accession (matches protein)
   label: string; // Display label (entry_name or protein)
+  entryName: string; // UniProt entry name
   description: string; // Functional description
   geneSymbol: string; // Gene symbol
   family: string; // Protein family
