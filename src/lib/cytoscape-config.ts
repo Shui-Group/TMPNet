@@ -36,7 +36,7 @@ export const subgraphStyles: any[] = [
       "background-color": "#DC2626", // Red color for query node to stand out
       width: 24,
       height: 24,
-      label: "data(id)",
+      label: "data(geneSymbol)",
       "font-size": 14,
       "font-weight": "bold",
       color: "#0F172A",
@@ -47,7 +47,7 @@ export const subgraphStyles: any[] = [
       "text-outline-width": 2,
       "text-outline-color": "#FFFFFF",
       "text-wrap": "none",
-      "text-margin-y": -10,
+      "text-margin-y": -24,
       "text-halign": "center",
       "text-valign": "top",
       "min-zoomed-font-size": 0, // Always show label regardless of zoom
@@ -60,7 +60,7 @@ export const subgraphStyles: any[] = [
   {
     selector: "node[?isQuery]:selected",
     style: {
-      label: "data(id)",
+      label: "data(geneSymbol)",
       "font-size": 14,
       "border-width": 3,
       "border-color": "#7F1D1D",

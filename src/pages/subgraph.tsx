@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Header from "@/components/Header";
 import Legend from "@/components/Legend";
 import NetworkGraph from "@/components/NetworkGraph";
-import SearchBar from "@/components/SearchBar";
+
 import DataTable from "@/components/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { LayoutPayload, SubgraphData } from "@/lib/types";
@@ -352,12 +352,12 @@ export default function SubgraphPage() {
 
             <section className="grid gap-6 lg:grid-cols-2">
               <DataTable
-                caption="Node Information (Top 10)"
+                caption="Node Information"
                 columns={nodeColumns}
                 data={formattedNodes}
               />
               <DataTable
-                caption="Edge Information (Top 10)"
+                caption="Edge Information"
                 columns={edgeColumns}
                 data={formattedEdges}
               />
@@ -366,7 +366,7 @@ export default function SubgraphPage() {
         )}
       </main>
 
-      <SearchBar />
+
     </div>
   );
 }
