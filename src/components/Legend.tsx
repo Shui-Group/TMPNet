@@ -1,5 +1,5 @@
 import React from "react";
-import { familyColorMap, edgeColors } from "@/lib/graphUtils";
+import { familyColorMap, familyLabelMap, edgeColors } from "@/lib/graphUtils";
 
 interface LegendItem {
   color: string;
@@ -8,11 +8,11 @@ interface LegendItem {
 
 export default function Legend() {
   const nodeItems: LegendItem[] = [
-    { color: familyColorMap.GPCR, label: "GPCRs" },
-    { color: familyColorMap["Ion-channels"], label: "Ion-channels" },
-    { color: familyColorMap.Transporter, label: "Transporters" },
-    { color: familyColorMap["Catalytic receptors"], label: "Catalytic receptors" },
-    { color: familyColorMap["Other TMPs"], label: "Other TMPs" },
+    { color: familyColorMap.GPCR, label: familyLabelMap.GPCR }, // GPCRs
+    { color: familyColorMap["Ion-channels"], label: familyLabelMap["Ion-channels"] }, // Ion-channels
+    { color: familyColorMap.Transporter, label: familyLabelMap.Transporter }, // Transporters
+    { color: familyColorMap["Catalytic receptors"], label: familyLabelMap["Catalytic receptors"] }, // Catalytic receptors
+    { color: familyColorMap["Other TMPs"], label: familyLabelMap["Other TMPs"] }, // Other TMPs
   ];
   const edgeItems: LegendItem[] = [
     { color: edgeColors.experimental, label: "Experimental" },

@@ -94,10 +94,24 @@ export interface NetworkData {
 }
 
 /**
+ * Information about a queried protein for display
+ */
+export interface QueryProteinInfo {
+  searchedTerm: string; // Original search term (gene symbol or protein ID)
+  proteinId: string; // Resolved protein ID (UniProt accession)
+  geneSymbol: string; // Gene symbol
+  entryName: string; // Entry name (e.g., EGFR_HUMAN)
+  description: string; // Protein description
+  wasGeneSymbolSearch: boolean; // True if searched by gene symbol
+}
+
+/**
  * Subgraph data response
  */
 export interface SubgraphData {
-  query: string[]; // Queried protein IDs
+  query: string[]; // Queried protein IDs (for backwards compatibility)
+  searchedIdentifiers: string[]; // Original identifiers used for search
+  queryProteins: QueryProteinInfo[]; // Full info for each queried protein
   nodes: NodeResponse[];
   edges: EdgeResponse[];
   truncated?: {

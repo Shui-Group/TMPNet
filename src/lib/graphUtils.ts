@@ -22,9 +22,24 @@ export const familyColorMap: Record<string, string> = {
   Other: "#D1D5DB", // fallback
 };
 
+// Family labels for display (plural forms)
+export const familyLabelMap: Record<string, string> = {
+  GPCR: "GPCRs",
+  "Ion-channels": "Ion-channels",
+  Transporter: "Transporters",
+  "Catalytic receptors": "Catalytic receptors",
+  "Other TMPs": "Other TMPs",
+  Other: "Other",
+};
+
 export function getFamilyColor(family?: string | null): string {
   if (!family) return familyColorMap.Other;
   return familyColorMap[family] || familyColorMap.Other;
+}
+
+export function getFamilyLabel(family?: string | null): string {
+  if (!family) return familyLabelMap.Other;
+  return familyLabelMap[family] || family;
 }
 
 // Edge color shades (only experimental and predicted)

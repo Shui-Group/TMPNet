@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getFamilyLabel } from "@/lib/graphUtils";
 import type { NetworkMeta, NetworkStats } from "@/lib/types";
 
 type PositiveTypeOption = "experiment" | "prediction";
@@ -207,7 +208,7 @@ export default function Sidebar({
                     key={family}
                     className="flex justify-between text-sm text-gray-700"
                   >
-                    <span>{family}</span>
+                    <span>{getFamilyLabel(family)}</span>
                     <span className="font-semibold">
                       {count.toLocaleString()}
                     </span>

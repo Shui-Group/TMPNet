@@ -64,8 +64,24 @@ describe("/api/subgraph integration", () => {
       }
 
       if (table === "nodes") {
+        // Build identifier resolution data
+        const identifierData = nodesData.map((n: any) => ({
+          protein: n.protein,
+          gene_symbol: n.gene_names || n.gene_symbol,
+        }));
+
         return {
           select: jest.fn((columns: string) => {
+            // For identifier resolution queries using .or()
+            if (columns === "protein, gene_symbol") {
+              return {
+                or: jest.fn().mockResolvedValue({
+                  data: identifierData,
+                  error: null,
+                }),
+              };
+            }
+
             if (columns === "protein") {
               return {
                 in: jest.fn().mockResolvedValue({

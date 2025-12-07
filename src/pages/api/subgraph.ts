@@ -7,6 +7,7 @@ import type {
   SubgraphData,
   LayoutPayload,
   LayoutCacheRecord,
+  QueryProteinInfo,
 } from "@/lib/types";
 import {
   transformNodeToResponse,
@@ -21,11 +22,85 @@ import {
 } from "@/lib/layoutCache";
 
 /**
+ * Resolution result for a single identifier
+ */
+interface IdentifierResolution {
+  proteinId: string;
+  wasGeneSymbolSearch: boolean;
+}
+
+/**
+ * Resolves identifiers (UniProt IDs or gene symbols) to UniProt protein IDs.
+ * Returns a mapping from original identifier to resolved protein ID with metadata.
+ */
+async function resolveIdentifiersToProteins(
+  identifiers: string[]
+): Promise<{
+  resolved: Map<string, IdentifierResolution>;
+  notFound: string[];
+}> {
+  const resolved = new Map<string, IdentifierResolution>();
+  const notFound: string[] = [];
+
+  if (identifiers.length === 0) {
+    return { resolved, notFound };
+  }
+
+  // Query nodes table to find matches by protein (UniProt ID) or gene_symbol
+  const { data: nodes, error } = await supabase
+    .from("nodes")
+    .select("protein, gene_symbol")
+    .or(
+      identifiers
+        .map((id) => `protein.eq.${id},gene_symbol.eq.${id}`)
+        .join(",")
+    );
+
+  if (error) {
+    console.error("Error resolving identifiers:", error);
+    return { resolved, notFound: identifiers };
+  }
+
+  // Build lookup maps for fast resolution
+  const proteinSet = new Set<string>();
+  const geneSymbolToProtein = new Map<string, string>();
+
+  for (const node of nodes ?? []) {
+    if (node.protein) {
+      proteinSet.add(node.protein.toUpperCase());
+      if (node.gene_symbol) {
+        geneSymbolToProtein.set(node.gene_symbol.toUpperCase(), node.protein);
+      }
+    }
+  }
+
+  // Resolve each identifier
+  for (const id of identifiers) {
+    const upperCaseId = id.toUpperCase();
+    if (proteinSet.has(upperCaseId)) {
+      // Direct UniProt ID match
+      resolved.set(id, { proteinId: upperCaseId, wasGeneSymbolSearch: false });
+    } else if (geneSymbolToProtein.has(upperCaseId)) {
+      // Gene symbol match - map to protein ID
+      resolved.set(id, {
+        proteinId: geneSymbolToProtein.get(upperCaseId)!,
+        wasGeneSymbolSearch: true,
+      });
+    } else {
+      notFound.push(id);
+    }
+  }
+
+  return { resolved, notFound };
+}
+
+
+/**
  * GET /api/subgraph?proteins=P12345,Q67890
  * Returns subgraph containing query proteins and their 1-hop neighbors
  *
  * Query Parameters:
- * - proteins (required): Comma-separated list of UniProt accessions
+ * - proteins (required): Comma-separated list of UniProt accessions or gene symbols
  * - minProb (optional): Minimum fusion prediction probability (default: 0.8)
  * - preferExperimental (optional): Prefer experimental edges (default: true)
  * - maxEdges (optional): Maximum edges to return (default: 5000, max: 20000)
@@ -48,18 +123,38 @@ export default async function handler(
         .json({ error: "Missing required parameter: proteins" });
     }
 
-    // Parse query proteins (case-insensitive, convert to uppercase)
-    const queryProteins = proteinsParam
+    // Parse query identifiers (case-insensitive, convert to uppercase)
+    const queryIdentifiers = proteinsParam
       .split(",")
       .map((p) => p.trim().toUpperCase())
       .filter((p) => p.length > 0);
 
-    if (queryProteins.length === 0) {
+    if (queryIdentifiers.length === 0) {
       return res.status(400).json({
         error:
-          "Invalid proteins parameter: must contain at least one protein ID",
+          "Invalid proteins parameter: must contain at least one protein ID or gene symbol",
       });
     }
+
+    // Resolve identifiers to UniProt protein IDs
+    const { resolved, notFound } = await resolveIdentifiersToProteins(queryIdentifiers);
+
+    if (resolved.size === 0) {
+      return res.status(404).json({
+        error: `None of the queried identifiers were found in the dataset: ${notFound.join(", ")}`,
+      });
+    }
+
+    // Log any identifiers that weren't found
+    if (notFound.length > 0) {
+      console.warn(`Some identifiers not found: ${notFound.join(", ")}`);
+    }
+
+    // Get unique resolved protein IDs and store search metadata
+    const searchedIdentifiers = Array.from(resolved.keys());
+    const queryProteins = Array.from(
+      new Set(Array.from(resolved.values()).map((r) => r.proteinId))
+    );
 
     // Parse filtering parameters (same defaults as network endpoint)
     const minProb = parseFloat((req.query.minProb as string) || "0.8");
@@ -187,8 +282,24 @@ export default async function handler(
         isQuery: true,
       }));
 
+      // Build query protein info for the response
+      const queryProteinsInfo: QueryProteinInfo[] = searchedIdentifiers.map((id) => {
+        const resolution = resolved.get(id)!;
+        const nodeData = nodes.find((n) => n.id === resolution.proteinId);
+        return {
+          searchedTerm: id,
+          proteinId: resolution.proteinId,
+          geneSymbol: nodeData?.geneSymbol ?? "",
+          entryName: nodeData?.entryName ?? "",
+          description: nodeData?.description ?? "",
+          wasGeneSymbolSearch: resolution.wasGeneSymbolSearch,
+        };
+      });
+
       return res.status(200).json({
         query: queryProteins,
+        searchedIdentifiers,
+        queryProteins: queryProteinsInfo,
         nodes,
         edges: [],
       });
@@ -357,9 +468,25 @@ export default async function handler(
     // Transform edges
     const edgesResp = edges.map(transformEdgeToResponse);
 
+    // Build query protein info for the response
+    const queryProteinsInfo: QueryProteinInfo[] = searchedIdentifiers.map((id) => {
+      const resolution = resolved.get(id)!;
+      const nodeData = nodeResponses.find((n) => n.id === resolution.proteinId);
+      return {
+        searchedTerm: id,
+        proteinId: resolution.proteinId,
+        geneSymbol: nodeData?.geneSymbol ?? "",
+        entryName: nodeData?.entryName ?? "",
+        description: nodeData?.description ?? "",
+        wasGeneSymbolSearch: resolution.wasGeneSymbolSearch,
+      };
+    });
+
     // Build response with truncation metadata
     const response: SubgraphData = {
       query: queryProteins,
+      searchedIdentifiers,
+      queryProteins: queryProteinsInfo,
       nodes: nodeResponses,
       edges: edgesResp,
     };
@@ -422,9 +549,9 @@ export default async function handler(
       response.nodes = nodeResponses.map((node) =>
         layoutPositionMap[node.id]
           ? {
-              ...node,
-              position: layoutPositionMap[node.id],
-            }
+            ...node,
+            position: layoutPositionMap[node.id],
+          }
           : node
       );
     }

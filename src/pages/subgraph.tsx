@@ -245,7 +245,9 @@ export default function SubgraphPage() {
               {data && (
                 <div className="mb-4">
                   <h1 className="text-2xl font-semibold text-gray-900">
-                    Subgraph for: {data.query.join(", ")}
+                    Subgraph for: {data.queryProteins?.map((qp) =>
+                      qp.wasGeneSymbolSearch ? qp.searchedTerm : qp.proteinId
+                    ).join(", ") ?? data.query.join(", ")}
                   </h1>
                   <p className="mt-1 text-sm text-gray-600">
                     {data.nodes.length} node{data.nodes.length !== 1 ? "s" : ""}
@@ -256,19 +258,39 @@ export default function SubgraphPage() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Searched Proteins
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {data.query.map((protein) => (
-                        <span
-                          key={protein}
-                          className="inline-flex items-center rounded-full border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 shadow-sm"
+                    <div className="mt-2 flex flex-col gap-3">
+                      {(data.queryProteins ?? data.query.map((q) => ({
+                        searchedTerm: q,
+                        proteinId: q,
+                        geneSymbol: "",
+                        entryName: "",
+                        description: "",
+                        wasGeneSymbolSearch: false
+                      }))).map((qp) => (
+                        <div
+                          key={qp.proteinId}
+                          className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
                         >
-                          {protein}
-                        </span>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-lg font-semibold text-gray-900">
+                              {qp.wasGeneSymbolSearch ? qp.searchedTerm : qp.proteinId}
+                            </span>
+                            {qp.wasGeneSymbolSearch && (
+                              <span className="text-sm text-gray-500">({qp.proteinId})</span>
+                            )}
+                          </div>
+                          <div className="mt-1 text-sm text-gray-600">
+                            <p><span className="font-medium">Entry Name:</span> {qp.entryName || "—"}</p>
+                            <p><span className="font-medium">Gene Symbol:</span> {qp.geneSymbol || "—"}</p>
+                            <p><span className="font-medium">Description:</span> {qp.description || "—"}</p>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
+
 
               {/* Truncation warning */}
               {data?.truncated &&

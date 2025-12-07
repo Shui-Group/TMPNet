@@ -55,7 +55,7 @@ export default function Home() {
                     className="flex-1 relative flex flex-col items-center justify-center"
                     style={{
                         backgroundImage: "url(/background.png)",
-                        backgroundSize: "cover",
+                        backgroundSize: "130%",
                         backgroundPosition: "center",
                         backgroundColor: "#a8c4e8",
                     }}
@@ -107,33 +107,45 @@ export default function Home() {
                                 <SearchBar
                                     className=""
                                     initialValue={searchValue}
-                                    placeholder="Search for Gene Symbol or Uniprot id"
+                                    placeholder="Enter UniProt ID (e.g., P43220) or Gene Symbol (e.g., EGFR)"
                                 />
                             </div>
+
+                            {/* Search description */}
+                            <p className="text-sm text-gray-600 mb-3">
+                                Search by <span className="font-semibold">UniProt ID</span> (e.g., P43220, P00533) or <span className="font-semibold">Gene Symbol</span> (e.g., EGFR, INSR)
+                            </p>
 
                             {/* Examples and Guide - centered with search box */}
                             <div className="text-center">
                                 <p className="text-sm text-gray-700">
                                     Example:{" "}
                                     <button
-                                        onClick={() => handleExampleClick("GLP1R")}
-                                        className="text-red-500 hover:underline font-medium"
-                                    >
-                                        GLP1R
-                                    </button>
-                                    {" ,"}
-                                    <button
-                                        onClick={() => handleExampleClick("ADGRE5")}
-                                        className="text-red-500 hover:underline font-medium"
-                                    >
-                                        ADGRE5
-                                    </button>
-                                    {","}
-                                    <button
                                         onClick={() => handleExampleClick("EGFR")}
                                         className="text-red-500 hover:underline font-medium"
                                     >
                                         EGFR
+                                    </button>
+                                    {", "}
+                                    <button
+                                        onClick={() => handleExampleClick("INSR")}
+                                        className="text-red-500 hover:underline font-medium"
+                                    >
+                                        INSR
+                                    </button>
+                                    {", "}
+                                    <button
+                                        onClick={() => handleExampleClick("P43220")}
+                                        className="text-red-500 hover:underline font-medium"
+                                    >
+                                        P43220
+                                    </button>
+                                    {", "}
+                                    <button
+                                        onClick={() => handleExampleClick("P00533")}
+                                        className="text-red-500 hover:underline font-medium"
+                                    >
+                                        P00533
                                     </button>
                                 </p>
                                 <p className="text-sm text-gray-600 mt-2">

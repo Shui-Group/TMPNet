@@ -40,8 +40,20 @@ function setupSupabaseMock(
       };
     }
     if (table === "nodes") {
+      // Build mock data for identifier resolution (protein + gene_symbol)
+      const identifierResolutionData = nodesData?.map((n) => ({
+        protein: n.protein,
+        gene_symbol: n.gene_symbol,
+      })) ?? [];
+
       return {
         select: jest.fn().mockReturnValue({
+          // For identifier resolution queries using .or()
+          or: jest.fn().mockResolvedValue({
+            data: identifierResolutionData,
+            error: nodesError,
+          }),
+          // For regular node queries using .in()
           in: jest.fn().mockResolvedValue({
             data: nodesData,
             error: nodesError,
@@ -114,7 +126,7 @@ describe("/api/subgraph", () => {
 
     expect(res._getStatusCode()).toBe(404);
     const data = JSON.parse(res._getData());
-    expect(data.error).toContain("None of the queried proteins exist");
+    expect(data.error).toContain("None of the queried identifiers were found");
   });
 
   it("should return 200 with subgraph for single protein", async () => {
@@ -336,7 +348,7 @@ describe("/api/subgraph", () => {
       },
     ];
 
-    // First call returns empty edges, second call for nodes check returns the protein, third call fetches full node data
+    // Setup mock: identifier resolution returns the protein, edges are empty, then full node data is fetched
     const mockFrom = supabase.from as jest.Mock;
     let nodesCallCount = 0;
     mockFrom.mockImplementation((table: string) => {
@@ -355,6 +367,12 @@ describe("/api/subgraph", () => {
       if (table === "nodes") {
         return {
           select: jest.fn().mockReturnValue({
+            // For identifier resolution (first call uses .or())
+            or: jest.fn().mockResolvedValue({
+              data: [{ protein: "P12345", gene_symbol: "GENE1" }],
+              error: null,
+            }),
+            // For node data fetching (uses .in())
             in: jest.fn().mockResolvedValue({
               data:
                 nodesCallCount++ === 0 ? [{ protein: "P12345" }] : mockNodes,
@@ -380,7 +398,37 @@ describe("/api/subgraph", () => {
   });
 
   it("should handle database error when fetching edges", async () => {
-    setupSupabaseMock([], [], new Error("Database connection failed"), null);
+    // Setup: identifier resolution succeeds, but edges fetch fails
+    const mockFrom = supabase.from as jest.Mock;
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "edges") {
+        const mockChain = {
+          eq: jest.fn().mockReturnThis(),
+          or: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue({ data: null, error: new Error("Database connection failed") }),
+          gte: jest.fn().mockReturnThis(),
+          order: jest.fn().mockReturnThis(),
+        };
+        return {
+          select: jest.fn().mockReturnValue(mockChain),
+        };
+      }
+      if (table === "nodes") {
+        return {
+          select: jest.fn().mockReturnValue({
+            or: jest.fn().mockResolvedValue({
+              data: [{ protein: "P12345", gene_symbol: "GENE1" }],
+              error: null,
+            }),
+            in: jest.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          }),
+        };
+      }
+      return { select: jest.fn() };
+    });
 
     const { req, res } = createMocks({
       method: "GET",
@@ -394,6 +442,8 @@ describe("/api/subgraph", () => {
   });
 
   it("should handle database error when fetching nodes", async () => {
+    // Setup: identifier resolution succeeds, edges return data, 
+    // but the final node data fetch fails
     const mockEdges = [
       {
         edge: "P12345_Q67890",
@@ -406,12 +456,39 @@ describe("/api/subgraph", () => {
       },
     ];
 
-    setupSupabaseMock(
-      mockEdges,
-      [],
-      null,
-      new Error("Database connection failed")
-    );
+    const mockFrom = supabase.from as jest.Mock;
+    let nodesFetchCount = 0;
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "edges") {
+        const mockChain = {
+          eq: jest.fn().mockReturnThis(),
+          or: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue({ data: mockEdges, error: null }),
+          gte: jest.fn().mockReturnThis(),
+          order: jest.fn().mockReturnThis(),
+        };
+        return {
+          select: jest.fn().mockReturnValue(mockChain),
+        };
+      }
+      if (table === "nodes") {
+        return {
+          select: jest.fn().mockReturnValue({
+            // Identifier resolution succeeds
+            or: jest.fn().mockResolvedValue({
+              data: [{ protein: "P12345", gene_symbol: "GENE1" }],
+              error: null,
+            }),
+            // But node data fetch fails
+            in: jest.fn().mockResolvedValue({
+              data: null,
+              error: new Error("Database connection failed"),
+            }),
+          }),
+        };
+      }
+      return { select: jest.fn() };
+    });
 
     const { req, res } = createMocks({
       method: "GET",
@@ -528,7 +605,8 @@ describe("/api/subgraph", () => {
 
     expect(res._getStatusCode()).toBe(200);
     const data = JSON.parse(res._getData());
-    expect(data.query).toEqual(["P12345", "NONEXISTENT"]);
+    // Only the resolved protein ID is in the query (NONEXISTENT was not found)
+    expect(data.query).toEqual(["P12345"]);
     expect(data.nodes.length).toBeGreaterThan(0);
   });
 });
