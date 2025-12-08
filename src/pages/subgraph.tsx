@@ -107,6 +107,32 @@ export default function SubgraphPage() {
     }));
   }, [data]);
 
+  // Prepare export data
+  const exportableNodes = useMemo(() => {
+    return data?.nodes.map((node) => ({
+      protein: node.id,
+      entry_name: node.entryName,
+      description: node.description,
+      family: node.family,
+      expression_tissue: node.expressionTissue.join("\\"),
+      gene_symbol: node.geneSymbol,
+    })) ?? [];
+  }, [data]);
+
+  const exportableEdges = useMemo(() => {
+    return data?.edges.map((edge) => ({
+      edge: edge.id,
+      protein1: edge.source,
+      protein2: edge.target,
+      fusion_pred_prob: edge.fusionPredProb,
+      enriched_tissue: edge.enrichedTissue || "NA",
+      tissue_enriched_confidence: edge.tissueEnrichedConfidence || "NA",
+      positive_type: edge.positiveType,
+      gene_symbol1: edge.geneSymbol1 || "NA",
+      gene_symbol2: edge.geneSymbol2 || "NA",
+    })) ?? [];
+  }, [data]);
+
   useEffect(() => {
     if (!proteins || typeof proteins !== "string") {
       setLoading(false);
@@ -359,11 +385,15 @@ export default function SubgraphPage() {
                 caption="Node Information"
                 columns={nodeColumns}
                 data={formattedNodes}
+                exportData={exportableNodes}
+                exportFileName="nodes.csv"
               />
               <DataTable
                 caption="Edge Information"
                 columns={edgeColumns}
                 data={formattedEdges}
+                exportData={exportableEdges}
+                exportFileName="edges.csv"
               />
             </section>
           </div>
