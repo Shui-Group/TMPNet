@@ -24,17 +24,40 @@ export default function DataTable({ columns, data, caption, pageSize = 10 }: Dat
 
   // Generate page numbers to display - always show page 1, then next pages
   const pageNumbers = useMemo(() => {
-    const pages: number[] = [1];
-    const maxPagesToShow = 4; // Additional pages after page 1
+    const pages: (number | string)[] = [1];
 
     if (totalPages <= 1) return pages;
 
-    // Add pages starting from current page area
-    const startPage = Math.max(2, currentPage);
-    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    const showEllipsisStart = currentPage > 4;
+    const showEllipsisEnd = currentPage < totalPages - 3;
+
+    if (showEllipsisStart) {
+      pages.push("...");
+    }
+
+    // Determine the range of pages to show around the current page
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    // Adjust for edge cases to ensure we show a reasonable number of pages
+    if (currentPage <= 4) {
+      startPage = 2;
+      endPage = Math.min(5, totalPages - 1); // Show up to page 5 initially
+    } else if (currentPage >= totalPages - 3) {
+      startPage = Math.max(totalPages - 4, 2);
+      endPage = totalPages - 1;
+    }
 
     for (let i = startPage; i <= endPage; i++) {
-      if (!pages.includes(i)) pages.push(i);
+      pages.push(i);
+    }
+
+    if (showEllipsisEnd) {
+      pages.push("... "); // Space to differentiate if needed, or just same string key
+    }
+
+    if (totalPages > 1) {
+      pages.push(totalPages);
     }
 
     return pages;
@@ -89,17 +112,21 @@ export default function DataTable({ columns, data, caption, pageSize = 10 }: Dat
             Previous
           </button>
 
-          {pageNumbers.map((page) => (
-            <button
-              key={page}
-              onClick={() => goToPage(page)}
-              className={`px-3 py-1 text-sm rounded ${page === currentPage
-                ? "bg-blue-600 text-white"
-                : "text-gray-600 hover:bg-gray-200"
-                }`}
-            >
-              {page}
-            </button>
+          {pageNumbers.map((page, idx) => (
+            typeof page === 'number' ? (
+              <button
+                key={`${page}-${idx}`}
+                onClick={() => goToPage(page)}
+                className={`px-3 py-1 text-sm rounded ${page === currentPage
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600 hover:bg-gray-200"
+                  }`}
+              >
+                {page}
+              </button>
+            ) : (
+              <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>
+            )
           ))}
 
           <button

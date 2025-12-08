@@ -350,7 +350,7 @@ export default function SubgraphPage() {
               </div>
             </section>
 
-            <section className="grid gap-6 lg:grid-cols-2">
+            <section className="grid gap-6">
               <DataTable
                 caption="Node Information"
                 columns={nodeColumns}
