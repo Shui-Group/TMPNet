@@ -182,59 +182,113 @@ export default async function handler(
     };
     const BATCH_SIZE = 200;
 
-    // Step 1: Query edges where protein1 OR protein2 matches any query protein
+    // Determine search mode: single protein vs multiple proteins
+    // Single protein: show protein + 1-hop neighbors (star topology)
+    // Multiple proteins: only show searched proteins and edges between them
+    const isSingleProteinSearch = queryProteins.length === 1;
+
+    // Step 1: Query edges based on search mode
     let edges: Edge[] = [];
     let edgesTruncated = false;
 
-    // Build OR condition for Supabase query
-    // We need to check if protein1 is in queryProteins OR protein2 is in queryProteins
-    if (preferExperimental) {
-      // First, get experimental edges
-      const { data: expEdges, error: expErr } = await supabase
-        .from("edges")
-        .select(edgeSelect)
-        .eq("positive_type", "experimental")
-        .or(
-          queryProteins
-            .map((p) => `protein1.eq.${p},protein2.eq.${p}`)
-            .join(",")
-        )
-        .limit(maxEdges);
+    if (isSingleProteinSearch) {
+      // Single protein search: Get all edges connected to the query protein (1-hop neighbors)
+      if (preferExperimental) {
+        // First, get experimental edges
+        const { data: expEdges, error: expErr } = await supabase
+          .from("edges")
+          .select(edgeSelect)
+          .eq("positive_type", "experimental")
+          .or(
+            queryProteins
+              .map((p) => `protein1.eq.${p},protein2.eq.${p}`)
+              .join(",")
+          )
+          .limit(maxEdges);
 
-      if (expErr) {
-        console.error("Database error fetching experimental edges:", expErr);
-        return res
-          .status(500)
-          .json({ error: "Failed to fetch edges from database" });
+        if (expErr) {
+          console.error("Database error fetching experimental edges:", expErr);
+          return res
+            .status(500)
+            .json({ error: "Failed to fetch edges from database" });
+        }
+        edges = (expEdges ?? []) as Edge[];
       }
-      edges = (expEdges ?? []) as Edge[];
-    }
 
-    // Add high-probability predicted edges if we haven't hit the limit
-    const remaining = Math.max(0, maxEdges - edges.length);
-    if (remaining > 0) {
-      const { data: predEdges, error: predErr } = await supabase
-        .from("edges")
-        .select(edgeSelect)
-        .gte("fusion_pred_prob", minProb)
-        .or(
-          queryProteins
-            .map((p) => `protein1.eq.${p},protein2.eq.${p}`)
-            .join(",")
-        )
-        .order("fusion_pred_prob", { ascending: false })
-        .limit(remaining);
+      // Add high-probability predicted edges if we haven't hit the limit
+      const remaining = Math.max(0, maxEdges - edges.length);
+      if (remaining > 0) {
+        const { data: predEdges, error: predErr } = await supabase
+          .from("edges")
+          .select(edgeSelect)
+          .gte("fusion_pred_prob", minProb)
+          .or(
+            queryProteins
+              .map((p) => `protein1.eq.${p},protein2.eq.${p}`)
+              .join(",")
+          )
+          .order("fusion_pred_prob", { ascending: false })
+          .limit(remaining);
 
-      if (predErr) {
-        console.warn("Predicted edges query error:", predErr);
-      } else {
-        const typedPredEdges = (predEdges ?? []) as Edge[];
-        // Deduplicate edges (in case an edge is both experimental and predicted)
-        const existingEdgeIds = new Set(edges.map((e) => e.edge));
-        const newEdges = typedPredEdges.filter(
-          (e) => !existingEdgeIds.has(e.edge)
-        );
-        edges = edges.concat(newEdges);
+        if (predErr) {
+          console.warn("Predicted edges query error:", predErr);
+        } else {
+          const typedPredEdges = (predEdges ?? []) as Edge[];
+          // Deduplicate edges (in case an edge is both experimental and predicted)
+          const existingEdgeIds = new Set(edges.map((e) => e.edge));
+          const newEdges = typedPredEdges.filter(
+            (e) => !existingEdgeIds.has(e.edge)
+          );
+          edges = edges.concat(newEdges);
+        }
+      }
+    } else {
+      // Multiple proteins search: Only get edges that connect query proteins to each other
+      // Both endpoints must be in queryProteins
+      const queryProteinsSet = new Set(queryProteins);
+
+      if (preferExperimental) {
+        // First, get experimental edges connecting query proteins
+        const { data: expEdges, error: expErr } = await supabase
+          .from("edges")
+          .select(edgeSelect)
+          .eq("positive_type", "experimental")
+          .in("protein1", queryProteins)
+          .in("protein2", queryProteins)
+          .limit(maxEdges);
+
+        if (expErr) {
+          console.error("Database error fetching experimental edges:", expErr);
+          return res
+            .status(500)
+            .json({ error: "Failed to fetch edges from database" });
+        }
+        edges = (expEdges ?? []) as Edge[];
+      }
+
+      // Add high-probability predicted edges between query proteins
+      const remaining = Math.max(0, maxEdges - edges.length);
+      if (remaining > 0) {
+        const { data: predEdges, error: predErr } = await supabase
+          .from("edges")
+          .select(edgeSelect)
+          .gte("fusion_pred_prob", minProb)
+          .in("protein1", queryProteins)
+          .in("protein2", queryProteins)
+          .order("fusion_pred_prob", { ascending: false })
+          .limit(remaining);
+
+        if (predErr) {
+          console.warn("Predicted edges query error:", predErr);
+        } else {
+          const typedPredEdges = (predEdges ?? []) as Edge[];
+          // Deduplicate edges (in case an edge is both experimental and predicted)
+          const existingEdgeIds = new Set(edges.map((e) => e.edge));
+          const newEdges = typedPredEdges.filter(
+            (e) => !existingEdgeIds.has(e.edge)
+          );
+          edges = edges.concat(newEdges);
+        }
       }
     }
 
@@ -305,35 +359,44 @@ export default async function handler(
       });
     }
 
-    // Step 3: Extract all unique protein IDs from edges
-    const proteinIdsSet = new Set<string>(queryProteins);
-    edges.forEach((edge) => {
-      proteinIdsSet.add(edge.protein1);
-      proteinIdsSet.add(edge.protein2);
-    });
-    const allProteinIds = Array.from(proteinIdsSet);
-
-    // Apply maxNodes limit
+    // Step 3: Determine which nodes to include based on search mode
     let nodesTruncated = false;
-    let limitedProteinIds = allProteinIds;
-    if (allProteinIds.length > maxNodes) {
-      // Always include query proteins, then add neighbors up to limit
-      const neighborIds = allProteinIds.filter(
-        (id) => !queryProteins.includes(id)
-      );
-      limitedProteinIds = [
-        ...queryProteins,
-        ...neighborIds.slice(0, maxNodes - queryProteins.length),
-      ];
-      nodesTruncated = true;
+    let limitedProteinIds: string[];
 
-      // Filter edges to only include those connecting limited nodes
-      const limitedProteinIdsSet = new Set(limitedProteinIds);
-      edges = edges.filter(
-        (edge) =>
-          limitedProteinIdsSet.has(edge.protein1) &&
-          limitedProteinIdsSet.has(edge.protein2)
-      );
+    if (isSingleProteinSearch) {
+      // Single protein search: Extract all unique protein IDs from edges (query + neighbors)
+      const proteinIdsSet = new Set<string>(queryProteins);
+      edges.forEach((edge) => {
+        proteinIdsSet.add(edge.protein1);
+        proteinIdsSet.add(edge.protein2);
+      });
+      const allProteinIds = Array.from(proteinIdsSet);
+
+      // Apply maxNodes limit
+      limitedProteinIds = allProteinIds;
+      if (allProteinIds.length > maxNodes) {
+        // Always include query proteins, then add neighbors up to limit
+        const neighborIds = allProteinIds.filter(
+          (id) => !queryProteins.includes(id)
+        );
+        limitedProteinIds = [
+          ...queryProteins,
+          ...neighborIds.slice(0, maxNodes - queryProteins.length),
+        ];
+        nodesTruncated = true;
+
+        // Filter edges to only include those connecting limited nodes
+        const limitedProteinIdsSet = new Set(limitedProteinIds);
+        edges = edges.filter(
+          (edge) =>
+            limitedProteinIdsSet.has(edge.protein1) &&
+            limitedProteinIdsSet.has(edge.protein2)
+        );
+      }
+    } else {
+      // Multiple proteins search: Only include query proteins as nodes
+      // Edges are already filtered to only connect query proteins
+      limitedProteinIds = queryProteins;
     }
 
     // Step 3b: Fetch additional edges where both endpoints are within the limited node set
