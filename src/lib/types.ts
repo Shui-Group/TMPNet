@@ -56,6 +56,8 @@ export interface EdgeResponse {
   enrichedTissue: string | null; // Tissue enrichment
   tissueEnrichedConfidence: string | null; // Confidence level (high/low confidence)
   positiveType: string; // Source type
+  geneSymbol1: string | null; // Gene symbol for protein1
+  geneSymbol2: string | null; // Gene symbol for protein2
 }
 
 /**

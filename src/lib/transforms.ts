@@ -43,5 +43,7 @@ export function transformEdgeToResponse(dbEdge: Edge): EdgeResponse {
         ? null
         : dbEdge.tissue_enriched_confidence,
     positiveType: dbEdge.positive_type || "",
+    geneSymbol1: dbEdge.gene_symbol1 || null,
+    geneSymbol2: dbEdge.gene_symbol2 || null,
   };
 }

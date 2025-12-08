@@ -170,7 +170,7 @@ export default async function handler(
     );
 
     const edgeSelect =
-      "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,tissue_enriched_confidence,positive_type";
+      "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,tissue_enriched_confidence,positive_type,gene_symbol1,gene_symbol2";
 
     // Helper to chunk arrays for batching queries
     const chunkArray = <T>(arr: T[], size: number): T[][] => {

@@ -95,8 +95,12 @@ export default function SubgraphPage() {
 
     return sorted.map((edge) => ({
       id: edge.id,
-      source: edge.source,
-      target: edge.target,
+      source: edge.geneSymbol1
+        ? `${edge.source} (${edge.geneSymbol1})`
+        : edge.source,
+      target: edge.geneSymbol2
+        ? `${edge.target} (${edge.geneSymbol2})`
+        : edge.target,
       fusionPredProb: edge.fusionPredProb.toFixed(3),
       enrichedTissue: edge.enrichedTissue ?? "",
       positiveType: edge.positiveType,

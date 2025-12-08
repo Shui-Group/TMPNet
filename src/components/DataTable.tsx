@@ -14,13 +14,30 @@ interface DataTableProps {
 
 export default function DataTable({ columns, data, caption, pageSize = 10 }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterText, setFilterText] = useState("");
 
-  const totalPages = Math.ceil(data.length / pageSize);
+  const filteredData = useMemo(() => {
+    if (!filterText) return data;
+    const lowerFilter = filterText.toLowerCase();
+    return data.filter((row) =>
+      columns.some((col) => {
+        const val = row[col.key];
+        return val && String(val).toLowerCase().includes(lowerFilter);
+      })
+    );
+  }, [data, columns, filterText]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // Reset to page 1 when filter changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [filterText]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return data.slice(startIndex, startIndex + pageSize);
-  }, [data, currentPage, pageSize]);
+    return filteredData.slice(startIndex, startIndex + pageSize);
+  }, [filteredData, currentPage, pageSize]);
 
   // Generate page numbers to display - always show page 1, then next pages
   const pageNumbers = useMemo(() => {
@@ -69,10 +86,26 @@ export default function DataTable({ columns, data, caption, pageSize = 10 }: Dat
 
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-      <table className="table-auto w-full">
-        <caption className="bg-gray-50 px-4 py-3 text-left text-sm font-semibold uppercase tracking-wide text-gray-500">
+      <div className="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <span className="text-left text-sm font-semibold uppercase tracking-wide text-gray-500">
           {caption}
-        </caption>
+        </span>
+        <div className="flex items-center gap-2">
+          <label htmlFor={`search-${caption}`} className="text-sm text-gray-600">
+            Search:
+          </label>
+          <input
+            id={`search-${caption}`}
+            type="text"
+            className="rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            placeholder="Search..."
+          />
+        </div>
+      </div>
+
+      <table className="table-auto w-full">
         <thead className="bg-gray-100">
           <tr>
             {columns.map((col) => (
@@ -102,42 +135,44 @@ export default function DataTable({ columns, data, caption, pageSize = 10 }: Dat
       </table>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 py-3 px-4 border-t border-gray-200 bg-gray-50">
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
+      {
+        totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1 py-3 px-4 border-t border-gray-200 bg-gray-50">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
 
-          {pageNumbers.map((page, idx) => (
-            typeof page === 'number' ? (
-              <button
-                key={`${page}-${idx}`}
-                onClick={() => goToPage(page)}
-                className={`px-3 py-1 text-sm rounded ${page === currentPage
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-600 hover:bg-gray-200"
-                  }`}
-              >
-                {page}
-              </button>
-            ) : (
-              <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>
-            )
-          ))}
+            {pageNumbers.map((page, idx) => (
+              typeof page === 'number' ? (
+                <button
+                  key={`${page}-${idx}`}
+                  onClick={() => goToPage(page)}
+                  className={`px-3 py-1 text-sm rounded ${page === currentPage
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
+                >
+                  {page}
+                </button>
+              ) : (
+                <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>
+              )
+            ))}
 
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-      )}
-    </div>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )
+      }
+    </div >
   );
 }

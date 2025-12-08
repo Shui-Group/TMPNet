@@ -34,8 +34,8 @@ export const subgraphStyles: any[] = [
     selector: "node[?isQuery]",
     style: {
       "background-color": "#DC2626", // Red color for query node to stand out
-      width: 16,
-      height: 16,
+      width: 14,
+      height: 14,
       label: "data(geneSymbol)",
       "font-size": 12,
       "font-weight": "bold",
@@ -64,8 +64,8 @@ export const subgraphStyles: any[] = [
       "font-size": 12,
       "border-width": 3,
       "border-color": "#7F1D1D",
-      width: 20,
-      height: 20,
+      width: 18,
+      height: 18,
       "z-index": 10000,
     },
   },
