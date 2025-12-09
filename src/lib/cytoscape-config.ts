@@ -8,10 +8,20 @@ export const subgraphStyles: any[] = [
     selector: "node",
     style: {
       "background-color": "data(color)",
-      width: 12,
-      height: 12,
+      width: 10,
+      height: 10,
       label: "",
+      "font-size": 3,
+      "text-valign": "center",
+      "text-halign": "center",
       "overlay-opacity": 0,
+    },
+  },
+  {
+    selector: "node[?showLabel]",
+    style: {
+      label: "data(label)",
+      "font-size": 3,
     },
   },
   {
@@ -36,7 +46,7 @@ export const subgraphStyles: any[] = [
       "background-color": "#DC2626", // Red color for query node to stand out
       width: 14,
       height: 14,
-      label: "data(geneSymbol)",
+      label: "data(label)",
       "font-size": 12,
       "font-weight": "bold",
       color: "#0F172A",
@@ -60,7 +70,7 @@ export const subgraphStyles: any[] = [
   {
     selector: "node[?isQuery]:selected",
     style: {
-      label: "data(geneSymbol)",
+      label: "data(label)",
       "font-size": 12,
       "border-width": 3,
       "border-color": "#7F1D1D",
@@ -117,7 +127,7 @@ export const cyStyles: any[] = [
       "background-color": "#1E3A8A",
       width: 32,
       height: 32,
-      label: "data(id)",
+      label: "data(label)",
       "font-size": 14,
       color: "#0F172A",
       "text-background-color": "#FFFFFF",
@@ -139,7 +149,7 @@ export const cyStyles: any[] = [
   {
     selector: "node[?isQuery]:selected",
     style: {
-      label: "data(id)",
+      label: "data(label)",
       "font-size": 14,
       "border-width": 3,
       "border-color": "#1D4ED8",
@@ -191,27 +201,27 @@ export const fcoseLayout: any = {
   quality: "default",
   randomize: true,
   animate: false,
-  nodeDimensionsIncludeLabels: false,
+  nodeDimensionsIncludeLabels: true,
   fit: true,
   padding: 30,
-  nodeRepulsion: 6500,
-  idealEdgeLength: () => 60 + Math.random() * 120,
-  gravity: 0.2,
+  nodeRepulsion: 9000,
+  idealEdgeLength: () => 150 + Math.random() * 300,
+  gravity: 0.1,
   numIter: 2500,
-  tile: false, // Prevent disconnected components from being packed into a grid
-  tilingPaddingVertical: 10,
-  tilingPaddingHorizontal: 10,
+  tile: true, // Allow tile to separate unconnected components
+  tilingPaddingVertical: 20,
+  tilingPaddingHorizontal: 20,
 };
 
 export const coseLayout: cytoscape.LayoutOptions = {
   name: "cose",
   animate: false,
-  nodeDimensionsIncludeLabels: false,
+  nodeDimensionsIncludeLabels: true,
   fit: true,
   padding: 50,
-  nodeRepulsion: 8000,
-  idealEdgeLength: 80,
-  gravity: 0.5,
+  nodeRepulsion: 10000,
+  idealEdgeLength: 200,
+  gravity: 0.25,
   numIter: 1000,
   randomize: false,
 };

@@ -67,16 +67,17 @@ export function layoutPayloadToPositionMap(
   }, {});
 }
 
-export function nodesToCy(nodes: NodeResponse[]): CytoscapeNode[] {
+export function nodesToCy(nodes: NodeResponse[], showAllLabels = false): CytoscapeNode[] {
   return nodes.map((node) => {
     const isQuery = Boolean(node.isQuery);
     const nodeDef: CytoscapeNode = {
       data: {
         id: node.id,
-        label: node.label,
+        label: node.geneSymbol || node.label || node.id,
         family: node.family || "Other",
         color: isQuery ? "#1E3A8A" : getFamilyColor(node.family),
         isQuery,
+        showLabel: showAllLabels || isQuery,
         entryName: node.entryName,
         description: node.description,
         geneSymbol: node.geneSymbol,
@@ -122,9 +123,9 @@ type GraphLikeData = {
   layoutPositions?: LayoutPositionMap;
 };
 
-export function toCytoscapeElements(data: GraphLikeData): CytoscapeElements {
+export function toCytoscapeElements(data: GraphLikeData, showAllLabels = false): CytoscapeElements {
   const positions = data.layoutPositions;
-  const nodeElements = nodesToCy(data.nodes).map((node) => {
+  const nodeElements = nodesToCy(data.nodes, showAllLabels).map((node) => {
     const hasPreset =
       Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y);
     if (hasPreset || !positions) {

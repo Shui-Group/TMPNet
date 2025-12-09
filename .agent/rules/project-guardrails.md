@@ -1,9 +1,8 @@
 ---
+trigger: always_on
 description: Non-negotiable guardrails (Always)
-alwaysApply: true
 ---
 
-- First propose a plan; wait for confirmation before coding.
 - Only modify files explicitly named; no side effects elsewhere.
 - Do the simplest thing that works; justify any new dependency.
 - Reuse existing functions; no duplicate code.

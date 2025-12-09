@@ -12,7 +12,8 @@ import {
   layoutPayloadToPositionMap,
   toCytoscapeElements,
 } from "@/lib/graphUtils";
-import { coseLayout, subgraphStyles } from "@/lib/cytoscape-config";
+// This argument is ignored by the tool wrapper, but I need to call the tool.
+import { coseLayout, fcoseLayout, subgraphStyles } from "@/lib/cytoscape-config";
 
 export default function SubgraphPage() {
   const router = useRouter();
@@ -172,11 +173,17 @@ export default function SubgraphPage() {
         setData(subgraphData);
         setGraphLayout(subgraphData.layout ?? null);
 
+        const isMultipleMode = (subgraphData.queryProteins?.length ?? subgraphData.query.length) > 1;
+
+        const nodes = isMultipleMode
+          ? subgraphData.nodes.map(n => ({ ...n, isQuery: false }))
+          : subgraphData.nodes;
+
         const elements = toCytoscapeElements({
-          nodes: subgraphData.nodes,
+          nodes: nodes,
           edges: subgraphData.edges,
           layoutPositions: layoutPayloadToPositionMap(subgraphData.layout),
-        });
+        }, isMultipleMode);
         setGraphElements(elements);
       } catch (err) {
         const message =
@@ -360,7 +367,11 @@ export default function SubgraphPage() {
                   elements={graphElements}
                   isLoading={false}
                   onError={handleGraphError}
-                  layout={coseLayout}
+                  layout={
+                    (data.queryProteins?.length ?? data.query.length) > 1
+                      ? fcoseLayout
+                      : coseLayout
+                  }
                   layoutMetadata={graphLayout}
                   customStyles={subgraphStyles}
                 />
