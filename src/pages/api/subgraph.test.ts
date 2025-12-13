@@ -457,7 +457,6 @@ describe("/api/subgraph", () => {
     ];
 
     const mockFrom = supabase.from as jest.Mock;
-    let nodesFetchCount = 0;
     mockFrom.mockImplementation((table: string) => {
       if (table === "edges") {
         const mockChain = {

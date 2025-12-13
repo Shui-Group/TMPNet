@@ -245,7 +245,6 @@ export default async function handler(
     } else {
       // Multiple proteins search: Only get edges that connect query proteins to each other
       // Both endpoints must be in queryProteins
-      const queryProteinsSet = new Set(queryProteins);
 
       if (preferExperimental) {
         // First, get experimental edges connecting query proteins
