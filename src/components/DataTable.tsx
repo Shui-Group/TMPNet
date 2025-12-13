@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface Column {
   key: string;
@@ -83,7 +83,7 @@ export default function DataTable({
   const totalPages = Math.ceil(processedData.length / pageSize);
 
   // Reset to page 1 when filter changes
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [filterText, isFilterVisible, columnFilters]);
 
@@ -215,8 +215,8 @@ export default function DataTable({
           <button
             onClick={() => setIsFilterVisible(!isFilterVisible)}
             className={`rounded border px-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${isFilterVisible
-                ? "border-blue-500 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              ? "border-blue-500 bg-blue-50 text-blue-700"
+              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               }`}
           >
             Filter
