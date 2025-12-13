@@ -197,15 +197,28 @@ export default function NetworkGraph({
     const nodeElements = elements.filter(isNodeElement);
     const edgeElements = elements.filter(isEdgeElement);
 
-    const seedEdges = largeGraph ? 12000 : 20000; // quick initial layout
+    const seedEdgesLimit = largeGraph ? 15000 : 25000; // Increased slightly and randomized
+
+    // Create a shuffled subset of edges for the initial layout
+    // This prevents "grid" artifacts when data is sorted by cluster/type
+    const indices = Array.from({ length: edgeElements.length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    const seedIndices = new Set(indices.slice(0, seedEdgesLimit));
+    const initialEdges = shouldSkipLayout
+      ? edgeElements
+      : edgeElements.filter((_, i) => seedIndices.has(i));
+
+    // Keep track of which edges we've already added
+    const addedIndices = new Set(shouldSkipLayout ? indices : indices.slice(0, seedEdgesLimit));
+
     cy.startBatch();
     cy.elements().remove();
     cy.add(nodeElements);
-    if (shouldSkipLayout) {
-      cy.add(edgeElements);
-    } else {
-      cy.add(edgeElements.slice(0, Math.min(seedEdges, edgeElements.length)));
-    }
+    cy.add(initialEdges);
     cy.endBatch();
     ensureQueryPriority();
     cy.resize();
@@ -285,18 +298,26 @@ export default function NetworkGraph({
     cy.fit(undefined, 30);
 
     // batch in remaining edges without relayout
-    let added = Math.min(seedEdges, edgeElements.length);
     const batchSize = largeGraph ? 5000 : 10000;
+    let currentIndex = seedEdgesLimit; // Start after the seed set
+
     function addMore() {
       if (!cyRef.current) return;
-      if (added >= edgeElements.length) return;
-      const end = Math.min(added + batchSize, edgeElements.length);
-      cyRef.current.add(edgeElements.slice(added, end));
-      added = end;
+      if (currentIndex >= indices.length) return;
+
+      const chunkIndices = indices.slice(currentIndex, currentIndex + batchSize);
+      const chunkEdges = chunkIndices.map(i => edgeElements[i]);
+
+      cyRef.current.add(chunkEdges);
+      currentIndex += batchSize;
+
       ensureQueryPriority();
-      if (added < edgeElements.length) setTimeout(addMore, 0);
+      if (currentIndex < indices.length) setTimeout(addMore, 0);
     }
-    setTimeout(addMore, 0);
+
+    if (!shouldSkipLayout) {
+      setTimeout(addMore, 0);
+    }
   }, [
     elements,
     ready,
