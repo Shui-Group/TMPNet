@@ -163,9 +163,8 @@ export default function NetworkGraph({
         current.off("tap");
         current.destroy();
       }
-      cyRef.current = null;
     };
-  }, [onError]);
+  }, [onError, customStyles]);
 
   const hideTooltip = useCallback(() => {
     setTooltip((prev) => (prev.visible ? { ...prev, visible: false } : prev));
@@ -211,9 +210,6 @@ export default function NetworkGraph({
     const initialEdges = shouldSkipLayout
       ? edgeElements
       : edgeElements.filter((_, i) => seedIndices.has(i));
-
-    // Keep track of which edges we've already added
-    const addedIndices = new Set(shouldSkipLayout ? indices : indices.slice(0, seedEdgesLimit));
 
     cy.startBatch();
     cy.elements().remove();
@@ -327,6 +323,7 @@ export default function NetworkGraph({
     largeGraph,
     layoutMetadata,
     shouldSkipLayout,
+    onError,
   ]);
 
   useEffect(() => {

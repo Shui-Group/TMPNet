@@ -134,7 +134,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [queryString]);
+  }, [queryString, applyNetworkData]);
 
   return (
     <div className="min-h-screen bg-gray-50">
