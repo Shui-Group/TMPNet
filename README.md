@@ -78,6 +78,19 @@ npm run dev
 # Open http://localhost:3000 in your browser
 ```
 
+### Data Preparation
+
+```bash
+# Normalize the 20260407 website dataset for Supabase import
+npm run prepare:data:20260407
+```
+
+This generates import-ready files under `data/supabase-import/20260407_new_web_data/`:
+
+- `nodes.csv`
+- `edges.csv`
+- `structure_models.csv`
+
 ### Build
 
 ```bash

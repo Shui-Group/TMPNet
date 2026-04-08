@@ -153,3 +153,59 @@ export interface LayoutCacheRecord {
   layout_version: string;
   updated_at: string;
 }
+
+export type StructureVariant = "plain" | "without_ag" | "optimize";
+
+export interface StructureModelRecord {
+  model_id: string;
+  edge: string;
+  protein1: string;
+  protein2: string;
+  folder_protein1: string;
+  folder_protein2: string;
+  variant: StructureVariant;
+  source: string;
+  cif_rel_path: string;
+  cif_size_bytes: number;
+  summary_confidences_rel_path: string;
+  summary_confidences: Record<string, unknown> | null;
+  summary_iptm: number | null;
+  summary_ptm: number | null;
+  summary_ranking_score: number | null;
+  summary_fraction_disordered: number | null;
+  summary_has_clash: boolean;
+  confidences_rel_path: string | null;
+  confidences_size_bytes: number | null;
+  has_confidences: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StructureModelResponse {
+  modelId: string;
+  edge: string;
+  protein1: string;
+  protein2: string;
+  folderProtein1: string;
+  folderProtein2: string;
+  variant: StructureVariant;
+  source: string;
+  cifPath: string;
+  cifSizeBytes: number;
+  summaryConfidencesPath: string;
+  summaryConfidences: Record<string, unknown> | null;
+  summaryIptm: number | null;
+  summaryPtm: number | null;
+  summaryRankingScore: number | null;
+  summaryFractionDisordered: number | null;
+  summaryHasClash: boolean;
+  confidencesPath: string | null;
+  confidencesSizeBytes: number | null;
+  hasConfidences: boolean;
+}
+
+export interface StructureDetailResponse {
+  model: StructureModelResponse;
+  edge: EdgeResponse;
+  proteins: NodeResponse[];
+}
