@@ -440,8 +440,8 @@ describe("/api/network", () => {
     expect(data.meta).toMatchObject({
       totalNodes: mockNodes.length,
       totalEdges: 100,
-      filteredEdges: mockEdges.length,
     });
+    expect(data.meta.filteredEdges).toBeUndefined();
     expect(Array.isArray(data.nodes)).toBe(true);
     expect(Array.isArray(data.edges)).toBe(true);
   });

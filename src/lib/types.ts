@@ -95,7 +95,6 @@ export interface NetworkTimings {
 export interface NetworkMeta {
   totalNodes: number;
   totalEdges: number;
-  filteredEdges: number;
   timings?: NetworkTimings;
 }
 

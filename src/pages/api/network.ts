@@ -222,10 +222,7 @@ export default async function handler(
       req.query.positiveType,
       preferExperimental
     );
-    const minProb = Math.min(
-      Math.max(parseNumber(req.query.minProb, 0.8), 0),
-      1
-    );
+    const minProb = Math.min(Math.max(parseNumber(req.query.minProb, 0), 0), 1);
     const includeEdges = parseBoolean(req.query.edges, true);
     const format = parseFormat(req.query.format);
     const nodeIds = parseNodeIds(req.query.nodes);
@@ -444,12 +441,9 @@ export default async function handler(
       totalMs: toMs(performance.now() - overallStart),
     };
 
-    const filteredEdges = includeEdges ? edgesResp.length : 0;
-
     const meta: NetworkMeta = {
       totalNodes,
       totalEdges,
-      filteredEdges,
       timings,
     };
 

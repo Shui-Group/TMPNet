@@ -37,12 +37,6 @@ export default function Sidebar({ stats, meta }: SidebarProps) {
                 {meta.totalEdges.toLocaleString()}
               </span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-gray-500">Filtered edges</span>
-              <span className="font-semibold text-gray-900">
-                {meta.filteredEdges.toLocaleString()}
-              </span>
-            </div>
             {meta.timings?.totalMs !== undefined && (
               <div className="flex flex-col">
                 <span className="text-gray-500">Server time (ms)</span>
