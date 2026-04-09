@@ -63,6 +63,61 @@ const getLayoutPriority = (edge: EdgeDefinition): number => {
   return typeof data?.layoutPriority === "number" ? data.layoutPriority : 0;
 };
 
+const getConnectedNodeIds = (edge: EdgeDefinition): string[] => {
+  const data = edge.data as
+    | (EdgeDefinition["data"] & { source?: string; target?: string })
+    | undefined;
+
+  return [data?.source, data?.target].filter(
+    (nodeId): nodeId is string => typeof nodeId === "string"
+  );
+};
+
+const selectSeedEdges = (
+  edges: EdgeDefinition[],
+  limit: number
+): EdgeDefinition[] => {
+  if (edges.length <= limit) {
+    return edges;
+  }
+
+  const selected = new Set<string>();
+  const coveredNodeIds = new Set<string>();
+  const coverageFirst: EdgeDefinition[] = [];
+
+  for (const edge of edges) {
+    if (coverageFirst.length >= limit) {
+      break;
+    }
+
+    const connectedNodeIds = getConnectedNodeIds(edge);
+    if (connectedNodeIds.some((nodeId) => !coveredNodeIds.has(nodeId))) {
+      const edgeId = String(edge.data?.id);
+      selected.add(edgeId);
+      coverageFirst.push(edge);
+      connectedNodeIds.forEach((nodeId) => coveredNodeIds.add(nodeId));
+    }
+  }
+
+  if (coverageFirst.length >= limit) {
+    return coverageFirst;
+  }
+
+  for (const edge of edges) {
+    if (coverageFirst.length >= limit) {
+      break;
+    }
+
+    const edgeId = String(edge.data?.id);
+    if (!selected.has(edgeId)) {
+      selected.add(edgeId);
+      coverageFirst.push(edge);
+    }
+  }
+
+  return coverageFirst;
+};
+
 interface NetworkGraphProps {
   elements: CytoscapeElements;
   isLoading?: boolean;
@@ -212,11 +267,11 @@ export default function NetworkGraph({
           );
 
     const seedEdgesLimit = largeGraph
-      ? 9000
-      : Math.min(18000, orderedEdges.length);
+      ? 14000
+      : Math.min(24000, orderedEdges.length);
     const initialEdges = shouldSkipLayout
       ? orderedEdges
-      : orderedEdges.slice(0, seedEdgesLimit);
+      : selectSeedEdges(orderedEdges, seedEdgesLimit);
 
     cy.startBatch();
     cy.elements().remove();

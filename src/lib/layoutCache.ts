@@ -10,7 +10,7 @@ type GraphKeyContext = {
   params: Record<string, Primitive | Primitive[] | Record<string, Primitive>>;
 };
 
-export const CURRENT_LAYOUT_VERSION = "2026-04-09-fcose-v5-backbone";
+export const CURRENT_LAYOUT_VERSION = "2026-04-10-fcose-v6-centered-coverage";
 
 const stableStringify = (value: unknown): string => {
   if (value === null || typeof value !== "object") {

@@ -1,5 +1,6 @@
 import {
   buildNodeDegreeMap,
+  buildInitialPositionMap,
   edgeColors,
   getEdgeVisualWeight,
   familyColorMap,
@@ -39,9 +40,40 @@ describe("graphUtils", () => {
       const degreeMap = buildNodeDegreeMap(edges);
 
       expect(degreeMap).toEqual({ A: 2, B: 1, C: 1 });
-      expect(getNodeSize(0)).toBe(9);
-      expect(getNodeSize(25)).toBeLessThanOrEqual(18);
+      expect(getNodeSize(0)).toBe(12);
+      expect(getNodeSize(25)).toBeLessThanOrEqual(24);
       expect(getNodeSize(9, { isQuery: true })).toBeGreaterThan(getNodeSize(9));
+    });
+
+    it("creates centered initial positions for nodes before cached coordinates exist", () => {
+      const nodes: NodeResponse[] = [
+        {
+          id: "A",
+          label: "A_HUMAN",
+          description: "",
+          geneSymbol: "A",
+          family: "GPCR",
+          expressionTissue: [],
+        },
+        {
+          id: "B",
+          label: "B_HUMAN",
+          description: "",
+          geneSymbol: "B",
+          family: "Transporter",
+          expressionTissue: [],
+        },
+      ];
+
+      const positions = buildInitialPositionMap(nodes, { A: 10, B: 1 });
+
+      expect(positions.A).toEqual({ x: 24, y: 0 });
+      expect(positions.B).toEqual(
+        expect.objectContaining({
+          x: expect.any(Number),
+          y: expect.any(Number),
+        })
+      );
     });
   });
 
@@ -118,7 +150,7 @@ describe("graphUtils", () => {
         expressionTissue: ["Brain", "Liver"],
         degree: 16,
       });
-      expect(nodeElement.data?.size).toBeGreaterThan(18);
+      expect(nodeElement.data?.size).toBeGreaterThan(22);
       expect(typeof nodeElement.data?.tooltip).toBe("string");
       expect(nodeElement.data?.tooltip).toContain("PROT_HUMAN");
     });
@@ -168,7 +200,13 @@ describe("graphUtils", () => {
       const ids = elements.map((el) => el.data?.id).sort();
       expect(ids).toEqual([edge.id, node.id].sort());
       const nodeElement = elements.find((el) => el.data?.id === node.id);
-      expect(nodeElement?.data?.size).toBeGreaterThan(9);
+      expect(nodeElement?.data?.size).toBeGreaterThan(12);
+      expect(nodeElement?.position).toEqual(
+        expect.objectContaining({
+          x: expect.any(Number),
+          y: expect.any(Number),
+        })
+      );
     });
   });
 });

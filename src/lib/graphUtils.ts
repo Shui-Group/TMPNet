@@ -11,6 +11,7 @@ import { EdgeResponse, LayoutPayload, NodeResponse } from "./types";
 export type CytoscapeNode = NodeDefinition;
 export type CytoscapeEdge = EdgeDefinition;
 export type CytoscapeElements = ElementDefinition[];
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -78,10 +79,10 @@ export function getNodeSize(
   const labelBoost = options.showLabel ? 1.5 : 0;
 
   if (options.isQuery) {
-    return clamp(15 + Math.sqrt(boundedDegree) * 1.8 + labelBoost, 18, 26);
+    return clamp(18 + Math.sqrt(boundedDegree) * 2 + labelBoost, 22, 34);
   }
 
-  return clamp(8 + Math.sqrt(boundedDegree) * 1.15 + labelBoost, 9, 18);
+  return clamp(11 + Math.sqrt(boundedDegree) * 1.4 + labelBoost, 12, 24);
 }
 
 export function getEdgeVisualWeight(edge: EdgeResponse): {
@@ -121,6 +122,44 @@ export function layoutPayloadToPositionMap(
   if (!layout || layout.positions.length === 0) return undefined;
   return layout.positions.reduce<LayoutPositionMap>((acc, pos) => {
     acc[pos.nodeId] = { x: pos.x, y: pos.y };
+    return acc;
+  }, {});
+}
+
+export function buildInitialPositionMap(
+  nodes: NodeResponse[],
+  degreeMap: NodeDegreeMap = {}
+): LayoutPositionMap {
+  const families = Array.from(
+    new Set(nodes.map((node) => node.family || "Other"))
+  ).sort();
+  const familyOffsetMap = families.reduce<Record<string, number>>(
+    (acc, family, index) => {
+      acc[family] = (index / Math.max(1, families.length)) * Math.PI * 2;
+      return acc;
+    },
+    {}
+  );
+
+  const sortedNodes = [...nodes].sort((left, right) => {
+    const degreeDelta = (degreeMap[right.id] ?? 0) - (degreeMap[left.id] ?? 0);
+    if (degreeDelta !== 0) {
+      return degreeDelta;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
+
+  return sortedNodes.reduce<LayoutPositionMap>((acc, node, index) => {
+    const familyOffset = familyOffsetMap[node.family || "Other"] ?? 0;
+    const angle = index * GOLDEN_ANGLE + familyOffset * 0.18;
+    const radius = 24 + Math.sqrt(index) * 14;
+
+    acc[node.id] = {
+      x: Number((Math.cos(angle) * radius).toFixed(3)),
+      y: Number((Math.sin(angle) * radius).toFixed(3)),
+    };
+
     return acc;
   }, {});
 }
@@ -198,7 +237,8 @@ export function toCytoscapeElements(
   showAllLabels = false
 ): CytoscapeElements {
   const degreeMap = buildNodeDegreeMap(data.edges);
-  const positions = data.layoutPositions;
+  const positions =
+    data.layoutPositions ?? buildInitialPositionMap(data.nodes, degreeMap);
   const nodeElements = nodesToCy(data.nodes, showAllLabels, degreeMap).map(
     (node) => {
       const hasPreset =
