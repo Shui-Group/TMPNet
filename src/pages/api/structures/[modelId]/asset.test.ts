@@ -2,27 +2,17 @@ import { createMocks } from "node-mocks-http";
 import handler from "./asset";
 import { supabase } from "@/lib/supabase";
 
-const pipelineMock = jest.fn(async (_stream, res) => {
-  res.write('{"iptm": 0.59}');
-  res.end();
-});
-
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
+    storage: {
+      from: jest.fn(),
+    },
   },
 }));
 
-jest.mock("fs/promises", () => ({
-  stat: jest.fn(() => Promise.resolve({ size: 14 })),
-  readFile: jest.fn(() => Promise.resolve(Buffer.from('{"iptm": 0.59}'))),
-}));
-
-jest.mock("stream/promises", () => ({
-  pipeline: (...args: Parameters<typeof pipelineMock>) => pipelineMock(...args),
-}));
-
 const fromMock = supabase.from as jest.Mock;
+const storageFromMock = supabase.storage.from as jest.Mock;
 
 const structureRow = {
   model_id: "o15303-o00222",
@@ -35,12 +25,21 @@ const structureRow = {
 };
 
 describe("/api/structures/[modelId]/asset", () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     fromMock.mockReset();
-    pipelineMock.mockClear();
+    storageFromMock.mockReset();
+    consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
   });
 
-  it("streams the requested structure asset for a valid model", async () => {
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("redirects the requested structure asset to Supabase Storage", async () => {
     fromMock.mockImplementation((table: string) => {
       if (table === "structure_models") {
         return {
@@ -56,6 +55,14 @@ describe("/api/structures/[modelId]/asset", () => {
 
       return { select: jest.fn() };
     });
+    storageFromMock.mockReturnValue({
+      getPublicUrl: jest.fn(() => ({
+        data: {
+          publicUrl:
+            "https://example.supabase.co/storage/v1/object/public/structure-models/o15303-o00222/summary_confidences.json",
+        },
+      })),
+    });
 
     const { req, res } = createMocks({
       method: "GET",
@@ -64,9 +71,10 @@ describe("/api/structures/[modelId]/asset", () => {
 
     await handler(req, res);
 
-    expect(res._getStatusCode()).toBe(200);
-    expect(res.getHeader("Content-Type")).toBe("application/json; charset=utf-8");
-    expect(res._getData().toString()).toContain('"iptm": 0.59');
+    expect(res._getStatusCode()).toBe(307);
+    expect(res._getRedirectUrl()).toBe(
+      "https://example.supabase.co/storage/v1/object/public/structure-models/o15303-o00222/summary_confidences.json"
+    );
   });
 
   it("rejects invalid asset kinds", async () => {
@@ -91,5 +99,41 @@ describe("/api/structures/[modelId]/asset", () => {
 
     expect(res._getStatusCode()).toBe(400);
     expect(JSON.parse(res._getData()).error).toBe("Invalid structure model id");
+  });
+
+  it("rejects structure asset paths outside the storage root", async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === "structure_models") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              maybeSingle: jest.fn(() =>
+                Promise.resolve({
+                  data: {
+                    ...structureRow,
+                    cif_rel_path: "data/raw/../secrets/o15303-o00222.cif",
+                  },
+                  error: null,
+                })
+              ),
+            })),
+          })),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+      query: { modelId: "o15303-o00222", kind: "cif" },
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(400);
+    expect(JSON.parse(res._getData()).error).toBe(
+      "Invalid structure asset path"
+    );
   });
 });

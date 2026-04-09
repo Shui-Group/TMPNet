@@ -5,10 +5,14 @@ import { supabase } from "@/lib/supabase";
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
+    storage: {
+      from: jest.fn(),
+    },
   },
 }));
 
 const fromMock = supabase.from as jest.Mock;
+const storageFromMock = supabase.storage.from as jest.Mock;
 
 const structureRow = {
   model_id: "o15303-o00222",
@@ -79,9 +83,25 @@ const nodeRows = [
 describe("/api/structures/[modelId]", () => {
   beforeEach(() => {
     fromMock.mockReset();
+    storageFromMock.mockReset();
   });
 
   it("returns a structure model with edge and protein summaries", async () => {
+    const downloadMock = jest.fn(() =>
+      Promise.resolve({
+        data: {
+          text: async () =>
+            JSON.stringify({
+              atom_chain_ids: ["A", "A", "B", "B"],
+              atom_plddts: [95, 80, 60, 40],
+              token_chain_ids: ["A", "A", "B"],
+              token_res_ids: [1, 2, 3],
+            }),
+        },
+        error: null,
+      })
+    );
+
     fromMock.mockImplementation((table: string) => {
       if (table === "structure_models") {
         return {
@@ -110,14 +130,15 @@ describe("/api/structures/[modelId]", () => {
       if (table === "nodes") {
         return {
           select: jest.fn(() => ({
-            in: jest.fn(() =>
-              Promise.resolve({ data: nodeRows, error: null })
-            ),
+            in: jest.fn(() => Promise.resolve({ data: nodeRows, error: null })),
           })),
         };
       }
 
       return { select: jest.fn() };
+    });
+    storageFromMock.mockReturnValue({
+      download: downloadMock,
     });
 
     const { req, res } = createMocks({
@@ -140,15 +161,18 @@ describe("/api/structures/[modelId]", () => {
       "/api/structures/o15303-o00222/asset?kind=cif"
     );
     expect(payload.confidenceSummary).toMatchObject({
-      atomCount: expect.any(Number),
-      residueCount: expect.any(Number),
+      atomCount: 4,
+      residueCount: 3,
+      meanPlddt: 68.75,
       plddtBins: {
-        veryHigh: expect.any(Number),
-        confident: expect.any(Number),
-        low: expect.any(Number),
-        veryLow: expect.any(Number),
+        veryHigh: 1,
+        confident: 1,
+        low: 1,
+        veryLow: 1,
       },
     });
+    expect(storageFromMock).toHaveBeenCalledWith("structure-models");
+    expect(downloadMock).toHaveBeenCalledWith("o15303-o00222/confidences.json");
   });
 
   it("returns 404 when the model is not present", async () => {

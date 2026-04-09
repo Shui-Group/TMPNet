@@ -106,6 +106,9 @@ export default async function handler(
   });
 
   const assets = buildStructureAssetLinks(structureRecord.model_id);
+  if (!structureRecord.has_confidences) {
+    assets.confidences = null;
+  }
 
   return res.status(200).json({
     model: transformStructureModelRecord(structureRecord),

@@ -1,12 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createReadStream } from "fs";
-import { readFile, stat } from "fs/promises";
-import { pipeline } from "stream/promises";
 import { supabase } from "@/lib/supabase";
 import type { StructureModelRecord } from "@/lib/types";
 import { parseStructureModelId } from "@/lib/structureModels";
 import {
-  resolveStructureAssetPath,
+  buildStructureAssetPublicUrl,
   type StructureAssetKind,
 } from "@/lib/structureAssets";
 
@@ -14,13 +11,7 @@ const structureSelect =
   "model_id,cif_rel_path,summary_confidences_rel_path,confidences_rel_path";
 
 type ErrorResponse = { error: string };
-type AssetResponse = ErrorResponse | Buffer | string;
-
-const CONTENT_TYPES: Record<StructureAssetKind, string> = {
-  cif: "chemical/x-cif",
-  summary: "application/json; charset=utf-8",
-  confidences: "application/json; charset=utf-8",
-};
+type AssetResponse = ErrorResponse;
 
 const FILE_NAMES: Record<StructureAssetKind, (modelId: string) => string> = {
   cif: (modelId) => `${modelId}.cif`,
@@ -71,48 +62,28 @@ export default async function handler(
     return res.status(404).json({ error: "Structure model not found" });
   }
 
-  let filePath: string;
-
   try {
-    filePath = resolveStructureAssetPath(
-      structureData as Pick<
-        StructureModelRecord,
-        "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
-      >,
-      kindParam
-    );
-  } catch (assetError) {
-    console.error("Invalid structure asset path:", assetError);
-    return res.status(400).json({ error: "Invalid structure asset path" });
-  }
-
-  try {
-    const fileStat = await stat(filePath);
     const shouldDownload =
       (Array.isArray(req.query.download)
         ? req.query.download[0]
         : req.query.download) === "1";
-
-    res.setHeader("Content-Type", CONTENT_TYPES[kindParam]);
-    res.setHeader("Content-Length", String(fileStat.size));
-    res.setHeader(
-      "Content-Disposition",
-      `${shouldDownload ? "attachment" : "inline"}; filename="${FILE_NAMES[
-        kindParam
-      ](parsedModelId.modelId)}"`
+    const redirectUrl = buildStructureAssetPublicUrl(
+      structureData as Pick<
+        StructureModelRecord,
+        "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
+      >,
+      kindParam,
+      {
+        downloadFileName: shouldDownload
+          ? FILE_NAMES[kindParam](parsedModelId.modelId)
+          : undefined,
+      }
     );
 
-    if (kindParam === "summary") {
-      const contents = await readFile(filePath);
-      return res.status(200).send(contents);
-    }
-
-    await pipeline(createReadStream(filePath), res);
+    res.redirect(307, redirectUrl);
     return;
-  } catch (fileError) {
-    console.error("Failed to stream structure asset:", fileError);
-    if (!res.headersSent) {
-      return res.status(404).json({ error: "Structure asset not found" });
-    }
+  } catch (assetError) {
+    console.error("Invalid structure asset path:", assetError);
+    return res.status(400).json({ error: "Invalid structure asset path" });
   }
 }

@@ -1,5 +1,3 @@
-import { promises as fs } from "fs";
-import path from "path";
 import type {
   StructureAssetLinks,
   StructureConfidenceBins,
@@ -7,6 +5,7 @@ import type {
   StructureConfidenceSummary,
   StructureModelRecord,
 } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 export type StructureAssetKind = "cif" | "summary" | "confidences";
 
@@ -17,20 +16,19 @@ type ConfidenceJson = {
   token_res_ids?: unknown;
 };
 
-const STRUCTURE_ASSET_ROOT = path.join(
-  process.cwd(),
-  "data",
-  "raw",
-  "20260407_new_web_data",
-  "best_structure"
-);
+const STRUCTURE_STORAGE_ROOT = "data/raw/20260407_new_web_data/best_structure/";
+const DEFAULT_STRUCTURE_STORAGE_BUCKET = "structure-models";
 
 function isNumberArray(value: unknown): value is number[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "number");
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "number")
+  );
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 }
 
 export function buildStructureAssetLinks(modelId: string): StructureAssetLinks {
@@ -42,7 +40,15 @@ export function buildStructureAssetLinks(modelId: string): StructureAssetLinks {
   };
 }
 
-export function resolveStructureAssetPath(
+export function getStructureStorageBucketName(): string {
+  return (
+    process.env.SUPABASE_STRUCTURE_BUCKET ||
+    process.env.NEXT_PUBLIC_SUPABASE_STRUCTURE_BUCKET ||
+    DEFAULT_STRUCTURE_STORAGE_BUCKET
+  );
+}
+
+export function resolveStructureAssetObjectPath(
   record: Pick<
     StructureModelRecord,
     "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
@@ -53,24 +59,52 @@ export function resolveStructureAssetPath(
     kind === "cif"
       ? record.cif_rel_path
       : kind === "summary"
-        ? record.summary_confidences_rel_path
-        : record.confidences_rel_path;
+      ? record.summary_confidences_rel_path
+      : record.confidences_rel_path;
 
   if (!relativePath) {
     throw new Error(`Missing ${kind} asset path`);
   }
 
-  const absolutePath = path.resolve(process.cwd(), relativePath);
-  const normalizedRoot = `${STRUCTURE_ASSET_ROOT}${path.sep}`;
+  const normalizedPath = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
+  if (!normalizedPath.startsWith(STRUCTURE_STORAGE_ROOT)) {
+    throw new Error(`Resolved asset path is outside structure root: ${kind}`);
+  }
+
+  const objectPath = normalizedPath.slice(STRUCTURE_STORAGE_ROOT.length);
+  const segments = objectPath.split("/");
 
   if (
-    absolutePath !== STRUCTURE_ASSET_ROOT &&
-    !absolutePath.startsWith(normalizedRoot)
+    !objectPath ||
+    objectPath.startsWith("/") ||
+    segments.some((segment) => !segment || segment === "." || segment === "..")
   ) {
     throw new Error(`Resolved asset path is outside structure root: ${kind}`);
   }
 
-  return absolutePath;
+  return objectPath;
+}
+
+export function buildStructureAssetPublicUrl(
+  record: Pick<
+    StructureModelRecord,
+    "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
+  >,
+  kind: StructureAssetKind,
+  options?: { downloadFileName?: string }
+): string {
+  const objectPath = resolveStructureAssetObjectPath(record, kind);
+  const bucketName = getStructureStorageBucketName();
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(bucketName).getPublicUrl(objectPath);
+
+  const url = new URL(publicUrl);
+  if (options?.downloadFileName) {
+    url.searchParams.set("download", options.downloadFileName);
+  }
+
+  return url.toString();
 }
 
 export async function readStructureConfidenceSummary(
@@ -80,81 +114,105 @@ export async function readStructureConfidenceSummary(
     return null;
   }
 
-  const confidencePath = resolveStructureAssetPath(
-    {
-      cif_rel_path: "",
-      summary_confidences_rel_path: "",
-      confidences_rel_path: record.confidences_rel_path,
-    },
-    "confidences"
-  );
+  try {
+    const bucketName = getStructureStorageBucketName();
+    const confidencePath = resolveStructureAssetObjectPath(
+      {
+        cif_rel_path: "",
+        summary_confidences_rel_path: "",
+        confidences_rel_path: record.confidences_rel_path,
+      },
+      "confidences"
+    );
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .download(confidencePath);
 
-  const raw = await fs.readFile(confidencePath, "utf8");
-  const parsed = JSON.parse(raw) as ConfidenceJson;
-
-  const atomPlddts = isNumberArray(parsed.atom_plddts) ? parsed.atom_plddts : [];
-  const atomChainIds = isStringArray(parsed.atom_chain_ids)
-    ? parsed.atom_chain_ids
-    : [];
-  const tokenResidues = Array.isArray(parsed.token_res_ids)
-    ? parsed.token_res_ids
-    : [];
-
-  if (atomPlddts.length === 0) {
-    return null;
-  }
-
-  const bins: StructureConfidenceBins = {
-    veryHigh: 0,
-    confident: 0,
-    low: 0,
-    veryLow: 0,
-  };
-
-  const chainSums = new Map<string, { atomCount: number; plddtTotal: number }>();
-  let minPlddt = Number.POSITIVE_INFINITY;
-  let maxPlddt = Number.NEGATIVE_INFINITY;
-  let totalPlddt = 0;
-
-  atomPlddts.forEach((plddt, index) => {
-    totalPlddt += plddt;
-    minPlddt = Math.min(minPlddt, plddt);
-    maxPlddt = Math.max(maxPlddt, plddt);
-
-    if (plddt > 90) {
-      bins.veryHigh += 1;
-    } else if (plddt > 70) {
-      bins.confident += 1;
-    } else if (plddt > 50) {
-      bins.low += 1;
-    } else {
-      bins.veryLow += 1;
+    if (error || !data) {
+      console.error("Failed to download structure confidence payload:", error);
+      return null;
     }
 
-    const chainId = atomChainIds[index] ?? "Unknown";
-    const current = chainSums.get(chainId) ?? { atomCount: 0, plddtTotal: 0 };
-    current.atomCount += 1;
-    current.plddtTotal += plddt;
-    chainSums.set(chainId, current);
-  });
+    const raw = await data.text();
+    const parsed = JSON.parse(raw) as ConfidenceJson;
 
-  const chains: StructureConfidenceChainSummary[] = Array.from(chainSums.entries())
-    .map(([chainId, summary]) => ({
-      chainId,
-      atomCount: summary.atomCount,
-      meanPlddt: roundToTwo(summary.plddtTotal / summary.atomCount),
-    }))
-    .sort((left, right) => left.chainId.localeCompare(right.chainId));
+    const atomPlddts = isNumberArray(parsed.atom_plddts)
+      ? parsed.atom_plddts
+      : [];
+    const atomChainIds = isStringArray(parsed.atom_chain_ids)
+      ? parsed.atom_chain_ids
+      : [];
+    const tokenResidues = Array.isArray(parsed.token_res_ids)
+      ? parsed.token_res_ids
+      : [];
 
-  return {
-    atomCount: atomPlddts.length,
-    residueCount: tokenResidues.length,
-    meanPlddt: roundToTwo(totalPlddt / atomPlddts.length),
-    minPlddt: roundToTwo(minPlddt),
-    maxPlddt: roundToTwo(maxPlddt),
-    plddtBins: bins,
-    chains,
-  };
+    if (atomPlddts.length === 0) {
+      return null;
+    }
+
+    const bins: StructureConfidenceBins = {
+      veryHigh: 0,
+      confident: 0,
+      low: 0,
+      veryLow: 0,
+    };
+
+    const chainSums = new Map<
+      string,
+      { atomCount: number; plddtTotal: number }
+    >();
+    let minPlddt = Number.POSITIVE_INFINITY;
+    let maxPlddt = Number.NEGATIVE_INFINITY;
+    let totalPlddt = 0;
+
+    atomPlddts.forEach((plddt, index) => {
+      totalPlddt += plddt;
+      minPlddt = Math.min(minPlddt, plddt);
+      maxPlddt = Math.max(maxPlddt, plddt);
+
+      if (plddt > 90) {
+        bins.veryHigh += 1;
+      } else if (plddt > 70) {
+        bins.confident += 1;
+      } else if (plddt > 50) {
+        bins.low += 1;
+      } else {
+        bins.veryLow += 1;
+      }
+
+      const chainId = atomChainIds[index] ?? "Unknown";
+      const current = chainSums.get(chainId) ?? {
+        atomCount: 0,
+        plddtTotal: 0,
+      };
+      current.atomCount += 1;
+      current.plddtTotal += plddt;
+      chainSums.set(chainId, current);
+    });
+
+    const chains: StructureConfidenceChainSummary[] = Array.from(
+      chainSums.entries()
+    )
+      .map(([chainId, summary]) => ({
+        chainId,
+        atomCount: summary.atomCount,
+        meanPlddt: roundToTwo(summary.plddtTotal / summary.atomCount),
+      }))
+      .sort((left, right) => left.chainId.localeCompare(right.chainId));
+
+    return {
+      atomCount: atomPlddts.length,
+      residueCount: tokenResidues.length,
+      meanPlddt: roundToTwo(totalPlddt / atomPlddts.length),
+      minPlddt: roundToTwo(minPlddt),
+      maxPlddt: roundToTwo(maxPlddt),
+      plddtBins: bins,
+      chains,
+    };
+  } catch (error) {
+    console.error("Failed to parse structure confidence payload:", error);
+    return null;
+  }
 }
 
 function roundToTwo(value: number): number {
