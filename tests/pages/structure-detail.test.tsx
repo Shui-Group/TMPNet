@@ -148,4 +148,18 @@ describe("StructureDetailPage", () => {
 
     expect(screen.getByText("Structure model not found.")).toBeInTheDocument();
   });
+
+  it("links the back control to the network explorer", () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => structureResponse,
+    });
+
+    render(<StructureDetailPage />);
+
+    expect(
+      screen.getByRole("link", { name: "Back to network" })
+    ).toHaveAttribute("href", "/network");
+  });
 });
