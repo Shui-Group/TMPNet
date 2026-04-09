@@ -1,65 +1,79 @@
-# SQL Scripts for MemPPI-Atlas Database Setup
+# SQL Setup
 
-This directory contains SQL scripts for setting up the Supabase PostgreSQL database.
+This directory contains the base SQL used to bootstrap the Supabase database
+for MemPPI-Atlas.
 
-## Scripts
+## Files
 
-### 01_create_tables.sql
+### `01_create_tables.sql`
 
-Creates the `nodes` and `edges` tables with proper schemas, indexes, and foreign key constraints.
+Creates the base `nodes` and `edges` tables plus indexes.
 
-**Run first**: This must be executed before importing any data.
+### `02_enable_rls.sql`
 
-**Usage**:
+Enables Row Level Security and grants public read access to the base tables.
 
-- Open Supabase Dashboard → SQL Editor
-- Copy and paste the entire file
-- Click "Run"
+### `03_import_data.sql`
 
-### 02_import_data.sql
+Reference import instructions for loading CSV data into Supabase.
 
-Contains SQL commands and instructions for importing CSV data using PostgreSQL COPY commands.
+### `04_graph_layout_cache.sql`
 
-**Note**: For most users, the Supabase Dashboard import feature (Method A in the setup guide) is easier. This script provides SQL-based alternatives.
+Creates `graph_layout_cache`, which stores Cytoscape node positions keyed by a
+hashed graph signature.
 
-### 03_enable_rls.sql
+## What Is Not In This Folder
 
-Enables Row Level Security (RLS) on both tables and creates public read-only access policies.
+The structure-model expansion is not part of the base SQL sequence. It lives in
+the Supabase migration:
 
-**Run last**: Execute this after all data has been imported successfully.
+- `supabase/migrations/20260409173000_add_structure_models_and_edge_evidence.sql`
 
-## Execution Order
+That migration:
 
-1. `01_create_tables.sql` - Create schema
-2. Import CSV data (via Dashboard or SQL)
-3. `03_enable_rls.sql` - Enable security
-4. `04_graph_layout_cache.sql` - Provision layout cache table
+- adds edge-evidence columns to `edges`
+- creates `structure_models`
+- adds indexes
+- enables RLS for `structure_models`
 
-## Testing
+## Recommended Execution Order
 
-After running all scripts, verify with:
+1. Run `npm run prepare:data:20260407`.
+2. Apply `01_create_tables.sql`.
+3. Import `nodes.csv` and `edges.csv`.
+4. Apply `04_graph_layout_cache.sql`.
+5. Apply `02_enable_rls.sql`.
+6. Apply the structure-model migration from `supabase/migrations/`.
+7. Import `structure_models.csv`.
+
+## Prepared CSV Outputs
+
+The preparation script writes:
+
+- `data/supabase-import/20260407_new_web_data/nodes.csv`
+- `data/supabase-import/20260407_new_web_data/edges.csv`
+- `data/supabase-import/20260407_new_web_data/structure_models.csv`
+
+## Verification Queries
 
 ```sql
--- Check tables exist
-SELECT tablename FROM pg_tables WHERE schemaname = 'public';
+select tablename
+from pg_tables
+where schemaname = 'public'
+order by tablename;
 
--- Check row counts
-SELECT 'nodes' as table, COUNT(*) FROM nodes
-UNION ALL
-SELECT 'edges' as table, COUNT(*) FROM edges;
-
--- Check RLS is enabled
-SELECT tablename, rowsecurity FROM pg_tables WHERE tablename IN ('nodes', 'edges');
+select 'nodes' as table_name, count(*) from public.nodes
+union all
+select 'edges' as table_name, count(*) from public.edges
+union all
+select 'graph_layout_cache' as table_name, count(*) from public.graph_layout_cache
+union all
+select 'structure_models' as table_name, count(*) from public.structure_models;
 ```
 
-## Rollback
+## Notes
 
-To start over:
-
-```sql
-DROP TABLE IF EXISTS edges CASCADE;
-DROP TABLE IF EXISTS graph_layout_cache CASCADE;
-DROP TABLE IF EXISTS nodes CASCADE;
-```
-
-Then re-run `01_create_tables.sql`.
+- `structure_models` depends on `edges` and `nodes`.
+- Structure assets themselves live in Supabase Storage, not in Postgres.
+- The base schema comments still mention older source data names in a few places;
+  the live import pipeline is the `20260407_new_web_data` dataset.

@@ -1,67 +1,25 @@
-# Codex Agent Guide
+# Repository Guidelines
 
-## Overall rule
+## Project Structure & Module Organization
+This repository is a Next.js 14 Pages Router app for MemPPI network exploration. Main code lives in `src/`: UI pages in `src/pages`, API routes in `src/pages/api`, shared React components in `src/components`, and data/helpers in `src/lib`. Global styles are in `src/styles`, static assets in `public`, raw and generated datasets in `data`, import and validation utilities in `scripts`, and Supabase schema work in `supabase/` and `sql/`. Tests are split between co-located API/component tests and broader suites under `tests/api`, `tests/components`, `tests/pages`, and `tests/unit`.
 
-Write code for clarity first. Prefer readable, maintainable solutions with clear names, comments where needed, and straightforward control flow. Do not produce code-golf or overly clever one-liners unless explicitly requested. Use high verbosity for writing code and code tools.
+## Build, Test, and Development Commands
+- `npm run dev` starts the local app at `http://localhost:3000`.
+- `npm run build` creates the production build; `npm run start` serves it.
+- `npm run lint` runs Next.js ESLint rules.
+- `npm run format` rewrites files with Prettier; `npm run format:check` verifies formatting.
+- `npm test` runs the Jest suite; `npm run test:watch` is useful while iterating.
+- `npm run test:coverage` checks coverage thresholds.
+- `npm run prepare:data:20260407` normalizes the website dataset for Supabase import.
 
-## Key Rules
+## Coding Style & Naming Conventions
+Use TypeScript, strict mode, and the `@/` import alias for `src`. Prettier enforces 2-space indentation, semicolons, double quotes, trailing commas, and an 80-character print width. Use `PascalCase` for React components, `camelCase` for functions and variables, and descriptive API route names that match their resource, for example `src/pages/api/network/stats.ts`. Prefer extending existing modules over creating parallel helpers.
 
-### Guardrails
+## Testing Guidelines
+Jest with React Testing Library is the default stack. Name tests `*.test.ts`, `*.test.tsx`, or `*.integration.test.ts`. Mock API and Supabase boundaries instead of hitting live services. Global coverage is enforced at 70% for statements, branches, functions, and lines; keep new code at or above that bar and add regression tests with every bug fix.
 
-- First propose a plan; wait for confirmation before coding.
-- Only modify files explicitly named; no side effects elsewhere.
-- Do the simplest thing that works; justify any new dependency.
-- Reuse existing functions; no duplicate code.
-- After coding: print a short self-check list of what changed and why.
-- Follow the user's requirements exactly; confirm, then write code.
-- If uncertain or no correct answer exists, say so—do not guess.
-- Anticipate needs and briefly suggest better alternatives when useful.
-- Fully implement requests; avoid TODOs/placeholders/missing pieces.
-- Be concise—prioritize code and minimal, high-signal prose.
+## Commit & Pull Request Guidelines
+Recent history follows Conventional Commits such as `feat:`, `fix:`, and `refactor:`. Keep commits focused and use the format `type(scope): summary` when a scope adds clarity. PRs should include a short problem statement, a concise change summary, test evidence (`npm test`, `npm run lint`, coverage if relevant), and screenshots or recordings for UI changes.
 
-### Style & Structure
-
-- No duplicate code—reuse existing functions.
-- Extend existing files unless a new file is necessary.
-- Justify each dependency.
-- Prefer the smallest working solution, keep every module under 500 lines. If larger than 500 lines, refactor it into smaller components.
-- Consistent naming: camelCase for functions/vars, PascalCase for classes/components.
-- Prioritize clarity and readability over micro-optimizations.
-- Write correct, secure, up-to-date, bug-free code.
-- Treat users as experts; keep explanations brief and precise.
-
-### Frontend
-
-- **Framework**: Next.js and React with SSR.
-- **Styling**: Tailwind CSS for all styling.
-- **State**: React Hooks for local state.
-- **Data Fetching**: Use Next.js data fetching methods.
-- **Graph Visualization**: Use Cytoscape.js in a dedicated component.
-
-### Backend
-
-- **API**: Next.js API Routes.
-- **Database**: Supabase (PostgreSQL), accessed via client library.
-- **Design**: RESTful principles for endpoints.
-- **Data**: Server-side filtering and pagination in Supabase queries.
-
-### Tests
-
-- **Frameworks**: Jest and React Testing Library.
-- **Structure**: Co-locate tests with source files (e.g., `Component.test.tsx`).
-- **Mocking**: Mock API routes; do not test against the live database.
-
-### Git Commits
-
-- **Format**: Conventional Commits (`type(scope): summary`).
-- **Guidelines**: Prefer small, focused commits.
-
-## Project Specs (from `docs/`)
-
-- **instructions.md**: Store **signatures** of canonical functions, classes, or patterns.
-- **architecture.md**: Module map, data flow, dependencies, decisions
-- **api-spec.md**: REST endpoints and request/response shapes (TBD)
-- **data.md**: CSV schemas, relationships, conventions, and usage
-- **test-plan.md**: Unit, integration, and E2E strategy and tooling
-- **roadmap.md**:
-- **ui-spec.md**: Design system, components, and page layouts
+## Security & Configuration Tips
+Store Supabase credentials in `.env.local`, typically `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Do not commit secrets, generated `.next` output, or ad hoc data dumps. Validate external inputs at API boundaries and review schema or migration changes carefully before merging.
