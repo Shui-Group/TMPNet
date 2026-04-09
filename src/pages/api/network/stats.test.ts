@@ -119,7 +119,7 @@ describe("/api/network/stats", () => {
   it("returns aggregate counts and family distribution", async () => {
     const families = [
       { family: "TM" },
-      { family: "TM" },
+      { family: "TM(GPCR)" },
       { family: "TF" },
       { family: "Other" },
     ];
@@ -173,7 +173,12 @@ describe("/api/network/stats", () => {
 
     expect(payload.totalNodes).toBe(families.length);
     expect(payload.totalEdges).toBe(500);
-    expect(payload.familyCounts).toEqual({ TM: 2, TF: 1, Other: 1 });
+    expect(payload.familyCounts).toEqual({
+      "Other TMPs": 1,
+      GPCR: 1,
+      TF: 1,
+      Other: 1,
+    });
     expect(payload.enrichedEdgeCount).toBe(210);
     expect(payload.predictedEdgeCount).toBe(320);
   });

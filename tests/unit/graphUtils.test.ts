@@ -6,7 +6,9 @@ import {
   familyColorMap,
   getEdgeColor,
   getFamilyColor,
+  getFamilyLabel,
   getNodeSize,
+  normalizeFamily,
   nodesToCy,
   edgesToCy,
   toCytoscapeElements,
@@ -80,6 +82,16 @@ describe("graphUtils", () => {
   describe("getFamilyColor", () => {
     it("returns mapped color for known family", () => {
       expect(getFamilyColor("GPCR")).toBe(familyColorMap.GPCR);
+    });
+
+    it("normalizes raw dataset family codes into legend buckets", () => {
+      expect(normalizeFamily("TM(GPCR)")).toBe("GPCR");
+      expect(normalizeFamily("TM(IC)")).toBe("Ion-channels");
+      expect(normalizeFamily("TM(Trans)")).toBe("Transporter");
+      expect(normalizeFamily("TM(RTK)")).toBe("Catalytic receptors");
+      expect(normalizeFamily("TM")).toBe("Other TMPs");
+      expect(getFamilyColor("TM(Trans)")).toBe(familyColorMap.Transporter);
+      expect(getFamilyLabel("TM(GPCR)")).toBe("GPCRs");
     });
 
     it("falls back to Other for unknown family", () => {
@@ -156,8 +168,11 @@ describe("graphUtils", () => {
     });
 
     it("applies family color for non-query nodes", () => {
-      const [nodeElement] = nodesToCy([{ ...node, isQuery: false }]);
-      expect(nodeElement.data?.color).toBe(getFamilyColor(node.family));
+      const [nodeElement] = nodesToCy([
+        { ...node, isQuery: false, family: "TM(Trans)" },
+      ]);
+      expect(nodeElement.data?.family).toBe("Transporter");
+      expect(nodeElement.data?.color).toBe(getFamilyColor("TM(Trans)"));
     });
   });
 

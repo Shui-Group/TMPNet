@@ -7,6 +7,7 @@ import type {
   NodeDefinition,
 } from "cytoscape";
 import { EdgeResponse, LayoutPayload, NodeResponse } from "./types";
+import familyBuckets from "./familyBuckets.json";
 
 export type CytoscapeNode = NodeDefinition;
 export type CytoscapeEdge = EdgeDefinition;
@@ -37,14 +38,21 @@ export const familyLabelMap: Record<string, string> = {
   Other: "Other",
 };
 
+export function normalizeFamily(family?: string | null): string {
+  if (!family) return "Other";
+  const trimmed = family.trim();
+  if (!trimmed) return "Other";
+  return familyBuckets[trimmed as keyof typeof familyBuckets] || trimmed;
+}
+
 export function getFamilyColor(family?: string | null): string {
-  if (!family) return familyColorMap.Other;
-  return familyColorMap[family] || familyColorMap.Other;
+  const normalizedFamily = normalizeFamily(family);
+  return familyColorMap[normalizedFamily] || familyColorMap.Other;
 }
 
 export function getFamilyLabel(family?: string | null): string {
-  if (!family) return familyLabelMap.Other;
-  return familyLabelMap[family] || family;
+  const normalizedFamily = normalizeFamily(family);
+  return familyLabelMap[normalizedFamily] || normalizedFamily;
 }
 
 // Edge color shades (only experimental and predicted)
@@ -132,7 +140,7 @@ export function buildInitialPositionMap(
   degreeMap: NodeDegreeMap = {}
 ): LayoutPositionMap {
   const families = Array.from(
-    new Set(nodes.map((node) => node.family || "Other"))
+    new Set(nodes.map((node) => normalizeFamily(node.family)))
   ).sort();
   const familyOffsetMap = families.reduce<Record<string, number>>(
     (acc, family, index) => {
@@ -175,12 +183,13 @@ export function nodesToCy(
     const isQuery = Boolean(node.isQuery);
     const degree = degreeMap[node.id] ?? 0;
     const showLabel = showAllLabels || isQuery;
+    const normalizedFamily = normalizeFamily(node.family);
     const nodeDef: CytoscapeNode = {
       data: {
         id: node.id,
         label: node.geneSymbol || node.label || node.id,
-        family: node.family || "Other",
-        color: isQuery ? "#1E3A8A" : getFamilyColor(node.family),
+        family: normalizedFamily,
+        color: isQuery ? "#1E3A8A" : getFamilyColor(normalizedFamily),
         isQuery,
         showLabel,
         degree,
@@ -194,7 +203,7 @@ export function nodesToCy(
         entryName: node.entryName,
         description: node.description,
         expressionTissue: node.expressionTissue,
-        tooltip: [node.label, node.geneSymbol, node.family]
+        tooltip: [node.label, node.geneSymbol, normalizedFamily]
           .filter(Boolean)
           .join(" · "),
       };

@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
+const familyBuckets = require("../src/lib/familyBuckets.json");
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const ARTIFACT_VERSION = "2026-04-10-network-artifact-v1";
@@ -114,11 +115,28 @@ const createHeaderIndex = (headerLine) => {
   }, {});
 };
 
+const getColumnValue = (values, headerIndex, ...columnNames) => {
+  for (const columnName of columnNames) {
+    const index = headerIndex[columnName];
+    if (typeof index === "number") {
+      return values[index];
+    }
+  }
+  return "";
+};
+
 const getNodeSize = (degree) =>
   clamp(11 + Math.sqrt(Math.max(0, degree)) * 1.4, 12, 24);
 
 const getFamilyColor = (family) =>
   familyColorMap[family] || familyColorMap.Other;
+
+const normalizeFamily = (family) => {
+  if (!family) return "Other";
+  const trimmed = family.trim();
+  if (!trimmed) return "Other";
+  return familyBuckets[trimmed] || trimmed;
+};
 
 const getEdgeVisualWeight = (positiveType, fusionPredProb) => {
   const probability = Number.isFinite(fusionPredProb) ? fusionPredProb : 0;
@@ -243,13 +261,35 @@ const loadNodes = async (nodesPath) => {
     if (!line.trim()) continue;
 
     const values = parseCsvLine(line);
-    const protein = values[headerIndex.protein];
-    const entryName = values[headerIndex["Entry.Name"]] || protein;
-    const description = values[headerIndex.Description] || "";
-    const geneSymbol = (values[headerIndex["Gene.Names"]] || "").split(" ")[0];
-    const family = values[headerIndex.Family] || "Other";
-    const expressionTissue = values[headerIndex["Expression.tissue"]]
-      ? values[headerIndex["Expression.tissue"]].split("\\").filter(Boolean)
+    const protein = getColumnValue(values, headerIndex, "protein", "Protein");
+    const entryName =
+      getColumnValue(values, headerIndex, "entry_name", "Entry.Name") ||
+      protein;
+    const description = getColumnValue(
+      values,
+      headerIndex,
+      "description",
+      "Description"
+    );
+    const geneSymbol = getColumnValue(
+      values,
+      headerIndex,
+      "gene_symbol",
+      "Gene.Names"
+    )
+      .split(" ")[0]
+      .trim();
+    const family = normalizeFamily(
+      getColumnValue(values, headerIndex, "family", "Family") || "Other"
+    );
+    const expressionTissueValue = getColumnValue(
+      values,
+      headerIndex,
+      "expression_tissue",
+      "Expression.tissue"
+    );
+    const expressionTissue = expressionTissueValue
+      ? expressionTissueValue.split("\\").filter(Boolean)
       : [];
 
     nodes.push({
@@ -292,13 +332,27 @@ const scanEdges = async (edgesPath, overviewLimit, fullLimit) => {
     if (!line.trim()) continue;
 
     const values = parseCsvLine(line);
-    const edgeId = values[headerIndex.Edge];
-    const source = values[headerIndex.Protein1];
-    const target = values[headerIndex.Protein2];
-    const fusionPredProb = Number(values[headerIndex.Fusion_Pred_Prob] || 0);
-    const enrichedTissue = values[headerIndex.Enriched_tissue] || null;
+    const edgeId = getColumnValue(values, headerIndex, "edge", "Edge");
+    const source = getColumnValue(values, headerIndex, "protein1", "Protein1");
+    const target = getColumnValue(values, headerIndex, "protein2", "Protein2");
+    const fusionPredProb = Number(
+      getColumnValue(
+        values,
+        headerIndex,
+        "fusion_pred_prob",
+        "Fusion_Pred_Prob"
+      ) || 0
+    );
+    const enrichedTissue =
+      getColumnValue(
+        values,
+        headerIndex,
+        "enriched_tissue",
+        "Enriched_tissue"
+      ) || null;
     const positiveType = (
-      values[headerIndex.Positive_type] || "prediction"
+      getColumnValue(values, headerIndex, "positive_type", "Positive_type") ||
+      "prediction"
     ).toLowerCase();
 
     totalEdges += 1;
@@ -522,8 +576,9 @@ if (require.main === module) {
 }
 
 module.exports = {
-  DEFAULT_EDGES_PATH,
-  DEFAULT_NODES_PATH,
-  DEFAULT_OUTPUT_DIR,
-  parseArgs,
+      DEFAULT_EDGES_PATH,
+      DEFAULT_NODES_PATH,
+      DEFAULT_OUTPUT_DIR,
+      normalizeFamily,
+      parseArgs,
 };

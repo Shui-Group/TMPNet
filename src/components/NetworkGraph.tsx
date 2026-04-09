@@ -73,6 +73,21 @@ const getConnectedNodeIds = (edge: EdgeDefinition): string[] => {
   );
 };
 
+const filterRenderableEdges = (
+  edges: EdgeDefinition[],
+  nodeElements: NodeDefinition[]
+): EdgeDefinition[] => {
+  const nodeIds = new Set(
+    nodeElements
+      .map((node) => node.data?.id)
+      .filter((nodeId): nodeId is string => typeof nodeId === "string")
+  );
+
+  return edges.filter((edge) =>
+    getConnectedNodeIds(edge).every((nodeId) => nodeIds.has(nodeId))
+  );
+};
+
 const selectSeedEdges = (
   edges: EdgeDefinition[],
   limit: number
@@ -257,7 +272,10 @@ export default function NetworkGraph({
     if (!ready || !cyRef.current) return;
     const cy = cyRef.current;
     const nodeElements = elements.filter(isNodeElement);
-    const edgeElements = elements.filter(isEdgeElement);
+    const edgeElements = filterRenderableEdges(
+      elements.filter(isEdgeElement),
+      nodeElements
+    );
     const orderedEdges = shouldSkipLayout
       ? edgeElements
       : edgeElements

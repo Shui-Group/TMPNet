@@ -26,7 +26,11 @@ describe("/api/network/stats integration", () => {
             }
             if (columns === "family") {
               return Promise.resolve({
-                data: [{ family: "TM" }, { family: "TF" }, { family: null }],
+                data: [
+                  { family: "TM(Trans)" },
+                  { family: "TF" },
+                  { family: null },
+                ],
                 error: null,
               });
             }
@@ -78,7 +82,7 @@ describe("/api/network/stats integration", () => {
 
     expect(payload.totalNodes).toBe(200);
     expect(payload.totalEdges).toBe(500);
-    expect(payload.familyCounts).toEqual({ TM: 1, TF: 1 });
+    expect(payload.familyCounts).toEqual({ Transporter: 1, TF: 1 });
     expect(payload.enrichedEdgeCount).toBe(80);
     expect(payload.predictedEdgeCount).toBe(120);
   });

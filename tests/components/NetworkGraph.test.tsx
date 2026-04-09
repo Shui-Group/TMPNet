@@ -168,4 +168,71 @@ describe("NetworkGraph component", () => {
       expect(core?.layout).toHaveBeenCalled();
     });
   });
+
+  it("drops edges whose source or target node is missing", async () => {
+    render(
+      <NetworkGraph
+        elements={[
+          {
+            ...baseNode,
+            data: {
+              ...baseNode.data,
+              id: "P43115",
+            },
+          },
+          {
+            ...baseNode,
+            data: {
+              ...baseNode.data,
+              id: "Q99999",
+              geneSymbol: "GENE2",
+            },
+          },
+          {
+            data: {
+              id: "P43115_Q99999",
+              source: "P43115",
+              target: "Q99999",
+              layoutPriority: 1,
+            },
+          },
+          {
+            data: {
+              id: "P43115_Q8TCG1",
+              source: "Q8TCG1",
+              target: "P43115",
+              layoutPriority: 2,
+            },
+          },
+        ]}
+      />
+    );
+
+    await waitFor(() => expect(cytoscapeMock).toHaveBeenCalled());
+
+    const core = cytoscapeMock.__core as
+      | ReturnType<typeof createCoreMock>
+      | undefined;
+
+    await waitFor(() => {
+      expect(core?.add).toHaveBeenCalledTimes(2);
+    });
+
+    expect(core?.add).toHaveBeenNthCalledWith(
+      2,
+      expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({ id: "P43115_Q99999" }),
+        }),
+      ])
+    );
+    expect(core?.add).not.toHaveBeenNthCalledWith(
+      2,
+      expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({ id: "P43115_Q8TCG1" }),
+        }),
+      ])
+    );
+  });
 });

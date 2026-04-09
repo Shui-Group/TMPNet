@@ -278,15 +278,18 @@ export default async function handler(
     if (shouldUseArtifact) {
       const artifact = await readNetworkArtifact(view);
       if (artifact) {
+        const artifactMeta: NetworkMeta =
+          typeof fullArtifactAvailable === "boolean"
+            ? {
+                ...artifact.meta,
+                fullArtifactAvailable,
+              }
+            : artifact.meta;
+
         res.setHeader("Cache-Control", ARTIFACT_CACHE_CONTROL_HEADER);
         return res.status(200).json({
           elements: artifact.elements,
-          meta: {
-            ...artifact.meta,
-            ...(typeof fullArtifactAvailable === "boolean"
-              ? { fullArtifactAvailable }
-              : {}),
-          },
+          meta: artifactMeta,
           layout:
             artifact.layout ?? buildArtifactLayoutPayload(artifact.version),
         });

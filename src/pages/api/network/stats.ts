@@ -4,6 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { NetworkStats } from "@/lib/types";
 import { readNetworkStatsArtifact } from "@/lib/networkArtifacts";
+import { normalizeFamily } from "@/lib/graphUtils";
 
 const EDGE_COUNT_BATCH_INITIAL = 50000;
 const EDGE_COUNT_BATCH_MIN = 5000;
@@ -155,7 +156,9 @@ export default async function handler(
     familyData?.forEach((node) => {
       const family = node.family;
       if (family && family.trim() !== "") {
-        familyCounts[family] = (familyCounts[family] || 0) + 1;
+        const normalizedFamily = normalizeFamily(family);
+        familyCounts[normalizedFamily] =
+          (familyCounts[normalizedFamily] || 0) + 1;
       }
     });
 

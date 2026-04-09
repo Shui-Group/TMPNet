@@ -3,12 +3,14 @@ import path from "path";
 import type {
   LayoutPayload,
   NetworkElementsResponse,
+  NetworkMeta,
   NetworkStats,
 } from "./types";
 
 type NetworkArtifactView = "overview" | "full";
 
-type NetworkArtifactPayload = NetworkElementsResponse & {
+type NetworkArtifactPayload = Omit<NetworkElementsResponse, "meta"> & {
+  meta: NetworkMeta;
   version: string;
 };
 
