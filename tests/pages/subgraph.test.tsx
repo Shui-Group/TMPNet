@@ -64,7 +64,7 @@ describe("Subgraph page", () => {
             id: "P12345",
             label: "PROT1",
             description: "Query node",
-            geneNames: "GENE1",
+            geneSymbol: "GENE1",
             family: "TM",
             expressionTissue: ["Brain"],
             isQuery: true,
@@ -88,10 +88,10 @@ describe("Subgraph page", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Subgraph for: P12345")).toBeInTheDocument();
-      expect(screen.getByTestId("Node Information (Top 10)")).toHaveTextContent(
+      expect(screen.getByTestId("Node Information")).toHaveTextContent(
         "1"
       );
-      expect(screen.getByTestId("Edge Information (Top 10)")).toHaveTextContent(
+      expect(screen.getByTestId("Edge Information")).toHaveTextContent(
         "1"
       );
     });

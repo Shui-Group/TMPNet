@@ -15,6 +15,7 @@ describe("/api/layout-cache", () => {
   beforeEach(() => {
     upsertMock.mockReset();
     fromMock.mockReset();
+    fromMock.mockImplementation(() => ({ upsert: upsertMock }));
   });
 
   it("rejects unsupported methods", async () => {
@@ -70,4 +71,3 @@ describe("/api/layout-cache", () => {
     expect(res._getStatusCode()).toBe(204);
   });
 });
-

@@ -34,48 +34,35 @@ beforeEach(() => {
 });
 
 describe("Home page", () => {
-  it("renders sidebar after successful data fetch", async () => {
-    mockFetch
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          totalNodes: 10,
-          totalEdges: 20,
-          familyCounts: {},
-          enrichedEdgeCount: 5,
-          predictedEdgeCount: 7,
-        })
-      )
-      .mockResolvedValueOnce(
-        createJsonResponse({
-          nodes: [],
-          edges: [],
-          meta: { totalNodes: 10, totalEdges: 20, filteredEdges: 0 },
-        })
-      );
+  it("renders fetched statistics in the hero", async () => {
+    mockFetch.mockResolvedValueOnce(
+      createJsonResponse({
+        totalNodes: 10,
+        totalEdges: 20,
+        familyCounts: {},
+        enrichedEdgeCount: 5,
+        predictedEdgeCount: 7,
+      })
+    );
 
     render(<Home />);
 
-    expect(
-      screen.getByText("Loading network statistics...")
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("---")).toHaveLength(3);
 
     await waitFor(() => {
-      expect(screen.getByTestId("sidebar")).toHaveTextContent("Sidebar 10");
-      expect(screen.getByTestId("network-graph")).toBeInTheDocument();
+      expect(screen.getByText("10")).toBeInTheDocument();
+      expect(screen.getByText("20")).toBeInTheDocument();
+      expect(screen.getByText("22")).toBeInTheDocument();
     });
 
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it("shows error message when stats request fails", async () => {
-    mockFetch
-      .mockResolvedValueOnce(createJsonResponse({}, false))
-      .mockResolvedValueOnce(createJsonResponse({ nodes: [], edges: [] }));
+  it("keeps placeholders when stats request fails", async () => {
+    mockFetch.mockResolvedValueOnce(createJsonResponse({}, false));
 
     render(<Home />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Error:/)).toBeInTheDocument();
-    });
+    expect(await screen.findAllByText("---")).toHaveLength(3);
   });
 });

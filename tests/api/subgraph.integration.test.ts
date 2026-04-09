@@ -116,6 +116,17 @@ describe("/api/subgraph integration", () => {
         };
       }
 
+      if (table === "structure_models") {
+        return {
+          select: jest.fn(() => ({
+            in: jest.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          })),
+        };
+      }
+
       return { select: jest.fn().mockResolvedValue({ data: [], error: null }) };
     });
 

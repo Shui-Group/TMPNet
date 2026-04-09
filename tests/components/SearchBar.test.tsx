@@ -18,18 +18,18 @@ describe("SearchBar", () => {
   it("shows validation error for invalid protein IDs", () => {
     render(<SearchBar />);
 
-    const input = screen.getByLabelText("Search proteins by ID");
+    const input = screen.getByLabelText("Search proteins");
     fireEvent.change(input, { target: { value: "invalid-id" } });
     fireEvent.click(screen.getByText("Search"));
 
-    expect(screen.getByText(/Invalid protein ID format/i)).toBeInTheDocument();
+    expect(screen.getByText(/Invalid format/i)).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("navigates to subgraph with sanitized, uppercase IDs", () => {
     render(<SearchBar />);
 
-    const input = screen.getByLabelText("Search proteins by ID");
+    const input = screen.getByLabelText("Search proteins");
     fireEvent.change(input, { target: { value: "p12345, q67890 " } });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 

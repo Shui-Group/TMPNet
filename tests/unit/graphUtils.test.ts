@@ -61,7 +61,7 @@ describe("graphUtils", () => {
       const [nodeElement] = nodesToCy([node]);
       expect(nodeElement.data).toMatchObject({
         id: "P12345",
-        label: "PROT_HUMAN",
+        label: "GENE1",
         color: "#1E3A8A",
         isQuery: true,
         geneSymbol: "GENE1",

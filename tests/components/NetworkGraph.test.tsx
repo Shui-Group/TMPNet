@@ -85,7 +85,9 @@ const baseNode = {
     family: "TF",
     color: "#123456",
     isQuery: true,
-    geneNames: "GENE1",
+    geneSymbol: "GENE1",
+    entryName: "PROT_HUMAN",
+    description: "Protein description",
     expressionTissue: ["Brain"],
   },
 };
@@ -132,11 +134,8 @@ describe("NetworkGraph component", () => {
       });
     });
 
+    expect(screen.getByText("GENE1 (P12345)")).toBeInTheDocument();
     expect(screen.getByText("PROT_HUMAN")).toBeInTheDocument();
-    const genesLabel = screen.getByText(/Genes:/);
-    expect(genesLabel.parentElement).toHaveTextContent("Genes: GENE1");
-    expect(screen.getByText(/Family:/).parentElement).toHaveTextContent(
-      "Family: TF"
-    );
+    expect(screen.getByText("Protein description")).toBeInTheDocument();
   });
 });

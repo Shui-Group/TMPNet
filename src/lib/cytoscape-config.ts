@@ -198,7 +198,7 @@ export const concentricLayout: cytoscape.LayoutOptions = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const fcoseLayout: any = {
   name: "fcose",
-  quality: "default",
+  quality: "draft",
   randomize: true,
   animate: false,
   nodeDimensionsIncludeLabels: true,
@@ -227,3 +227,8 @@ export const coseLayout: cytoscape.LayoutOptions = {
 };
 
 export const largeGraphThreshold = 75000;
+
+export const rendererOptions = {
+  name: "canvas",
+  pixelRatio: 1,
+};

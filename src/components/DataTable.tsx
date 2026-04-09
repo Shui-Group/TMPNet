@@ -1,27 +1,26 @@
 import { useState, useMemo, useEffect } from "react";
+import type { TableColumn } from "@/lib/types";
 
-interface Column {
-  key: string;
-  label: string;
-}
+type TableRowValue = string | number | null | undefined;
+type TableRow = Record<string, TableRowValue | unknown>;
 
-interface DataTableProps {
-  columns: Column[];
-  data: Array<Record<string, string | number | null | undefined>>;
+interface DataTableProps<Row extends TableRow = TableRow> {
+  columns: TableColumn<Row>[];
+  data: Row[];
   caption: string;
   pageSize?: number;
-  exportData?: Array<Record<string, string | number | null | undefined>>;
+  exportData?: Array<Record<string, TableRowValue>>;
   exportFileName?: string;
 }
 
-export default function DataTable({
+export default function DataTable<Row extends TableRow = TableRow>({
   columns,
   data,
   caption,
   pageSize = 10,
   exportData,
   exportFileName = "data.csv"
-}: DataTableProps) {
+}: DataTableProps<Row>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterText, setFilterText] = useState("");
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -36,7 +35,7 @@ export default function DataTable({
       const lowerFilter = filterText.toLowerCase();
       result = result.filter((row) =>
         columns.some((col) => {
-          const val = row[col.key];
+          const val = row[col.key as string];
           return val && String(val).toLowerCase().includes(lowerFilter);
         })
       );
@@ -48,7 +47,7 @@ export default function DataTable({
         if (filterValue) {
           const lowerFilter = filterValue.toLowerCase();
           result = result.filter((row) => {
-            const val = row[key];
+            const val = row[key as string];
             return val && String(val).toLowerCase().includes(lowerFilter);
           });
         }
@@ -58,8 +57,8 @@ export default function DataTable({
     // 3. Sorting
     if (sortConfig) {
       result.sort((a, b) => {
-        const valA = a[sortConfig.key];
-        const valB = b[sortConfig.key];
+        const valA = a[sortConfig.key as string] as TableRowValue;
+        const valB = b[sortConfig.key as string] as TableRowValue;
 
         if (valA === valB) return 0;
         if (valA === null || valA === undefined) return 1;
@@ -233,51 +232,63 @@ export default function DataTable({
       <table className="table-auto w-full border-collapse">
         <thead className="bg-gray-100">
           <tr>
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className="group cursor-pointer border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap hover:bg-gray-200 transition-colors select-none"
-                onClick={() => handleSort(col.key)}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span>{col.label}</span>
-                  <span className="flex flex-col text-[8px] leading-[8px] text-gray-400">
-                    <span className={`${sortConfig?.key === col.key && sortConfig.direction === 'asc' ? 'text-gray-900' : ''}`}>▲</span>
-                    <span className={`${sortConfig?.key === col.key && sortConfig.direction === 'desc' ? 'text-gray-900' : ''}`}>▼</span>
-                  </span>
-                </div>
-              </th>
-            ))}
+            {columns.map((col) => {
+              const columnKey = String(col.key);
+
+              return (
+                <th
+                  key={columnKey}
+                  className="group cursor-pointer border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap hover:bg-gray-200 transition-colors select-none"
+                  onClick={() => handleSort(columnKey)}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{col.label}</span>
+                    <span className="flex flex-col text-[8px] leading-[8px] text-gray-400">
+                      <span className={`${sortConfig?.key === columnKey && sortConfig.direction === 'asc' ? 'text-gray-900' : ''}`}>▲</span>
+                      <span className={`${sortConfig?.key === columnKey && sortConfig.direction === 'desc' ? 'text-gray-900' : ''}`}>▼</span>
+                    </span>
+                  </div>
+                </th>
+              );
+            })}
           </tr>
           {/* Filter Row */}
           {isFilterVisible && (
             <tr className="bg-gray-50">
-              {columns.map((col) => (
-                <th key={`filter-${col.key}`} className="border-b border-gray-200 px-2 py-2">
-                  <input
-                    type="text"
-                    className="w-full min-w-[60px] rounded border border-gray-300 px-2 py-1 text-xs font-normal text-gray-600 focus:border-blue-500 focus:outline-none"
-                    placeholder={`Filter...`}
-                    value={columnFilters[col.key] || ""}
-                    onChange={(e) => updateColumnFilter(col.key, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </th>
-              ))}
+              {columns.map((col) => {
+                const columnKey = String(col.key);
+
+                return (
+                  <th key={`filter-${columnKey}`} className="border-b border-gray-200 px-2 py-2">
+                    <input
+                      type="text"
+                      className="w-full min-w-[60px] rounded border border-gray-300 px-2 py-1 text-xs font-normal text-gray-600 focus:border-blue-500 focus:outline-none"
+                      placeholder={`Filter...`}
+                      value={columnFilters[columnKey] || ""}
+                      onChange={(e) => updateColumnFilter(columnKey, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </th>
+                );
+              })}
             </tr>
           )}
         </thead>
         <tbody>
           {paginatedData.map((row, idx) => (
             <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100 transition-colors"}>
-              {columns.map((col) => (
-                <td
-                  key={col.key}
-                  className="border-b border-gray-200 px-4 py-3 text-sm text-gray-700 whitespace-nowrap"
-                >
-                  {row[col.key] ?? ""}
-                </td>
-              ))}
+              {columns.map((col) => {
+                const columnKey = String(col.key);
+
+                return (
+                  <td
+                    key={columnKey}
+                    className="border-b border-gray-200 px-4 py-3 text-sm text-gray-700 whitespace-nowrap"
+                  >
+                    {col.render ? col.render(row) : ((row[columnKey] as TableRowValue) ?? "")}
+                  </td>
+                );
+              })}
             </tr>
           ))}
           {paginatedData.length === 0 && (

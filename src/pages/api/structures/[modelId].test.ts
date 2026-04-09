@@ -52,6 +52,9 @@ const edgeRow = {
   positive_type: "prediction",
   gene_symbol1: "KCNK5",
   gene_symbol2: "GALR1",
+  string_combined_score: 812,
+  biogrid_experimental_system_type: "Two-hybrid",
+  hitpredict_confidence: "High",
 };
 
 const nodeRows = [
@@ -130,8 +133,22 @@ describe("/api/structures/[modelId]", () => {
     expect(payload.model.modelId).toBe("o15303-o00222");
     expect(payload.model.variant).toBe("plain");
     expect(payload.edge.id).toBe("O00222_O15303");
+    expect(payload.edge.stringCombinedScore).toBe(812);
     expect(payload.proteins).toHaveLength(2);
     expect(payload.proteins[0].id).toBe("O00222");
+    expect(payload.assets.cif).toContain(
+      "/api/structures/o15303-o00222/asset?kind=cif"
+    );
+    expect(payload.confidenceSummary).toMatchObject({
+      atomCount: expect.any(Number),
+      residueCount: expect.any(Number),
+      plddtBins: {
+        veryHigh: expect.any(Number),
+        confident: expect.any(Number),
+        low: expect.any(Number),
+        veryLow: expect.any(Number),
+      },
+    });
   });
 
   it("returns 404 when the model is not present", async () => {

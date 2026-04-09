@@ -29,6 +29,12 @@ interface IdentifierResolution {
   wasGeneSymbolSearch: boolean;
 }
 
+type StructureLookupRow = {
+  edge: string;
+  model_id: string;
+  variant: "plain" | "without_ag" | "optimize";
+};
+
 /**
  * Resolves identifiers (UniProt IDs or gene symbols) to UniProt protein IDs.
  * Returns a mapping from original identifier to resolved protein ID with metadata.
@@ -92,6 +98,36 @@ async function resolveIdentifiersToProteins(
   }
 
   return { resolved, notFound };
+}
+
+async function fetchStructureLookup(
+  edgeIds: string[]
+): Promise<Map<string, StructureLookupRow>> {
+  const lookup = new Map<string, StructureLookupRow>();
+
+  if (edgeIds.length === 0) {
+    return lookup;
+  }
+
+  const batchSize = 200;
+
+  for (let index = 0; index < edgeIds.length; index += batchSize) {
+    const batch = edgeIds.slice(index, index + batchSize);
+    const { data, error } = await supabase
+      .from("structure_models")
+      .select("edge,model_id,variant")
+      .in("edge", batch);
+
+    if (error) {
+      throw error;
+    }
+
+    ((data ?? []) as StructureLookupRow[]).forEach((row) => {
+      lookup.set(row.edge, row);
+    });
+  }
+
+  return lookup;
 }
 
 
@@ -527,8 +563,24 @@ export default async function handler(
       return 0;
     });
 
+    const structureLookup = await fetchStructureLookup(edges.map((edge) => edge.edge));
+
     // Transform edges
-    const edgesResp = edges.map(transformEdgeToResponse);
+    const edgesResp = edges.map((edge) => {
+      const transformed = transformEdgeToResponse(edge);
+      const structure = structureLookup.get(edge.edge);
+
+      if (!structure) {
+        return transformed;
+      }
+
+      return {
+        ...transformed,
+        structureModelId: structure.model_id,
+        structureVariant: structure.variant,
+        hasStructureModel: true,
+      };
+    });
 
     // Build query protein info for the response
     const queryProteinsInfo: QueryProteinInfo[] = searchedIdentifiers.map((id) => {

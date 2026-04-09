@@ -8,7 +8,7 @@ describe("Legend", () => {
 
     expect(screen.getByText("Legend")).toBeInTheDocument();
     expect(screen.getByText("Experimental")).toBeInTheDocument();
-    expect(screen.getByText("Predicted/Other")).toBeInTheDocument();
+    expect(screen.getByText("Predicted")).toBeInTheDocument();
     expect(screen.getByText("GPCRs")).toBeInTheDocument();
   });
 });

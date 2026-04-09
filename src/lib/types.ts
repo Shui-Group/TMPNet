@@ -1,5 +1,7 @@
 // Type definitions for MemPPI-Atlas data structures
 
+import type { ReactNode } from "react";
+
 /**
  * Node (Protein) data structure from database
  */
@@ -25,6 +27,9 @@ export interface Edge {
   positive_type: string | null; // Source type (prediction, experiment)
   gene_symbol1: string | null; // Gene symbol for protein1
   gene_symbol2: string | null; // Gene symbol for protein2
+  string_combined_score?: number | null;
+  biogrid_experimental_system_type?: string | null;
+  hitpredict_confidence?: string | null;
 }
 
 /**
@@ -58,6 +63,12 @@ export interface EdgeResponse {
   positiveType: string; // Source type
   geneSymbol1: string | null; // Gene symbol for protein1
   geneSymbol2: string | null; // Gene symbol for protein2
+  stringCombinedScore?: number | null;
+  biogridExperimentalSystemType?: string | null;
+  hitpredictConfidence?: string | null;
+  structureModelId?: string;
+  structureVariant?: StructureVariant;
+  hasStructureModel?: boolean;
 }
 
 /**
@@ -204,8 +215,45 @@ export interface StructureModelResponse {
   hasConfidences: boolean;
 }
 
+export interface StructureConfidenceBins {
+  veryHigh: number;
+  confident: number;
+  low: number;
+  veryLow: number;
+}
+
+export interface StructureConfidenceChainSummary {
+  chainId: string;
+  atomCount: number;
+  meanPlddt: number;
+}
+
+export interface StructureConfidenceSummary {
+  atomCount: number;
+  residueCount: number;
+  meanPlddt: number | null;
+  minPlddt: number | null;
+  maxPlddt: number | null;
+  plddtBins: StructureConfidenceBins;
+  chains: StructureConfidenceChainSummary[];
+}
+
+export interface StructureAssetLinks {
+  cif: string;
+  summary: string;
+  confidences: string | null;
+}
+
 export interface StructureDetailResponse {
   model: StructureModelResponse;
   edge: EdgeResponse;
   proteins: NodeResponse[];
+  assets: StructureAssetLinks;
+  confidenceSummary: StructureConfidenceSummary | null;
+}
+
+export interface TableColumn<Row extends Record<string, unknown>> {
+  key: keyof Row | string;
+  label: string;
+  render?: (row: Row) => ReactNode;
 }

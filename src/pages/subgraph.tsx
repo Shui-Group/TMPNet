@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import Header from "@/components/Header";
 import Legend from "@/components/Legend";
@@ -6,7 +7,7 @@ import NetworkGraph from "@/components/NetworkGraph";
 
 import DataTable from "@/components/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { LayoutPayload, SubgraphData } from "@/lib/types";
+import type { LayoutPayload, SubgraphData, TableColumn } from "@/lib/types";
 import type { CytoscapeElements } from "@/lib/graphUtils";
 import {
   layoutPayloadToPositionMap,
@@ -26,6 +27,26 @@ export default function SubgraphPage() {
   const [graphError, setGraphError] = useState<string | null>(null);
   const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
 
+  type NodeTableRow = {
+    id: string;
+    label: string;
+    description: string;
+    geneSymbol: string;
+    family: string;
+    expressionTissue: string;
+  };
+
+  type EdgeTableRow = {
+    id: string;
+    source: string;
+    target: string;
+    fusionPredProb: string;
+    enrichedTissue: string;
+    positiveType: string;
+    structureStatus: string;
+    structureModelId?: string;
+  };
+
   const handleGraphError = useCallback((err: unknown) => {
     const message =
       err instanceof Error
@@ -41,7 +62,7 @@ export default function SubgraphPage() {
 
   // Column definitions for data tables
   const nodeColumns = useMemo(
-    () => [
+    (): TableColumn<NodeTableRow>[] => [
       { key: "id", label: "Protein" },
       { key: "label", label: "Entry Name" },
       { key: "description", label: "Description" },
@@ -53,13 +74,28 @@ export default function SubgraphPage() {
   );
 
   const edgeColumns = useMemo(
-    () => [
+    (): TableColumn<EdgeTableRow>[] => [
       { key: "id", label: "Edge" },
       { key: "source", label: "Protein 1" },
       { key: "target", label: "Protein 2" },
       { key: "fusionPredProb", label: "Fusion Pred. Prob" },
       { key: "enrichedTissue", label: "Enriched Tissue" },
       { key: "positiveType", label: "Positive Type" },
+      {
+        key: "structureStatus",
+        label: "Structure",
+        render: (row) =>
+          row.structureModelId ? (
+            <Link
+              href={`/structures/${encodeURIComponent(row.structureModelId)}`}
+              className="inline-flex items-center rounded-full border border-emerald-700/20 bg-emerald-700/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-800 transition-colors hover:border-emerald-700/35 hover:bg-emerald-700/15"
+            >
+              View model
+            </Link>
+          ) : (
+            <span className="text-gray-400">N/A</span>
+          ),
+      },
     ],
     []
   );
@@ -105,6 +141,8 @@ export default function SubgraphPage() {
       fusionPredProb: edge.fusionPredProb.toFixed(3),
       enrichedTissue: edge.enrichedTissue ?? "",
       positiveType: edge.positiveType,
+      structureStatus: edge.hasStructureModel ? "Available" : "N/A",
+      structureModelId: edge.structureModelId,
     }));
   }, [data]);
 
@@ -317,9 +355,9 @@ export default function SubgraphPage() {
                             )}
                           </div>
                           <div className="mt-1 text-sm text-gray-600">
-                            <p><span className="font-medium">Entry Name:</span> {qp.entryName || "—"}</p>
-                            <p><span className="font-medium">Gene Symbol:</span> {qp.geneSymbol || "—"}</p>
-                            <p><span className="font-medium">Description:</span> {qp.description || "—"}</p>
+                            <p><span className="font-medium">Entry Name:</span> {qp.entryName || "N/A"}</p>
+                            <p><span className="font-medium">Gene Symbol:</span> {qp.geneSymbol || "N/A"}</p>
+                            <p><span className="font-medium">Description:</span> {qp.description || "N/A"}</p>
                           </div>
                         </div>
                       ))}

@@ -11,6 +11,10 @@ import {
   transformStructureModelRecord,
 } from "@/lib/structureModels";
 import {
+  buildStructureAssetLinks,
+  readStructureConfidenceSummary,
+} from "@/lib/structureAssets";
+import {
   transformEdgeToResponse,
   transformNodeToResponse,
 } from "@/lib/transforms";
@@ -19,7 +23,7 @@ const structureSelect =
   "model_id,edge,protein1,protein2,folder_protein1,folder_protein2,variant,source,cif_rel_path,cif_size_bytes,summary_confidences_rel_path,summary_confidences,summary_iptm,summary_ptm,summary_ranking_score,summary_fraction_disordered,summary_has_clash,confidences_rel_path,confidences_size_bytes,has_confidences";
 
 const edgeSelect =
-  "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,tissue_enriched_confidence,positive_type,gene_symbol1,gene_symbol2";
+  "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,tissue_enriched_confidence,positive_type,gene_symbol1,gene_symbol2,string_combined_score,biogrid_experimental_system_type,hitpredict_confidence";
 
 type ErrorResponse = { error: string };
 
@@ -96,9 +100,23 @@ export default async function handler(
     .filter((node): node is Node => Boolean(node))
     .map(transformNodeToResponse);
 
+  const confidenceSummary = await readStructureConfidenceSummary({
+    confidences_rel_path: structureRecord.confidences_rel_path,
+    has_confidences: structureRecord.has_confidences,
+  });
+
+  const assets = buildStructureAssetLinks(structureRecord.model_id);
+
   return res.status(200).json({
     model: transformStructureModelRecord(structureRecord),
-    edge: transformEdgeToResponse(edgeData as Edge),
+    edge: {
+      ...transformEdgeToResponse(edgeData as Edge),
+      structureModelId: structureRecord.model_id,
+      structureVariant: structureRecord.variant,
+      hasStructureModel: true,
+    },
     proteins: orderedProteins,
+    assets,
+    confidenceSummary,
   });
 }

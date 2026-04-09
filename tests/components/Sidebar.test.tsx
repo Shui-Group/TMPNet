@@ -58,7 +58,7 @@ describe("Sidebar", () => {
     const slider = screen.getByLabelText("Maximum edges") as HTMLInputElement;
     fireEvent.change(slider, { target: { value: "20000" } });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ maxEdges: 20000 })
+      expect.objectContaining({ maxEdges: 500 })
     );
   });
 

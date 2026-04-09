@@ -45,5 +45,9 @@ export function transformEdgeToResponse(dbEdge: Edge): EdgeResponse {
     positiveType: dbEdge.positive_type || "",
     geneSymbol1: dbEdge.gene_symbol1 || null,
     geneSymbol2: dbEdge.gene_symbol2 || null,
+    stringCombinedScore: dbEdge.string_combined_score ?? null,
+    biogridExperimentalSystemType:
+      dbEdge.biogrid_experimental_system_type || null,
+    hitpredictConfidence: dbEdge.hitpredict_confidence || null,
   };
 }
