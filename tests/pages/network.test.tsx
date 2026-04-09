@@ -60,11 +60,12 @@ describe("Network page", () => {
       )
       .mockResolvedValueOnce(
         createJsonResponse({
-          nodes: [],
-          edges: [],
+          elements: [],
           meta: {
             totalNodes: 10,
             totalEdges: 20,
+            renderedEdges: 20,
+            view: "overview",
           },
         })
       );
@@ -73,7 +74,49 @@ describe("Network page", () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenNthCalledWith(1, "/api/network/stats");
-      expect(mockFetch).toHaveBeenNthCalledWith(2, "/api/network");
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/network?view=overview&format=cyto&detail=slim"
+      );
+    });
+  });
+
+  it("does not auto-hydrate the full graph when no full artifact is available", async () => {
+    mockFetch
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          totalNodes: 10,
+          totalEdges: 20,
+          familyCounts: {},
+          enrichedEdgeCount: 5,
+          predictedEdgeCount: 7,
+        })
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          elements: [],
+          meta: {
+            totalNodes: 10,
+            totalEdges: 20,
+            renderedEdges: 5,
+            view: "overview",
+            fullArtifactAvailable: false,
+          },
+        })
+      );
+
+    render(<NetworkPage />);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenNthCalledWith(1, "/api/network/stats");
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/network?view=overview&format=cyto&detail=slim"
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 });

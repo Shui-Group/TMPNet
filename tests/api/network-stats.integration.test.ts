@@ -54,7 +54,7 @@ describe("/api/network/stats integration", () => {
               }
               if (edgesSelectCall === 3) {
                 return {
-                  eq: jest.fn(() =>
+                  ilike: jest.fn(() =>
                     Promise.resolve({ count: 120, error: null })
                   ),
                 };

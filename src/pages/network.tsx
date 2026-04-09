@@ -7,15 +7,11 @@ import NetworkGraph from "@/components/NetworkGraph";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type {
   LayoutPayload,
-  NetworkData,
+  NetworkElementsResponse,
   NetworkMeta,
   NetworkStats,
 } from "@/lib/types";
 import type { CytoscapeElements } from "@/lib/graphUtils";
-import {
-  layoutPayloadToPositionMap,
-  toCytoscapeElements,
-} from "@/lib/graphUtils";
 
 export default function Home() {
   const [stats, setStats] = useState<NetworkStats | null>(null);
@@ -26,7 +22,7 @@ export default function Home() {
   const [graphError, setGraphError] = useState<string | null>(null);
   const [graphMeta, setGraphMeta] = useState<NetworkMeta | null>(null);
   const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
-  const networkCacheRef = useRef<NetworkData | null>(null);
+  const networkCacheRef = useRef<NetworkElementsResponse | null>(null);
 
   const handleGraphError = useCallback((err: unknown) => {
     const message =
@@ -59,18 +55,10 @@ export default function Home() {
     fetchStats();
   }, []);
 
-  const applyNetworkData = useCallback((network: NetworkData) => {
-    const layout = network.layout ?? null;
-    setGraphLayout(layout);
+  const applyNetworkData = useCallback((network: NetworkElementsResponse) => {
     setGraphMeta(network.meta ?? null);
-    const layoutPositions = layoutPayloadToPositionMap(layout);
-    setGraphElements(
-      toCytoscapeElements({
-        nodes: network.nodes,
-        edges: network.edges,
-        layoutPositions,
-      })
-    );
+    setGraphElements(network.elements ?? []);
+    setGraphLayout(network.layout ?? null);
   }, []);
 
   useEffect(() => {
@@ -86,14 +74,42 @@ export default function Home() {
           setGraphLoading(true);
         }
         setGraphError(null);
-        const response = await fetch("/api/network");
+        const response = await fetch(
+          "/api/network?view=overview&format=cyto&detail=slim"
+        );
         if (!response.ok) {
           throw new Error(`Failed to fetch network: ${response.statusText}`);
         }
-        const data = (await response.json()) as NetworkData;
+        const data = (await response.json()) as NetworkElementsResponse;
         if (cancelled) return;
         networkCacheRef.current = data;
         applyNetworkData(data);
+
+        const shouldHydrateFull =
+          data.meta?.fullArtifactAvailable === true &&
+          (data.meta?.renderedEdges ?? 0) > 0 &&
+          (data.meta?.renderedEdges ?? 0) < (data.meta?.totalEdges ?? 0);
+
+        if (shouldHydrateFull) {
+          void fetch("/api/network?view=full&format=cyto&detail=slim")
+            .then(async (fullResponse) => {
+              if (!fullResponse.ok) {
+                throw new Error(
+                  `Failed to hydrate full network: ${fullResponse.statusText}`
+                );
+              }
+              return (await fullResponse.json()) as NetworkElementsResponse;
+            })
+            .then((fullData) => {
+              if (cancelled) return;
+              networkCacheRef.current = fullData;
+              applyNetworkData(fullData);
+            })
+            .catch((err) => {
+              if (cancelled) return;
+              console.error("Error hydrating full network:", err);
+            });
+        }
       } catch (err) {
         if (cancelled) return;
         const message =
@@ -143,6 +159,7 @@ export default function Home() {
               isLoading={graphLoading}
               onError={handleGraphError}
               layoutMetadata={graphLayout}
+              preferPresetLayout
             />
             <div className="pointer-events-auto absolute top-4 right-4 z-20">
               <Legend />

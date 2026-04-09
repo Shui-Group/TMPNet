@@ -11,6 +11,7 @@ import { EdgeResponse, LayoutPayload, NodeResponse } from "./types";
 export type CytoscapeNode = NodeDefinition;
 export type CytoscapeEdge = EdgeDefinition;
 export type CytoscapeElements = ElementDefinition[];
+export type GraphDetailLevel = "full" | "slim";
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 const clamp = (value: number, min: number, max: number) =>
@@ -167,7 +168,8 @@ export function buildInitialPositionMap(
 export function nodesToCy(
   nodes: NodeResponse[],
   showAllLabels = false,
-  degreeMap: NodeDegreeMap = {}
+  degreeMap: NodeDegreeMap = {},
+  detailLevel: GraphDetailLevel = "full"
 ): CytoscapeNode[] {
   return nodes.map((node) => {
     const isQuery = Boolean(node.isQuery);
@@ -183,15 +185,20 @@ export function nodesToCy(
         showLabel,
         degree,
         size: getNodeSize(degree, { isQuery, showLabel }),
+        geneSymbol: node.geneSymbol,
+      },
+    };
+    if (detailLevel === "full") {
+      nodeDef.data = {
+        ...nodeDef.data,
         entryName: node.entryName,
         description: node.description,
-        geneSymbol: node.geneSymbol,
         expressionTissue: node.expressionTissue,
         tooltip: [node.label, node.geneSymbol, node.family]
           .filter(Boolean)
           .join(" · "),
-      },
-    };
+      };
+    }
     const position = node.position;
     if (
       position &&
@@ -232,34 +239,46 @@ type GraphLikeData = {
   layoutPositions?: LayoutPositionMap;
 };
 
+type ToCytoscapeOptions = {
+  showAllLabels?: boolean;
+  detailLevel?: GraphDetailLevel;
+};
+
 export function toCytoscapeElements(
   data: GraphLikeData,
-  showAllLabels = false
+  options: boolean | ToCytoscapeOptions = false
 ): CytoscapeElements {
+  const showAllLabels =
+    typeof options === "boolean" ? options : Boolean(options.showAllLabels);
+  const detailLevel =
+    typeof options === "boolean" ? "full" : options.detailLevel ?? "full";
   const degreeMap = buildNodeDegreeMap(data.edges);
   const positions =
     data.layoutPositions ?? buildInitialPositionMap(data.nodes, degreeMap);
-  const nodeElements = nodesToCy(data.nodes, showAllLabels, degreeMap).map(
-    (node) => {
-      const hasPreset =
-        Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y);
-      if (hasPreset || !positions) {
-        return node;
-      }
-      const nodeId = node.data.id;
-      if (typeof nodeId !== "string") {
-        return node;
-      }
-      const position = positions[nodeId];
-      if (position) {
-        return {
-          ...node,
-          position,
-          locked: true,
-        };
-      }
+  const nodeElements = nodesToCy(
+    data.nodes,
+    showAllLabels,
+    degreeMap,
+    detailLevel
+  ).map((node) => {
+    const hasPreset =
+      Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y);
+    if (hasPreset || !positions) {
       return node;
     }
-  );
+    const nodeId = node.data.id;
+    if (typeof nodeId !== "string") {
+      return node;
+    }
+    const position = positions[nodeId];
+    if (position) {
+      return {
+        ...node,
+        position,
+        locked: true,
+      };
+    }
+    return node;
+  });
   return [...nodeElements, ...edgesToCy(data.edges)];
 }

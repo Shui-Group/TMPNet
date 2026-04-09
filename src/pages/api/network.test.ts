@@ -6,6 +6,10 @@
 import { createMocks } from "node-mocks-http";
 import handler from "./network";
 import { supabase } from "@/lib/supabase";
+import {
+  hasNetworkArtifact,
+  readNetworkArtifact,
+} from "@/lib/networkArtifacts";
 import type { Edge, Node } from "@/lib/types";
 
 // Mock the Supabase client
@@ -13,6 +17,17 @@ jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
   },
+}));
+
+jest.mock("@/lib/networkArtifacts", () => ({
+  hasNetworkArtifact: jest.fn(async () => false),
+  readNetworkArtifact: jest.fn(async () => null),
+  buildArtifactLayoutPayload: jest.fn((layoutVersion: string) => ({
+    graphKey: `artifact:${layoutVersion}`,
+    layoutVersion,
+    positions: [],
+    positionsNeeded: false,
+  })),
 }));
 
 type NodesMockConfig = {
@@ -342,6 +357,15 @@ class TableMock {
       return new MockEdgeDataBuilder(this.state.edges);
     }
 
+    if (this.table === "graph_layout_cache") {
+      const chain = {
+        data: [],
+        error: null,
+        eq: jest.fn(() => chain),
+      };
+      return chain;
+    }
+
     return Promise.resolve({ data: null, error: null });
   }
 }
@@ -378,6 +402,8 @@ const setupSupabaseMock = (config: Partial<SupabaseMockState>) => {
 describe("/api/network", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (hasNetworkArtifact as jest.Mock).mockResolvedValue(false);
+    (readNetworkArtifact as jest.Mock).mockResolvedValue(null);
   });
 
   it("should return 200 with nodes and edges arrays", async () => {
@@ -1162,5 +1188,114 @@ describe("/api/network", () => {
       "COMBO1",
       "PRED2",
     ]);
+  });
+
+  it("returns slim Cytoscape elements for overview mode", async () => {
+    const mockNodes: Node[] = [
+      {
+        protein: "P12345",
+        entry_name: "PROT1_HUMAN",
+        description: "Test protein 1",
+        gene_symbol: "GENE1",
+        family: "TM",
+        expression_tissue: "Brain\\Kidney",
+      },
+    ];
+
+    const mockEdges: Edge[] = [
+      {
+        edge: "P12345_P12345",
+        protein1: "P12345",
+        protein2: "P12345",
+        fusion_pred_prob: 0.95,
+        enriched_tissue: null,
+        tissue_enriched_confidence: null,
+        positive_type: "experiment",
+        gene_symbol1: null,
+        gene_symbol2: null,
+      },
+    ];
+
+    setupSupabaseMock({
+      nodes: {
+        data: mockNodes,
+        count: mockNodes.length,
+      },
+      edges: {
+        totalCount: mockEdges.length,
+        experimentalEdges: mockEdges,
+        experimentalCount: mockEdges.length,
+      },
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+      query: {
+        view: "overview",
+        format: "cyto",
+        detail: "slim",
+      },
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.meta).toMatchObject({
+      totalNodes: 1,
+      totalEdges: 1,
+      renderedEdges: 1,
+      view: "overview",
+    });
+    expect(Array.isArray(data.elements)).toBe(true);
+    const nodeElement = data.elements.find(
+      (element: { data?: { id?: string } }) => element.data?.id === "P12345"
+    );
+    expect(nodeElement?.data?.description).toBeUndefined();
+    expect(nodeElement?.data?.expressionTissue).toBeUndefined();
+    expect(nodeElement?.data?.tooltip).toBeUndefined();
+  });
+
+  it("reports whether a full overview artifact is available", async () => {
+    (hasNetworkArtifact as jest.Mock).mockResolvedValue(true);
+    (readNetworkArtifact as jest.Mock).mockResolvedValue({
+      version: "artifact-v1",
+      elements: [
+        {
+          data: {
+            id: "P12345",
+            label: "GENE1",
+          },
+          position: { x: 1, y: 2 },
+        },
+      ],
+      meta: {
+        totalNodes: 1,
+        totalEdges: 10,
+        renderedEdges: 5,
+        view: "overview",
+        artifactVersion: "artifact-v1",
+      },
+      layout: null,
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+      query: {
+        view: "overview",
+        format: "cyto",
+        detail: "slim",
+      },
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.meta).toMatchObject({
+      view: "overview",
+      fullArtifactAvailable: true,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });

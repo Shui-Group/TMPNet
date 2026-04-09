@@ -95,6 +95,10 @@ export interface NetworkTimings {
 export interface NetworkMeta {
   totalNodes: number;
   totalEdges: number;
+  renderedEdges?: number;
+  view?: "overview" | "full";
+  artifactVersion?: string;
+  fullArtifactAvailable?: boolean;
   timings?: NetworkTimings;
 }
 
@@ -103,6 +107,12 @@ export interface NetworkData {
   edges: EdgeResponse[];
   meta?: NetworkMeta;
   layout?: LayoutPayload;
+}
+
+export interface NetworkElementsResponse {
+  elements: import("./graphUtils").CytoscapeElements;
+  meta?: NetworkMeta;
+  layout?: LayoutPayload | null;
 }
 
 /**

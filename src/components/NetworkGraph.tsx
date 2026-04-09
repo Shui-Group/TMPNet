@@ -129,6 +129,7 @@ interface NetworkGraphProps {
   onError?: (err: unknown) => void;
   layout?: LayoutOptions;
   layoutMetadata?: LayoutPayload | null;
+  preferPresetLayout?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customStyles?: any[];
 }
@@ -140,6 +141,7 @@ export default function NetworkGraph({
   onError,
   layout = fcoseLayout,
   layoutMetadata = null,
+  preferPresetLayout = false,
   customStyles,
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -169,6 +171,7 @@ export default function NetworkGraph({
     [elements]
   );
   const largeGraph = edgeCount > largeGraphThreshold;
+  const tooltipEnabled = !largeGraph;
 
   useEffect(() => {
     (async () => {
@@ -234,11 +237,8 @@ export default function NetworkGraph({
   }, []);
 
   const shouldSkipLayout = useMemo(() => {
-    const layoutPositionsKnown =
-      layoutMetadata &&
-      !layoutMetadata.positionsNeeded &&
-      layoutMetadata.positions.length > 0;
-    if (!layoutPositionsKnown) return false;
+    if (!preferPresetLayout) return false;
+    if (layoutMetadata?.positionsNeeded !== false) return false;
     const nodeElements = elements.filter(isNodeElement);
     if (nodeElements.length === 0) return false;
     return nodeElements.every((node) => {
@@ -250,7 +250,7 @@ export default function NetworkGraph({
         Number.isFinite(pos.y)
       );
     });
-  }, [elements, layoutMetadata]);
+  }, [elements, layoutMetadata?.positionsNeeded, preferPresetLayout]);
 
   // apply elements and run layout (progressive: nodes + seed edges first)
   useEffect(() => {
@@ -402,6 +402,7 @@ export default function NetworkGraph({
 
   useEffect(() => {
     if (!ready || !cyRef.current) return;
+    if (!tooltipEnabled) return;
     const cy = cyRef.current;
 
     const handleNodeOver = (event: EventObject) => {
@@ -465,7 +466,7 @@ export default function NetworkGraph({
       cy.off("drag", "node", handleNodeOut);
       cy.off("viewport", handleViewportChange);
     };
-  }, [hideTooltip, ready]);
+  }, [hideTooltip, ready, tooltipEnabled]);
 
   return (
     <div

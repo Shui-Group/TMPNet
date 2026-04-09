@@ -3,9 +3,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { NetworkStats } from "@/lib/types";
+import { readNetworkStatsArtifact } from "@/lib/networkArtifacts";
 
 const EDGE_COUNT_BATCH_INITIAL = 50000;
 const EDGE_COUNT_BATCH_MIN = 5000;
+const STATS_CACHE_CONTROL_HEADER =
+  "public, s-maxage=3600, stale-while-revalidate=86400";
 
 type EdgeColumn = "enriched_tissue" | "positive_type";
 
@@ -89,9 +92,8 @@ async function countPredictedEdges(): Promise<number> {
   }
 
   console.warn("Falling back to batch scan for predicted edge count", error);
-  return countEdgesByScanning(
-    "positive_type",
-    (value) => (value || "").toLowerCase().includes("prediction")
+  return countEdgesByScanning("positive_type", (value) =>
+    (value || "").toLowerCase().includes("prediction")
   );
 }
 
@@ -112,6 +114,12 @@ export default async function handler(
   }
 
   try {
+    const artifactStats = await readNetworkStatsArtifact();
+    if (artifactStats) {
+      res.setHeader("Cache-Control", STATS_CACHE_CONTROL_HEADER);
+      return res.status(200).json(artifactStats);
+    }
+
     // Count total nodes
     const { count: nodeCount, error: nodeError } = await supabase
       .from("nodes")
@@ -176,6 +184,7 @@ export default async function handler(
       predictedEdgeCount: predictedEdgeCount || 0,
     };
 
+    res.setHeader("Cache-Control", STATS_CACHE_CONTROL_HEADER);
     return res.status(200).json(stats);
   } catch (error) {
     console.error("Unexpected error in /api/network/stats:", error);

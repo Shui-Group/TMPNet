@@ -27,6 +27,7 @@ const createCountChain = (count: number) => {
   };
 
   chain.eq = jest.fn(() => chain);
+  chain.ilike = jest.fn(() => chain);
   chain.gte = jest.fn(() => chain);
   chain.in = jest.fn(() => chain);
   chain.order = jest.fn(() => chain);

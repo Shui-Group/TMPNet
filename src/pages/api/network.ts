@@ -7,6 +7,7 @@ import type {
   LayoutCacheRecord,
   LayoutPayload,
   NetworkData,
+  NetworkElementsResponse,
   NetworkMeta,
   NetworkTimings,
   Node,
@@ -15,11 +16,15 @@ import {
   transformEdgeToResponse,
   transformNodeToResponse,
 } from "@/lib/transforms";
-import type { CytoscapeElements } from "@/lib/graphUtils";
 import {
   layoutPayloadToPositionMap,
   toCytoscapeElements,
 } from "@/lib/graphUtils";
+import {
+  buildArtifactLayoutPayload,
+  hasNetworkArtifact,
+  readNetworkArtifact,
+} from "@/lib/networkArtifacts";
 import {
   CURRENT_LAYOUT_VERSION,
   buildGraphKey,
@@ -31,17 +36,14 @@ import {
  * GET /api/network
  * Returns all nodes and edges from the database
  */
-type NetworkElementsResponse = {
-  elements: CytoscapeElements;
-  meta?: NetworkMeta;
-};
-
 type NetworkResponseBody =
   | NetworkData
   | NetworkElementsResponse
   | { error: string };
 
 type PositiveType = "experiment" | "prediction";
+type GraphView = "overview" | "full";
+type GraphDetailLevel = "full" | "slim";
 
 type EdgeFilters = {
   minProb: number;
@@ -54,8 +56,11 @@ const ALLOWED_POSITIVE_TYPES = new Set<PositiveType>([
 ]);
 const DEFAULT_POSITIVE_TYPES: PositiveType[] = ["experiment", "prediction"];
 const EDGE_PAGE_LIMIT = 10_000;
+const DEFAULT_OVERVIEW_MAX_EDGES = 20_000;
 
 const CACHE_CONTROL_HEADER = "public, s-maxage=60, stale-while-revalidate=300";
+const ARTIFACT_CACHE_CONTROL_HEADER =
+  "public, s-maxage=3600, stale-while-revalidate=86400";
 
 const edgeSelect =
   "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,tissue_enriched_confidence,positive_type";
@@ -88,6 +93,20 @@ const parseFormat = (value: string | string[] | undefined): "json" | "cyto" => {
   if (typeof value === "undefined") return "json";
   const str = (Array.isArray(value) ? value[0] : value).toLowerCase();
   return str === "cyto" ? "cyto" : "json";
+};
+
+const parseView = (value: string | string[] | undefined): GraphView => {
+  if (typeof value === "undefined") return "full";
+  const str = (Array.isArray(value) ? value[0] : value).toLowerCase();
+  return str === "overview" ? "overview" : "full";
+};
+
+const parseDetailLevel = (
+  value: string | string[] | undefined
+): GraphDetailLevel => {
+  if (typeof value === "undefined") return "full";
+  const str = (Array.isArray(value) ? value[0] : value).toLowerCase();
+  return str === "slim" ? "slim" : "full";
 };
 
 const parsePositiveTypes = (
@@ -135,6 +154,10 @@ const clampMaxEdges = (value: number, fallback: number) => {
   if (!Number.isFinite(value) || value <= 0) return fallback;
   return Math.max(1, Math.floor(value));
 };
+
+const hasDefaultPositiveTypes = (positiveTypes: PositiveType[]) =>
+  positiveTypes.length === DEFAULT_POSITIVE_TYPES.length &&
+  DEFAULT_POSITIVE_TYPES.every((type) => positiveTypes.includes(type));
 
 const applyNodeFilter = <T>(query: T, nodeIds: string[]): T => {
   if (nodeIds.length === 0) return query;
@@ -218,6 +241,8 @@ export default async function handler(
 
     const preferExperimental =
       (req.query.preferExperimental as string | undefined) !== "false";
+    const view = parseView(req.query.view);
+    const detailLevel = parseDetailLevel(req.query.detail);
     const positiveTypes = parsePositiveTypes(
       req.query.positiveType,
       preferExperimental
@@ -230,6 +255,43 @@ export default async function handler(
       minProb,
       nodeIds,
     };
+
+    const shouldUseArtifact =
+      format === "cyto" &&
+      includeEdges &&
+      nodeIds.length === 0 &&
+      minProb === 0 &&
+      preferExperimental &&
+      hasDefaultPositiveTypes(positiveTypes) &&
+      typeof req.query.maxEdges === "undefined";
+
+    const fullArtifactAvailable =
+      view === "overview" &&
+      nodeIds.length === 0 &&
+      minProb === 0 &&
+      preferExperimental &&
+      hasDefaultPositiveTypes(positiveTypes) &&
+      typeof req.query.maxEdges === "undefined"
+        ? await hasNetworkArtifact("full")
+        : undefined;
+
+    if (shouldUseArtifact) {
+      const artifact = await readNetworkArtifact(view);
+      if (artifact) {
+        res.setHeader("Cache-Control", ARTIFACT_CACHE_CONTROL_HEADER);
+        return res.status(200).json({
+          elements: artifact.elements,
+          meta: {
+            ...artifact.meta,
+            ...(typeof fullArtifactAvailable === "boolean"
+              ? { fullArtifactAvailable }
+              : {}),
+          },
+          layout:
+            artifact.layout ?? buildArtifactLayoutPayload(artifact.version),
+        });
+      }
+    }
 
     const nodesStart = performance.now();
     let nodesQuery = supabase.from("nodes").select("*", { count: "exact" });
@@ -298,10 +360,14 @@ export default async function handler(
     });
 
     const totalEdges = totalEdgesCount;
-    const fallbackMaxEdges = Math.max(
+    const fullEdgeCount = Math.max(
       totalEdges,
       Object.values(countsByType).reduce((sum, count) => sum + (count ?? 0), 0)
     );
+    const fallbackMaxEdges =
+      view === "overview"
+        ? Math.min(DEFAULT_OVERVIEW_MAX_EDGES, fullEdgeCount)
+        : fullEdgeCount;
     const maxEdges =
       typeof req.query.maxEdges === "undefined"
         ? fallbackMaxEdges
@@ -444,17 +510,25 @@ export default async function handler(
     const meta: NetworkMeta = {
       totalNodes,
       totalEdges,
+      renderedEdges: edgesResp.length,
+      view,
+      ...(typeof fullArtifactAvailable === "boolean"
+        ? { fullArtifactAvailable }
+        : {}),
       timings,
     };
 
     res.setHeader("Cache-Control", CACHE_CONTROL_HEADER);
 
     if (format === "cyto") {
-      const elements = toCytoscapeElements({
-        nodes: nodesWithPositions,
-        edges: edgesResp,
-        layoutPositions: layoutPositionMap,
-      });
+      const elements = toCytoscapeElements(
+        {
+          nodes: nodesWithPositions,
+          edges: edgesResp,
+          layoutPositions: layoutPositionMap,
+        },
+        { detailLevel }
+      );
       return res.status(200).json({ elements, meta, layout });
     }
 

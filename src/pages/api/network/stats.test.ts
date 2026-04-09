@@ -6,11 +6,16 @@
 import { createMocks } from "node-mocks-http";
 import handler from "./stats";
 import { supabase } from "@/lib/supabase";
+import { readNetworkStatsArtifact } from "@/lib/networkArtifacts";
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
   },
+}));
+
+jest.mock("@/lib/networkArtifacts", () => ({
+  readNetworkStatsArtifact: jest.fn(async () => null),
 }));
 
 const fromMock = supabase.from as jest.Mock;
@@ -85,6 +90,30 @@ const createCountBuilder = (
 describe("/api/network/stats", () => {
   beforeEach(() => {
     fromMock.mockReset();
+    (readNetworkStatsArtifact as jest.Mock).mockResolvedValue(null);
+  });
+
+  it("returns precomputed stats when an artifact is available", async () => {
+    (readNetworkStatsArtifact as jest.Mock).mockResolvedValue({
+      totalNodes: 111,
+      totalEdges: 222,
+      familyCounts: { GPCR: 12 },
+      enrichedEdgeCount: 33,
+      predictedEdgeCount: 44,
+    });
+
+    const { req, res } = createMocks({ method: "GET" });
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    expect(JSON.parse(res._getData())).toEqual({
+      totalNodes: 111,
+      totalEdges: 222,
+      familyCounts: { GPCR: 12 },
+      enrichedEdgeCount: 33,
+      predictedEdgeCount: 44,
+    });
+    expect(fromMock).not.toHaveBeenCalled();
   });
 
   it("returns aggregate counts and family distribution", async () => {

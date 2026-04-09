@@ -138,4 +138,34 @@ describe("NetworkGraph component", () => {
     expect(screen.getByText("PROT_HUMAN")).toBeInTheDocument();
     expect(screen.getByText("Protein description")).toBeInTheDocument();
   });
+
+  it("runs layout when preset positions are only placeholders", async () => {
+    render(
+      <NetworkGraph
+        elements={[
+          {
+            ...baseNode,
+            position: { x: 10, y: 20 },
+          },
+        ]}
+        preferPresetLayout
+        layoutMetadata={{
+          graphKey: "network:test",
+          layoutVersion: "v1",
+          positions: [],
+          positionsNeeded: true,
+        }}
+      />
+    );
+
+    await waitFor(() => expect(cytoscapeMock).toHaveBeenCalled());
+
+    const core = cytoscapeMock.__core as
+      | ReturnType<typeof createCoreMock>
+      | undefined;
+
+    await waitFor(() => {
+      expect(core?.layout).toHaveBeenCalled();
+    });
+  });
 });
