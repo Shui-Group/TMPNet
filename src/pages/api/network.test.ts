@@ -734,7 +734,7 @@ describe("/api/network", () => {
       "EXP1",
       "PRED1",
     ]);
-    expect(data.meta.filteredEdges).toBe(2);
+    expect(data.meta.filteredEdges).toBeUndefined();
   });
 
   it("does not cap returned edges when maxEdges is omitted", async () => {
@@ -782,11 +782,11 @@ describe("/api/network", () => {
     expect(res._getStatusCode()).toBe(200);
     const data = JSON.parse(res._getData());
     expect(data.edges).toHaveLength(50001);
-    expect(data.meta.filteredEdges).toBe(50001);
     expect(data.meta.totalEdges).toBe(50001);
+    expect(data.meta.filteredEdges).toBeUndefined();
   });
 
-  it("clamps maxEdges and reports filteredEdges", async () => {
+  it("clamps maxEdges without exposing filtered edge metadata", async () => {
     const mockNodes: Node[] = [
       {
         protein: "P00001",
@@ -842,10 +842,58 @@ describe("/api/network", () => {
     expect(res._getStatusCode()).toBe(200);
     const data = JSON.parse(res._getData());
     expect(data.edges).toHaveLength(1);
-    expect(data.meta.filteredEdges).toBe(1);
+    expect(data.meta.filteredEdges).toBeUndefined();
     expect(res.getHeader("Cache-Control")).toBe(
       "public, s-maxage=60, stale-while-revalidate=300"
     );
+  });
+
+  it("does not apply a default minProb filter to total network requests", async () => {
+    const mockNodes: Node[] = [
+      {
+        protein: "P00001",
+        entry_name: "NODE1",
+        description: null,
+        gene_symbol: null,
+        family: null,
+        expression_tissue: null,
+      },
+    ];
+
+    const predictionEdges: Edge[] = [
+      {
+        edge: "PRED_LOW",
+        protein1: "P00001",
+        protein2: "P00001",
+        fusion_pred_prob: 0.1,
+        enriched_tissue: null,
+        tissue_enriched_confidence: null,
+        positive_type: "prediction",
+        gene_symbol1: null,
+        gene_symbol2: null,
+      },
+    ];
+
+    setupSupabaseMock({
+      nodes: { data: mockNodes, count: mockNodes.length },
+      edges: {
+        totalCount: predictionEdges.length,
+        predictionEdges,
+        predictionCount: predictionEdges.length,
+      },
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.edges).toHaveLength(1);
+    expect(data.edges[0].id).toBe("PRED_LOW");
+    expect(data.meta.totalEdges).toBe(1);
   });
 
   it("filters edges by positiveType=prediction", async () => {
@@ -909,7 +957,7 @@ describe("/api/network", () => {
     const data = JSON.parse(res._getData());
     expect(data.edges).toHaveLength(1);
     expect(data.edges[0].positiveType).toBe("prediction");
-    expect(data.meta.filteredEdges).toBe(1);
+    expect(data.meta.filteredEdges).toBeUndefined();
   });
 
   it("returns cytoscape elements when format=cyto", async () => {
@@ -960,7 +1008,7 @@ describe("/api/network", () => {
     expect(data.meta.totalNodes).toBe(mockNodes.length);
   });
 
-  it("returns zero filteredEdges when edges=false", async () => {
+  it("omits filtered edge metadata when edges=false", async () => {
     const mockNodes: Node[] = [
       {
         protein: "P00001",
@@ -1004,7 +1052,7 @@ describe("/api/network", () => {
 
     const data = JSON.parse(res._getData());
     expect(data.edges).toHaveLength(0);
-    expect(data.meta.filteredEdges).toBe(0);
+    expect(data.meta.filteredEdges).toBeUndefined();
   });
 
   it("clamps minProb between 0 and 1", async () => {

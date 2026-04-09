@@ -65,7 +65,6 @@ describe("Network page", () => {
           meta: {
             totalNodes: 10,
             totalEdges: 20,
-            filteredEdges: 20,
           },
         })
       );

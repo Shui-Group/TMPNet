@@ -13,16 +13,16 @@ const stats = {
 const meta = {
   totalNodes: 200,
   totalEdges: 500,
-  filteredEdges: 120,
 };
 
 describe("Sidebar", () => {
-  it("shows network summary data without filter controls", () => {
+  it("shows network summary data without filter controls or filtered edge stats", () => {
     render(<Sidebar stats={stats} meta={meta} />);
 
     expect(screen.getByText("Network Statistics")).toBeInTheDocument();
     expect(screen.queryByText("Network Controls")).not.toBeInTheDocument();
     expect(screen.queryByText("Edge Sources")).not.toBeInTheDocument();
+    expect(screen.queryByText("Filtered edges")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Maximum edges")).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText("Only edges among visible nodes")
