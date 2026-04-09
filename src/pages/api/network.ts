@@ -141,14 +141,22 @@ const applyNodeFilter = <T>(query: T, nodeIds: string[]): T => {
   return (query as any).in("protein1", nodeIds).in("protein2", nodeIds);
 };
 
+const applyPositiveTypeFilter = <T>(query: T, type: PositiveType): T => {
+  const pattern = type === "experiment" ? "%experiment%" : "%prediction%";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (query as any).ilike("positive_type", pattern);
+};
+
 const countEdgesByType = async (
   type: PositiveType,
   filters: EdgeFilters
 ): Promise<{ count: number; error: Error | null }> => {
-  let query = supabase
+  let query = applyPositiveTypeFilter(
+    supabase
     .from("edges")
-    .select("edge", { count: "exact", head: true })
-    .eq("positive_type", type === "experiment" ? "experiment" : "prediction");
+    .select("edge", { count: "exact", head: true }),
+    type
+  );
 
   if (type === "prediction") {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,8 +181,9 @@ const fetchEdgeSlice = async (
 
   let query = supabase
     .from("edges")
-    .select(edgeSelect)
-    .eq("positive_type", type === "experiment" ? "experiment" : "prediction");
+    .select(edgeSelect);
+
+  query = applyPositiveTypeFilter(query, type);
 
   if (type === "prediction") {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -312,15 +321,13 @@ export default async function handler(
       const fetchSlices = async (type: PositiveType) => {
         const totalForType = countsByType[type] ?? 0;
         if (totalForType === 0) return;
-
-        const limitForType = Math.min(remaining, totalForType);
         let fetched = 0;
 
-        while (fetched < limitForType && remaining > 0) {
+        while (fetched < totalForType && remaining > 0) {
           const sliceStart = fetched;
           const sliceEnd = Math.min(
             sliceStart + EDGE_PAGE_LIMIT - 1,
-            limitForType - 1
+            totalForType - 1
           );
           const { data: sliceData, error: sliceError } = await fetchEdgeSlice(
             type,

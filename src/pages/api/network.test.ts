@@ -72,6 +72,17 @@ class MockEdgeCountBuilder {
     return this;
   }
 
+  ilike(column: string, value: string) {
+    if (column === "positive_type") {
+      if (value.includes("experiment")) {
+        this.positiveType = "experiment";
+      } else if (value.includes("prediction")) {
+        this.positiveType = "prediction";
+      }
+    }
+    return this;
+  }
+
   gte(column: string, value: number) {
     if (column === "fusion_pred_prob") {
       this.minProb = value;
@@ -94,6 +105,14 @@ class MockEdgeCountBuilder {
       return edges.filter(
         (edge) => nodeSet.has(edge.protein1) && nodeSet.has(edge.protein2)
       );
+    };
+
+    const mergeUniqueEdges = (...groups: Array<Edge[] | null | undefined>) => {
+      const byId = new Map<string, Edge>();
+      groups.flat().filter(Boolean).forEach((edge) => {
+        byId.set((edge as Edge).edge, edge as Edge);
+      });
+      return Array.from(byId.values());
     };
 
     if (this.positiveType === "experiment") {
@@ -127,15 +146,15 @@ class MockEdgeCountBuilder {
       };
     }
 
-    const combined = [
-      ...filterByNodes(this.edgesState.experimentalEdges),
-      ...filterByNodes(
+    const combined = mergeUniqueEdges(
+      filterByNodes(this.edgesState.experimentalEdges),
+      filterByNodes(
         (this.edgesState.predictionEdges ?? []).filter((edge) => {
           const prob = edge.fusion_pred_prob ?? 0;
           return prob >= this.minProb;
         })
-      ),
-    ];
+      )
+    );
     const total =
       this.nodeIds == null && this.edgesState.totalCount !== undefined
         ? this.edgesState.totalCount
@@ -203,6 +222,17 @@ class MockEdgeDataBuilder {
     return this;
   }
 
+  ilike(column: string, value: string) {
+    if (column === "positive_type") {
+      if (value.includes("experiment")) {
+        this.positiveType = "experiment";
+      } else if (value.includes("prediction")) {
+        this.positiveType = "prediction";
+      }
+    }
+    return this;
+  }
+
   gte(column: string, value: number) {
     if (column === "fusion_pred_prob") {
       this.minProb = value;
@@ -242,10 +272,12 @@ class MockEdgeDataBuilder {
     if (this.positiveType === "prediction") {
       return this.filterEdges(this.edgesState.predictionEdges);
     }
-    return [
-      ...this.filterEdges(this.edgesState.experimentalEdges),
-      ...this.filterEdges(this.edgesState.predictionEdges),
-    ];
+    const byId = new Map<string, Edge>();
+    [...this.filterEdges(this.edgesState.experimentalEdges), ...this.filterEdges(this.edgesState.predictionEdges)]
+      .forEach((edge) => {
+        byId.set(edge.edge, edge);
+      });
+    return Array.from(byId.values());
   }
 
   private buildResult() {
@@ -884,5 +916,68 @@ describe("/api/network", () => {
 
     const data = JSON.parse(res._getData());
     expect(data.edges).toHaveLength(1);
+  });
+
+  it("includes combined-source edges in prediction filters and fills past overlaps", async () => {
+    const mockNodes: Node[] = [
+      {
+        protein: "P00001",
+        entry_name: "NODE1",
+        description: null,
+        gene_symbol: null,
+        family: null,
+        expression_tissue: null,
+      },
+    ];
+
+    const combinedEdge: Edge = {
+      edge: "COMBO1",
+      protein1: "P00001",
+      protein2: "P00001",
+      fusion_pred_prob: 0.99,
+      enriched_tissue: null,
+      tissue_enriched_confidence: null,
+      positive_type: "prediction & experiment",
+      gene_symbol1: null,
+      gene_symbol2: null,
+    };
+
+    const predictionOnlyEdge: Edge = {
+      edge: "PRED2",
+      protein1: "P00001",
+      protein2: "P00001",
+      fusion_pred_prob: 0.98,
+      enriched_tissue: null,
+      tissue_enriched_confidence: null,
+      positive_type: "prediction",
+      gene_symbol1: null,
+      gene_symbol2: null,
+    };
+
+    setupSupabaseMock({
+      nodes: { data: mockNodes, count: mockNodes.length },
+      edges: {
+        totalCount: 2,
+        experimentalEdges: [combinedEdge],
+        experimentalCount: 1,
+        predictionEdges: [combinedEdge, predictionOnlyEdge],
+        predictionCount: 2,
+      },
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+      query: { positiveType: "experiment,prediction", maxEdges: "2" },
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.edges).toHaveLength(2);
+    expect(data.edges.map((edge: { id: string }) => edge.id).sort()).toEqual([
+      "COMBO1",
+      "PRED2",
+    ]);
   });
 });

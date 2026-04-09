@@ -81,7 +81,7 @@ async function countPredictedEdges(): Promise<number> {
   const query = supabase
     .from("edges")
     .select("*", { count: "exact", head: true })
-    .eq("positive_type", "prediction");
+    .ilike("positive_type", "%prediction%");
 
   const { count, error } = await query;
   if (!error && typeof count === "number") {
@@ -91,7 +91,7 @@ async function countPredictedEdges(): Promise<number> {
   console.warn("Falling back to batch scan for predicted edge count", error);
   return countEdgesByScanning(
     "positive_type",
-    (value) => (value || "").toLowerCase() === "prediction"
+    (value) => (value || "").toLowerCase().includes("prediction")
   );
 }
 
@@ -101,7 +101,7 @@ async function countPredictedEdges(): Promise<number> {
  * - Total node and edge counts
  * - Family distribution (count per family type)
  * - Enriched edge count (edges with non-null enriched_tissue)
- * - Predicted edge count (edges with positive_type = 'prediction')
+ * - Predicted edge count (edges whose positive_type includes 'prediction')
  */
 export default async function handler(
   req: NextApiRequest,

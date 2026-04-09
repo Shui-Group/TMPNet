@@ -28,6 +28,7 @@ type CountOverrides = {
 
 type CountBuilder = CountResult & {
   eq: jest.Mock<CountBuilder, [string, string]>;
+  ilike: jest.Mock<CountBuilder, [string, string]>;
   gte: jest.Mock<CountBuilder, []>;
   in: jest.Mock<CountBuilder, []>;
   order: jest.Mock<CountBuilder, []>;
@@ -53,6 +54,12 @@ const createCountBuilder = (
   const builder = { ...result } as CountBuilder;
 
   builder.eq = jest.fn((_column: string, value: string) => {
+    if (overrides.eq) {
+      return buildNext(overrides.eq(value));
+    }
+    return builder;
+  });
+  builder.ilike = jest.fn((_column: string, value: string) => {
     if (overrides.eq) {
       return buildNext(overrides.eq(value));
     }
@@ -111,7 +118,7 @@ describe("/api/network/stats", () => {
                   { count: 500, error: null },
                   {
                     eq: (value) =>
-                      value === "prediction"
+                      value.includes("prediction")
                         ? { count: 320, error: null }
                         : { count: 180, error: null },
                     neq: () => ({ count: 210, error: null }),

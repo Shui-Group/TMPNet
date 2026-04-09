@@ -35,6 +35,15 @@ type StructureLookupRow = {
   variant: "plain" | "without_ag" | "optimize";
 };
 
+const applyPositiveTypeFilter = <T>(
+  query: T,
+  type: "experiment" | "prediction"
+): T => {
+  const pattern = type === "experiment" ? "%experiment%" : "%prediction%";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (query as any).ilike("positive_type", pattern);
+};
+
 /**
  * Resolves identifiers (UniProt IDs or gene symbols) to UniProt protein IDs.
  * Returns a mapping from original identifier to resolved protein ID with metadata.
@@ -231,10 +240,12 @@ export default async function handler(
       // Single protein search: Get all edges connected to the query protein (1-hop neighbors)
       if (preferExperimental) {
         // First, get experimental edges
-        const { data: expEdges, error: expErr } = await supabase
+        const { data: expEdges, error: expErr } = await applyPositiveTypeFilter(
+          supabase
           .from("edges")
-          .select(edgeSelect)
-          .eq("positive_type", "experimental")
+          .select(edgeSelect),
+          "experiment"
+        )
           .or(
             queryProteins
               .map((p) => `protein1.eq.${p},protein2.eq.${p}`)
@@ -254,9 +265,12 @@ export default async function handler(
       // Add high-probability predicted edges if we haven't hit the limit
       const remaining = Math.max(0, maxEdges - edges.length);
       if (remaining > 0) {
-        const { data: predEdges, error: predErr } = await supabase
+        const { data: predEdges, error: predErr } = await applyPositiveTypeFilter(
+          supabase
           .from("edges")
-          .select(edgeSelect)
+          .select(edgeSelect),
+          "prediction"
+        )
           .gte("fusion_pred_prob", minProb)
           .or(
             queryProteins
@@ -284,10 +298,12 @@ export default async function handler(
 
       if (preferExperimental) {
         // First, get experimental edges connecting query proteins
-        const { data: expEdges, error: expErr } = await supabase
+        const { data: expEdges, error: expErr } = await applyPositiveTypeFilter(
+          supabase
           .from("edges")
-          .select(edgeSelect)
-          .eq("positive_type", "experimental")
+          .select(edgeSelect),
+          "experiment"
+        )
           .in("protein1", queryProteins)
           .in("protein2", queryProteins)
           .limit(maxEdges);
@@ -304,9 +320,12 @@ export default async function handler(
       // Add high-probability predicted edges between query proteins
       const remaining = Math.max(0, maxEdges - edges.length);
       if (remaining > 0) {
-        const { data: predEdges, error: predErr } = await supabase
+        const { data: predEdges, error: predErr } = await applyPositiveTypeFilter(
+          supabase
           .from("edges")
-          .select(edgeSelect)
+          .select(edgeSelect),
+          "prediction"
+        )
           .gte("fusion_pred_prob", minProb)
           .in("protein1", queryProteins)
           .in("protein2", queryProteins)

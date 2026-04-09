@@ -50,6 +50,7 @@ function setupSupabaseMock({
     if (table === "edges") {
       const chain = {
         eq: jest.fn().mockReturnThis(),
+        ilike: jest.fn().mockReturnThis(),
         or: jest.fn().mockReturnThis(),
         in: jest.fn().mockReturnThis(),
         gte: jest.fn().mockReturnThis(),

@@ -6,19 +6,18 @@ interface HeaderProps {
 
 export default function Header({ title = "MemPPI" }: HeaderProps) {
   const handleDownload = () => {
-    // Trigger downloads for both files
-    // Trigger downloads for both files
+    // Trigger downloads for the latest prepared dataset files.
     const link1 = document.createElement("a");
-    link1.href = "/20251202_node_information_fixed.csv";
-    link1.download = "20251202_node_information_fixed.csv";
+    link1.href = "/20260407_nodes.csv";
+    link1.download = "20260407_nodes.csv";
     document.body.appendChild(link1);
     link1.click();
     document.body.removeChild(link1);
 
     setTimeout(() => {
       const link2 = document.createElement("a");
-      link2.href = "/20251202_edge_information_fixed.csv";
-      link2.download = "20251202_edge_information_fixed.csv";
+      link2.href = "/20260407_edges.csv";
+      link2.download = "20260407_edges.csv";
       document.body.appendChild(link2);
       link2.click();
       document.body.removeChild(link2);
