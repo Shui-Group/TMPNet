@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import Sidebar from "@/components/Sidebar";
 
 const stats = {
@@ -17,70 +17,22 @@ const meta = {
 };
 
 describe("Sidebar", () => {
-  it("toggles positive type filters and calls onChange", () => {
-    const onChange = jest.fn();
+  it("shows network summary data without filter controls", () => {
     render(
       <Sidebar
         stats={stats}
         meta={meta}
-        filters={{
-          positiveTypes: ["experiment"],
-          maxEdges: 50000,
-          onlyVisibleEdges: false,
-        }}
-        onChange={onChange}
       />
     );
 
-    fireEvent.click(screen.getByText("Predicted"));
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        positiveTypes: expect.arrayContaining(["experiment", "prediction"]),
-      })
-    );
-  });
-
-  it("updates maxEdges via slider input", () => {
-    const onChange = jest.fn();
-    render(
-      <Sidebar
-        stats={stats}
-        meta={meta}
-        filters={{
-          positiveTypes: ["experiment"],
-          maxEdges: 50000,
-          onlyVisibleEdges: false,
-        }}
-        onChange={onChange}
-      />
-    );
-
-    const slider = screen.getByLabelText("Maximum edges") as HTMLInputElement;
-    fireEvent.change(slider, { target: { value: "20000" } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ maxEdges: 500 })
-    );
-  });
-
-  it("toggles onlyVisibleEdges checkbox", () => {
-    const onChange = jest.fn();
-    render(
-      <Sidebar
-        stats={stats}
-        meta={meta}
-        filters={{
-          positiveTypes: ["experiment"],
-          maxEdges: 50000,
-          onlyVisibleEdges: false,
-        }}
-        onChange={onChange}
-      />
-    );
-
-    const checkbox = screen.getByLabelText("Only edges among visible nodes");
-    fireEvent.click(checkbox);
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ onlyVisibleEdges: true })
-    );
+    expect(screen.getByText("Network Statistics")).toBeInTheDocument();
+    expect(screen.queryByText("Network Controls")).not.toBeInTheDocument();
+    expect(screen.queryByText("Edge Sources")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Maximum edges")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Only edges among visible nodes")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("200")).toBeInTheDocument();
+    expect(screen.getByText("500")).toBeInTheDocument();
   });
 });
