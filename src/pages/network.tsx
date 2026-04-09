@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Legend from "@/components/Legend";
@@ -26,25 +26,7 @@ export default function Home() {
   const [graphError, setGraphError] = useState<string | null>(null);
   const [graphMeta, setGraphMeta] = useState<NetworkMeta | null>(null);
   const [graphLayout, setGraphLayout] = useState<LayoutPayload | null>(null);
-  const [filters, setFilters] = useState<{
-    positiveTypes: ("experiment" | "prediction")[];
-    maxEdges: number;
-    onlyVisibleEdges: boolean;
-  }>({
-    positiveTypes: ["experiment", "prediction"],
-    maxEdges: 50_000,
-    onlyVisibleEdges: false,
-  });
-  const networkCacheRef = useRef<Map<string, NetworkData>>(new Map());
-
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("maxEdges", String(filters.maxEdges));
-    if (filters.positiveTypes.length > 0) {
-      params.set("positiveType", filters.positiveTypes.join(","));
-    }
-    return params.toString();
-  }, [filters.maxEdges, filters.positiveTypes]);
+  const networkCacheRef = useRef<NetworkData | null>(null);
 
   const handleGraphError = useCallback((err: unknown) => {
     const message =
@@ -77,29 +59,26 @@ export default function Home() {
     fetchStats();
   }, []);
 
-  const applyNetworkData = useCallback(
-    (network: NetworkData) => {
-      const layout = network.layout ?? null;
-      setGraphLayout(layout);
-      setGraphMeta(network.meta ?? null);
-      const layoutPositions = layoutPayloadToPositionMap(layout);
-      setGraphElements(
-        toCytoscapeElements({
-          nodes: network.nodes,
-          edges: network.edges,
-          layoutPositions,
-        })
-      );
-    },
-    []
-  );
+  const applyNetworkData = useCallback((network: NetworkData) => {
+    const layout = network.layout ?? null;
+    setGraphLayout(layout);
+    setGraphMeta(network.meta ?? null);
+    const layoutPositions = layoutPayloadToPositionMap(layout);
+    setGraphElements(
+      toCytoscapeElements({
+        nodes: network.nodes,
+        edges: network.edges,
+        layoutPositions,
+      })
+    );
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = queryString || "__default__";
+
     async function fetchNetwork() {
       try {
-        const cached = networkCacheRef.current.get(cacheKey);
+        const cached = networkCacheRef.current;
         if (cached) {
           applyNetworkData(cached);
           setGraphLoading(false);
@@ -107,15 +86,13 @@ export default function Home() {
           setGraphLoading(true);
         }
         setGraphError(null);
-        const response = await fetch(
-          `/api/network${queryString ? `?${queryString}` : ""}`
-        );
+        const response = await fetch("/api/network");
         if (!response.ok) {
           throw new Error(`Failed to fetch network: ${response.statusText}`);
         }
         const data = (await response.json()) as NetworkData;
         if (cancelled) return;
-        networkCacheRef.current.set(cacheKey, data);
+        networkCacheRef.current = data;
         applyNetworkData(data);
       } catch (err) {
         if (cancelled) return;
@@ -134,7 +111,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [queryString, applyNetworkData]);
+  }, [applyNetworkData]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -156,12 +133,7 @@ export default function Home() {
             </div>
           </div>
         ) : stats ? (
-          <Sidebar
-            stats={stats}
-            meta={graphMeta}
-            filters={filters}
-            onChange={setFilters}
-          />
+          <Sidebar stats={stats} meta={graphMeta} />
         ) : null}
 
         <main className="flex-1 p-6">

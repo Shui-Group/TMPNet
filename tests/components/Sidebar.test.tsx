@@ -18,12 +18,7 @@ const meta = {
 
 describe("Sidebar", () => {
   it("shows network summary data without filter controls", () => {
-    render(
-      <Sidebar
-        stats={stats}
-        meta={meta}
-      />
-    );
+    render(<Sidebar stats={stats} meta={meta} />);
 
     expect(screen.getByText("Network Statistics")).toBeInTheDocument();
     expect(screen.queryByText("Network Controls")).not.toBeInTheDocument();

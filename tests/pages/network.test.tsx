@@ -2,18 +2,34 @@ import React from "react";
 import { render, waitFor } from "@testing-library/react";
 import NetworkPage from "@/pages/network";
 
-jest.mock("@/components/Header", () => () => (
-  <div data-testid="header">Header</div>
-));
-jest.mock("@/components/Legend", () => () => (
-  <div data-testid="legend">Legend</div>
-));
-jest.mock("@/components/NetworkGraph", () => () => (
-  <div data-testid="network-graph">Graph</div>
-));
-jest.mock("@/components/Sidebar", () => () => (
-  <div data-testid="sidebar">Sidebar</div>
-));
+jest.mock("@/components/Header", () => {
+  function MockHeader() {
+    return <div data-testid="header">Header</div>;
+  }
+
+  return MockHeader;
+});
+jest.mock("@/components/Legend", () => {
+  function MockLegend() {
+    return <div data-testid="legend">Legend</div>;
+  }
+
+  return MockLegend;
+});
+jest.mock("@/components/NetworkGraph", () => {
+  function MockNetworkGraph() {
+    return <div data-testid="network-graph">Graph</div>;
+  }
+
+  return MockNetworkGraph;
+});
+jest.mock("@/components/Sidebar", () => {
+  function MockSidebar() {
+    return <div data-testid="sidebar">Sidebar</div>;
+  }
+
+  return MockSidebar;
+});
 
 const mockFetch = jest.fn();
 
