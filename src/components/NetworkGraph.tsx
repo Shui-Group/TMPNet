@@ -55,6 +55,14 @@ const isNodeElement = (
   return Boolean(data && !("source" in data));
 };
 
+const getLayoutPriority = (edge: EdgeDefinition): number => {
+  const data = edge.data as
+    | (EdgeDefinition["data"] & { layoutPriority?: number })
+    | undefined;
+
+  return typeof data?.layoutPriority === "number" ? data.layoutPriority : 0;
+};
+
 interface NetworkGraphProps {
   elements: CytoscapeElements;
   isLoading?: boolean;
@@ -179,12 +187,12 @@ export default function NetworkGraph({
     const nodeElements = elements.filter(isNodeElement);
     if (nodeElements.length === 0) return false;
     return nodeElements.every((node) => {
-      const pos = node.position as
-        | { x: number; y: number }
-        | undefined;
+      const pos = node.position as { x: number; y: number } | undefined;
       return (
-        typeof pos?.x === "number" && Number.isFinite(pos.x) &&
-        typeof pos?.y === "number" && Number.isFinite(pos.y)
+        typeof pos?.x === "number" &&
+        Number.isFinite(pos.x) &&
+        typeof pos?.y === "number" &&
+        Number.isFinite(pos.y)
       );
     });
   }, [elements, layoutMetadata]);
@@ -195,21 +203,20 @@ export default function NetworkGraph({
     const cy = cyRef.current;
     const nodeElements = elements.filter(isNodeElement);
     const edgeElements = elements.filter(isEdgeElement);
-
-    const seedEdgesLimit = largeGraph ? 15000 : 25000; // Increased slightly and randomized
-
-    // Create a shuffled subset of edges for the initial layout
-    // This prevents "grid" artifacts when data is sorted by cluster/type
-    const indices = Array.from({ length: edgeElements.length }, (_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-
-    const seedIndices = new Set(indices.slice(0, seedEdgesLimit));
-    const initialEdges = shouldSkipLayout
+    const orderedEdges = shouldSkipLayout
       ? edgeElements
-      : edgeElements.filter((_, i) => seedIndices.has(i));
+      : edgeElements
+          .slice()
+          .sort(
+            (left, right) => getLayoutPriority(right) - getLayoutPriority(left)
+          );
+
+    const seedEdgesLimit = largeGraph
+      ? 9000
+      : Math.min(18000, orderedEdges.length);
+    const initialEdges = shouldSkipLayout
+      ? orderedEdges
+      : orderedEdges.slice(0, seedEdgesLimit);
 
     cy.startBatch();
     cy.elements().remove();
@@ -220,7 +227,7 @@ export default function NetworkGraph({
     cy.resize();
     hideTooltip();
     if (shouldSkipLayout) {
-      cy.fit(undefined, 30);
+      cy.fit(undefined, 56);
       cy.autolock(true);
       cy.autoungrabify(true);
       return;
@@ -233,6 +240,7 @@ export default function NetworkGraph({
       const layoutInstance = cy.layout(options);
       layoutInstance.one?.("layoutstop", () => {
         ensureQueryPriority();
+        cy.fit(undefined, 72);
         cy.autolock(true);
         cy.autoungrabify(true);
 
@@ -253,9 +261,7 @@ export default function NetworkGraph({
               x: node.position("x"),
               y: node.position("y"),
             }))
-            .filter((pos) =>
-              Number.isFinite(pos.x) && Number.isFinite(pos.y)
-            );
+            .filter((pos) => Number.isFinite(pos.x) && Number.isFinite(pos.y));
 
           if (positions.length === nodeElements.length) {
             postedLayoutsRef.current.add(graphKey);
@@ -287,28 +293,29 @@ export default function NetworkGraph({
         name: "cose",
         animate: false,
         fit: true,
-        padding: 30,
+        padding: 72,
       };
       runLayout(fallbackLayout);
     }
-    cy.fit(undefined, 30);
 
     // batch in remaining edges without relayout
-    const batchSize = largeGraph ? 5000 : 10000;
-    let currentIndex = seedEdgesLimit; // Start after the seed set
+    const batchSize = largeGraph ? 4000 : 8000;
+    let currentIndex = initialEdges.length;
 
     function addMore() {
       if (!cyRef.current) return;
-      if (currentIndex >= indices.length) return;
+      if (currentIndex >= orderedEdges.length) return;
 
-      const chunkIndices = indices.slice(currentIndex, currentIndex + batchSize);
-      const chunkEdges = chunkIndices.map(i => edgeElements[i]);
+      const chunkEdges = orderedEdges.slice(
+        currentIndex,
+        currentIndex + batchSize
+      );
 
       cyRef.current.add(chunkEdges);
       currentIndex += batchSize;
 
       ensureQueryPriority();
-      if (currentIndex < indices.length) setTimeout(addMore, 0);
+      if (currentIndex < orderedEdges.length) setTimeout(addMore, 0);
     }
 
     if (!shouldSkipLayout) {
@@ -425,7 +432,7 @@ export default function NetworkGraph({
                         Math.round(
                           (progress.edgesLoaded /
                             Math.max(1, progress.edgesTotal)) *
-                          100
+                            100
                         )
                       )}%`,
                     }}
@@ -448,8 +455,9 @@ export default function NetworkGraph({
       />
       {tooltip.visible && (
         <div
-          className={`pointer-events-none absolute z-20 max-w-xs rounded-md border border-gray-200 bg-white/95 p-3 text-left shadow-lg transition ${tooltip.isQuery ? "ring-2 ring-blue-200" : ""
-            }`}
+          className={`pointer-events-none absolute z-20 max-w-xs rounded-md border border-gray-200 bg-white/95 p-3 text-left shadow-lg transition ${
+            tooltip.isQuery ? "ring-2 ring-blue-200" : ""
+          }`}
           style={{ left: tooltip.x, top: tooltip.y }}
         >
           {tooltip.geneSymbol && (
@@ -458,14 +466,10 @@ export default function NetworkGraph({
             </p>
           )}
           {tooltip.entryName && (
-            <p className="mt-1 text-xs text-gray-600">
-              {tooltip.entryName}
-            </p>
+            <p className="mt-1 text-xs text-gray-600">{tooltip.entryName}</p>
           )}
           {tooltip.description && (
-            <p className="mt-1 text-xs text-gray-600">
-              {tooltip.description}
-            </p>
+            <p className="mt-1 text-xs text-gray-600">{tooltip.description}</p>
           )}
         </div>
       )}

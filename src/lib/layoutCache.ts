@@ -10,7 +10,7 @@ type GraphKeyContext = {
   params: Record<string, Primitive | Primitive[] | Record<string, Primitive>>;
 };
 
-export const CURRENT_LAYOUT_VERSION = "2025-11-19-fcose-v4-random-edges";
+export const CURRENT_LAYOUT_VERSION = "2026-04-09-fcose-v5-backbone";
 
 const stableStringify = (value: unknown): string => {
   if (value === null || typeof value !== "object") {
@@ -68,4 +68,3 @@ export const buildLayoutPayload = (
   positions,
   positionsNeeded: positions.length !== expectedNodes,
 });
-
