@@ -16,7 +16,10 @@ import {
   transformNodeToResponse,
 } from "@/lib/transforms";
 import type { CytoscapeElements } from "@/lib/graphUtils";
-import { layoutPayloadToPositionMap, toCytoscapeElements } from "@/lib/graphUtils";
+import {
+  layoutPayloadToPositionMap,
+  toCytoscapeElements,
+} from "@/lib/graphUtils";
 import {
   CURRENT_LAYOUT_VERSION,
   buildGraphKey,
@@ -49,9 +52,7 @@ const ALLOWED_POSITIVE_TYPES = new Set<PositiveType>([
   "experiment",
   "prediction",
 ]);
-const DEFAULT_POSITIVE_TYPES: PositiveType[] = ["experiment"];
-const DEFAULT_MAX_EDGES = 50_000;
-const HARD_MAX_EDGES = 100_000;
+const DEFAULT_POSITIVE_TYPES: PositiveType[] = ["experiment", "prediction"];
 const EDGE_PAGE_LIMIT = 10_000;
 
 const CACHE_CONTROL_HEADER = "public, s-maxage=60, stale-while-revalidate=300";
@@ -130,9 +131,9 @@ const parseNodeIds = (value: string | string[] | undefined): string[] => {
   return Array.from(new Set(ids));
 };
 
-const clampMaxEdges = (value: number) => {
-  if (!Number.isFinite(value) || value <= 0) return DEFAULT_MAX_EDGES;
-  return Math.min(Math.max(1, Math.floor(value)), HARD_MAX_EDGES);
+const clampMaxEdges = (value: number, fallback: number) => {
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return Math.max(1, Math.floor(value));
 };
 
 const applyNodeFilter = <T>(query: T, nodeIds: string[]): T => {
@@ -152,9 +153,7 @@ const countEdgesByType = async (
   filters: EdgeFilters
 ): Promise<{ count: number; error: Error | null }> => {
   let query = applyPositiveTypeFilter(
-    supabase
-    .from("edges")
-    .select("edge", { count: "exact", head: true }),
+    supabase.from("edges").select("edge", { count: "exact", head: true }),
     type
   );
 
@@ -179,9 +178,7 @@ const fetchEdgeSlice = async (
     return { data: [], error: null };
   }
 
-  let query = supabase
-    .from("edges")
-    .select(edgeSelect);
+  let query = supabase.from("edges").select(edgeSelect);
 
   query = applyPositiveTypeFilter(query, type);
 
@@ -232,10 +229,6 @@ export default async function handler(
     const includeEdges = parseBoolean(req.query.edges, true);
     const format = parseFormat(req.query.format);
     const nodeIds = parseNodeIds(req.query.nodes);
-    const maxEdges = clampMaxEdges(
-      parseNumber(req.query.maxEdges, DEFAULT_MAX_EDGES)
-    );
-
     const edgeFilters: EdgeFilters = {
       minProb,
       nodeIds,
@@ -308,6 +301,17 @@ export default async function handler(
     });
 
     const totalEdges = totalEdgesCount;
+    const fallbackMaxEdges = Math.max(
+      totalEdges,
+      Object.values(countsByType).reduce((sum, count) => sum + (count ?? 0), 0)
+    );
+    const maxEdges =
+      typeof req.query.maxEdges === "undefined"
+        ? fallbackMaxEdges
+        : clampMaxEdges(
+            parseNumber(req.query.maxEdges, fallbackMaxEdges),
+            fallbackMaxEdges
+          );
 
     const edges: Edge[] = [];
     const seenEdgeIds = new Set<string>();
@@ -389,10 +393,7 @@ export default async function handler(
     let layout: LayoutPayload | undefined;
 
     try {
-      const {
-        data: layoutRows,
-        error: layoutError,
-      } = await supabase
+      const { data: layoutRows, error: layoutError } = await supabase
         .from("graph_layout_cache")
         .select("graph_key,node_id,x,y,layout_version,updated_at")
         .eq("graph_key", graphKey)
@@ -427,13 +428,13 @@ export default async function handler(
     const layoutPositionMap = layoutPayloadToPositionMap(layout);
     const nodesWithPositions = layoutPositionMap
       ? nodeResponses.map((node) =>
-        layoutPositionMap[node.id]
-          ? {
-            ...node,
-            position: layoutPositionMap[node.id],
-          }
-          : node
-      )
+          layoutPositionMap[node.id]
+            ? {
+                ...node,
+                position: layoutPositionMap[node.id],
+              }
+            : node
+        )
       : nodeResponses;
 
     const timings: NetworkTimings = {
