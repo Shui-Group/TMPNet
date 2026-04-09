@@ -665,6 +665,114 @@ describe("/api/network", () => {
     expect(data.error).toBe("Method not allowed");
   });
 
+  it("returns both experimental and prediction edges when no positiveType is provided", async () => {
+    const mockNodes: Node[] = [
+      {
+        protein: "P00001",
+        entry_name: "NODE1",
+        description: null,
+        gene_symbol: null,
+        family: null,
+        expression_tissue: null,
+      },
+    ];
+
+    const experimentalEdge: Edge = {
+      edge: "EXP1",
+      protein1: "P00001",
+      protein2: "P00001",
+      fusion_pred_prob: 0.1,
+      enriched_tissue: null,
+      tissue_enriched_confidence: null,
+      positive_type: "experiment",
+      gene_symbol1: null,
+      gene_symbol2: null,
+    };
+
+    const predictionEdge: Edge = {
+      edge: "PRED1",
+      protein1: "P00001",
+      protein2: "P00001",
+      fusion_pred_prob: 0.95,
+      enriched_tissue: null,
+      tissue_enriched_confidence: null,
+      positive_type: "prediction",
+      gene_symbol1: null,
+      gene_symbol2: null,
+    };
+
+    setupSupabaseMock({
+      nodes: { data: mockNodes, count: mockNodes.length },
+      edges: {
+        totalCount: 2,
+        experimentalEdges: [experimentalEdge],
+        experimentalCount: 1,
+        predictionEdges: [predictionEdge],
+        predictionCount: 1,
+      },
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.edges).toHaveLength(2);
+    expect(
+      data.edges.map((edge: { id: string }) => edge.id).sort()
+    ).toEqual(["EXP1", "PRED1"]);
+    expect(data.meta.filteredEdges).toBe(2);
+  });
+
+  it("does not cap returned edges when maxEdges is omitted", async () => {
+    const mockNodes: Node[] = [
+      {
+        protein: "P00001",
+        entry_name: "NODE1",
+        description: null,
+        gene_symbol: null,
+        family: null,
+        expression_tissue: null,
+      },
+    ];
+
+    const experimentalEdges: Edge[] = Array.from({ length: 50001 }, (_, index) => ({
+      edge: `EXP${index + 1}`,
+      protein1: "P00001",
+      protein2: "P00001",
+      fusion_pred_prob: 0.9,
+      enriched_tissue: null,
+      tissue_enriched_confidence: null,
+      positive_type: "experiment",
+      gene_symbol1: null,
+      gene_symbol2: null,
+    }));
+
+    setupSupabaseMock({
+      nodes: { data: mockNodes, count: mockNodes.length },
+      edges: {
+        totalCount: experimentalEdges.length,
+        experimentalEdges,
+        experimentalCount: experimentalEdges.length,
+      },
+    });
+
+    const { req, res } = createMocks({
+      method: "GET",
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.edges).toHaveLength(50001);
+    expect(data.meta.filteredEdges).toBe(50001);
+    expect(data.meta.totalEdges).toBe(50001);
+  });
+
   it("clamps maxEdges and reports filteredEdges", async () => {
     const mockNodes: Node[] = [
       {
