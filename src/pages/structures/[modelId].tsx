@@ -202,7 +202,7 @@ export default function StructureDetailPage() {
           <div className="mx-auto max-w-[1440px] px-6 pb-16 pt-8 lg:px-10">
             <div className="mb-8 flex items-center justify-between">
               <Link
-                href="/"
+                href="/network"
                 className="inline-flex items-center text-sm font-medium text-stone-600 transition-colors hover:text-stone-900"
               >
                 Back to network

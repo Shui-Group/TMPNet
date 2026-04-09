@@ -150,11 +150,7 @@ describe("StructureDetailPage", () => {
   });
 
   it("links the back control to the network explorer", () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => structureResponse,
-    });
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
 
     render(<StructureDetailPage />);
 
