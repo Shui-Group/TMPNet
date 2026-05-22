@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare:data:20260407": "node scripts/prepare-csvs-for-import.js",
+    "prepare:data:20260514": "node scripts/prepare-csvs-for-import.js --raw-dir data/raw/20260514_new_web_data --output-dir data/supabase-import/20260514_new_web_data --skip-structures",
     "build:network-artifacts": "node scripts/build-network-artifacts.js",
     "test": "jest",
     "test:watch": "jest --watch",

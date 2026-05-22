@@ -9,14 +9,20 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 
-const RAW_DIR = path.join(__dirname, "..", "data", "raw", "20260407_new_web_data");
-const STRUCTURE_DIR = path.join(RAW_DIR, "best_structure");
-const OUTPUT_DIR = path.join(
+const DEFAULT_DATASET = "20260407_new_web_data";
+const DEFAULT_RAW_DIR = path.join(
+  __dirname,
+  "..",
+  "data",
+  "raw",
+  DEFAULT_DATASET
+);
+const DEFAULT_OUTPUT_DIR = path.join(
   __dirname,
   "..",
   "data",
   "supabase-import",
-  "20260407_new_web_data"
+  DEFAULT_DATASET
 );
 
 const NODE_HEADER_MAP = {
@@ -47,6 +53,31 @@ function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
+}
+
+function parseArgs(args = process.argv.slice(2)) {
+  const config = {
+    rawDir: DEFAULT_RAW_DIR,
+    outputDir: DEFAULT_OUTPUT_DIR,
+    includeStructures: true,
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    const next = args[index + 1];
+
+    if (arg === "--raw-dir" && next) {
+      config.rawDir = path.resolve(__dirname, "..", next);
+      index += 1;
+    } else if (arg === "--output-dir" && next) {
+      config.outputDir = path.resolve(__dirname, "..", next);
+      index += 1;
+    } else if (arg === "--skip-structures") {
+      config.includeStructures = false;
+    }
+  }
+
+  return config;
 }
 
 function csvEscape(value) {
@@ -166,7 +197,9 @@ async function normalizeCsv(inputFile, outputFile, headerMap) {
   output.write(`${mappedHeaders.map(csvEscape).join(",")}\n`);
 
   for (const sourceRow of sourceRows) {
-    const values = inputHeaders.map((header) => normalizeValue(sourceRow[header]));
+    const values = inputHeaders.map((header) =>
+      normalizeValue(sourceRow[header])
+    );
     output.write(`${values.map(csvEscape).join(",")}\n`);
   }
 
@@ -174,7 +207,12 @@ async function normalizeCsv(inputFile, outputFile, headerMap) {
   return sourceRows;
 }
 
-async function buildStructureManifest(edgeRows, nodeRows) {
+async function buildStructureManifest(
+  edgeRows,
+  nodeRows,
+  structureDir,
+  outputDir
+) {
   const edgeByPair = new Map();
   const nodeSet = new Set(nodeRows.map((row) => row.protein.toUpperCase()));
 
@@ -187,12 +225,12 @@ async function buildStructureManifest(edgeRows, nodeRows) {
   }
 
   const structureDirs = fs
-    .readdirSync(STRUCTURE_DIR, { withFileTypes: true })
+    .readdirSync(structureDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort((left, right) => left.localeCompare(right));
 
-  const outputFile = path.join(OUTPUT_DIR, "structure_models.csv");
+  const outputFile = path.join(outputDir, "structure_models.csv");
   const output = fs.createWriteStream(outputFile);
 
   const headers = [
@@ -237,7 +275,7 @@ async function buildStructureManifest(edgeRows, nodeRows) {
       throw new Error(`Missing node metadata for structure model ${dirName}`);
     }
 
-    const baseDir = path.join(STRUCTURE_DIR, dirName);
+    const baseDir = path.join(structureDir, dirName);
     const cifPath = path.join(baseDir, `${dirName}.cif`);
     const confidencesPath = path.join(baseDir, "confidences.json");
     const summaryPath = path.join(baseDir, "summary_confidences.json");
@@ -275,17 +313,20 @@ async function buildStructureManifest(edgeRows, nodeRows) {
 }
 
 async function main() {
-  ensureDir(OUTPUT_DIR);
+  const config = parseArgs();
+  const structureDir = path.join(config.rawDir, "best_structure");
+
+  ensureDir(config.outputDir);
 
   const nodes = await normalizeCsv(
-    path.join(RAW_DIR, "node_info.csv"),
-    path.join(OUTPUT_DIR, "nodes.csv"),
+    path.join(config.rawDir, "node_info.csv"),
+    path.join(config.outputDir, "nodes.csv"),
     NODE_HEADER_MAP
   );
 
   const edges = await normalizeCsv(
-    path.join(RAW_DIR, "edge_info.csv"),
-    path.join(OUTPUT_DIR, "edges.csv"),
+    path.join(config.rawDir, "edge_info.csv"),
+    path.join(config.outputDir, "edges.csv"),
     EDGE_HEADER_MAP
   );
 
@@ -295,18 +336,33 @@ async function main() {
   );
 
   if (orphanEdges.length > 0) {
-    throw new Error(`Found ${orphanEdges.length} orphan edges in 20260407 data`);
+    throw new Error(`Found ${orphanEdges.length} orphan edges in raw data`);
   }
 
-  const structureCount = await buildStructureManifest(edges, nodes);
+  let structureCount = null;
+  if (config.includeStructures) {
+    if (!fs.existsSync(structureDir)) {
+      throw new Error(
+        `Structure directory not found: ${structureDir}. Pass --skip-structures for node/edge-only imports.`
+      );
+    }
+    structureCount = await buildStructureManifest(
+      edges,
+      nodes,
+      structureDir,
+      config.outputDir
+    );
+  }
 
   console.log(`Prepared ${nodes.length} nodes for import`);
   console.log(`Prepared ${edges.length} edges for import`);
-  console.log(`Prepared ${structureCount} structure models for import`);
-  console.log(`Output directory: ${OUTPUT_DIR}`);
+  if (structureCount !== null) {
+    console.log(`Prepared ${structureCount} structure models for import`);
+  }
+  console.log(`Output directory: ${config.outputDir}`);
 }
 
 main().catch((error) => {
-  console.error("Failed to prepare 20260407 Supabase import files:", error);
+  console.error("Failed to prepare Supabase import files:", error);
   process.exit(1);
 });
