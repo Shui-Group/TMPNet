@@ -153,7 +153,7 @@ export default async function handler(
 
     // Aggregate family counts (exclude null/empty values)
     const familyCounts: Record<string, number> = {};
-    familyData?.forEach((node) => {
+    familyData?.forEach((node: { family?: string | null }) => {
       const family = node.family;
       if (family && family.trim() !== "") {
         const normalizedFamily = normalizeFamily(family);

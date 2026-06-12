@@ -6,6 +6,7 @@ import type {
   StructureModelRecord,
 } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { readFile } from "fs/promises";
 import path from "path";
 
 export type StructureAssetKind = "cif" | "summary" | "confidences";
@@ -174,7 +175,6 @@ export async function readStructureConfidenceSummary(
   }
 
   try {
-    const bucketName = getStructureStorageBucketName();
     const confidencePath = resolveStructureAssetObjectPath(
       {
         cif_rel_path: "",
@@ -183,16 +183,14 @@ export async function readStructureConfidenceSummary(
       },
       "confidences"
     );
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .download(confidencePath);
 
-    if (error || !data) {
-      console.error("Failed to download structure confidence payload:", error);
-      return null;
-    }
+    const localRoot = getLocalStructureAssetRoot();
+    const raw = localRoot
+      ? await readFile(path.resolve(localRoot, confidencePath), "utf8")
+      : await downloadStructureConfidencePayload(confidencePath);
 
-    const raw = await data.text();
+    if (!raw) return null;
+
     const parsed = JSON.parse(raw) as ConfidenceJson;
 
     const atomPlddts = isNumberArray(parsed.atom_plddts)
@@ -276,4 +274,20 @@ export async function readStructureConfidenceSummary(
 
 function roundToTwo(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+async function downloadStructureConfidencePayload(
+  confidencePath: string
+): Promise<string | null> {
+  const bucketName = getStructureStorageBucketName();
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .download(confidencePath);
+
+  if (error || !data) {
+    console.error("Failed to download structure confidence payload:", error);
+    return null;
+  }
+
+  return data.text();
 }
