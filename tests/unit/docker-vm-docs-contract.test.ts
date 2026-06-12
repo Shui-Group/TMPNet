@@ -68,8 +68,8 @@ describe("Docker-only VM documentation contract", () => {
       "Graph Dataset",
       "Structure Model Dataset",
       "Docker-only VM Deployment",
-      "Supabase-compatible REST Gateway",
-      "Structure Asset Volume",
+      "Local File Data Mode",
+      "Structure Asset Root",
     ]) {
       expect(context).toContain(term);
     }

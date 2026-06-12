@@ -13,7 +13,8 @@ and hosted Supabase-style operations.
 ## Decision
 
 The supported VM deployment path is Docker-only. A local machine with Node.js,
-npm, and Docker builds `dist/vm-docker/`. The VM receives that bundle and runs:
+npm, and Docker builds `vm-docker-bundle/`. The VM receives that bundle and
+runs:
 
 ```bash
 docker load -i memppi-atlas-vm-images.tar
@@ -22,18 +23,18 @@ docker compose --env-file .env.vm up -d
 
 The VM stack contains:
 
-- Postgres for `nodes`, `edges`, `graph_layout_cache`, and `structure_models`
-- PostgREST for the Supabase-compatible table API
-- nginx as the Supabase-compatible REST Gateway
 - the Next.js app image
-- a Structure Asset Volume seeded from local structure files
+- the 0514 graph CSVs copied into the app image
+- the relocated 0407-derived structure metadata and assets copied into the app
+  image
+- the local file data adapter selected by `MEMPPI_DATA_MODE=file`
 
-The VM does not need Node.js, npm, npx, psql, or the Supabase CLI. Storage bucket
-upload flows are not a supported deployment path.
+The VM does not need Node.js, npm, npx, psql, a local database service, or the
+Supabase CLI. Storage bucket upload flows are not a supported deployment path.
 
 ## Consequences
 
 - VM setup and updates are repeatable from the Docker bundle.
 - Data and structure assets remain local inputs and ignored by Git.
-- Hosted Supabase and manual CLI import instructions are not canonical for VM
-  deployment.
+- Hosted Supabase, local database imports, and manual CLI import instructions are
+  not canonical for VM deployment.

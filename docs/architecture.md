@@ -71,13 +71,11 @@ deployment layout:
 
 ### Storage
 
-- `nodes` and `edges` are created by `sql/01_create_tables.sql`.
-- `graph_layout_cache` is created by `sql/04_graph_layout_cache.sql`.
-- `structure_models` and extra edge-evidence columns are added by
-  `supabase/migrations/20260409173000_add_structure_models_and_edge_evidence.sql`.
-- The Docker-only VM stack runs Postgres, PostgREST, nginx, the Next.js app, and
-  a local structure asset volume. It does not require Supabase CLI or a storage
-  bucket service on the VM.
+- File-mode Docker VM deployment reads `nodes`, `edges`, and
+  `structure_models` directly from the 0514 CSV files copied into the app image.
+- The Docker-only VM stack runs only the Next.js app container. It does not
+  require Supabase CLI, psql, a local database service, or a storage bucket
+  service on the VM.
 
 ### Query Transform Layer
 
@@ -120,8 +118,9 @@ Core shared components:
 
 Required:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `MEMPPI_DATA_MODE=file`
+- `MEMPPI_DATA_ROOT`
+- `STRUCTURE_ASSET_ROOT`
 
 Optional:
 

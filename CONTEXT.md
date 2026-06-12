@@ -4,8 +4,8 @@
 
 ### Graph Dataset
 
-The protein-protein interaction graph loaded into Postgres for runtime network
-queries. The current deployment contract uses:
+The protein-protein interaction graph loaded from local CSV files for runtime
+network queries in file-mode deployment. The current deployment contract uses:
 
 - `data/supabase-import/20260514_new_web_data/nodes.csv`
 - `data/supabase-import/20260514_new_web_data/edges.csv`
@@ -25,14 +25,15 @@ The supported VM deployment mode. A local machine builds the Docker image bundle
 and copies it to the VM. The VM only runs docker/docker compose and does not
 need Node.js, npm, npx, psql, or the Supabase CLI.
 
-### Supabase-compatible REST Gateway
+### Local File Data Mode
 
-The local REST endpoint exposed by nginx in front of PostgREST. It provides the
-`/rest/v1` API shape expected by the app without requiring a hosted Supabase
-project on the VM.
+The VM data adapter selected by `MEMPPI_DATA_MODE=file`. It reads the 0514 graph
+CSVs and 0407-derived structure model metadata directly from the image instead
+of using a hosted Supabase project or local database service.
 
-### Structure Asset Volume
+### Structure Asset Root
 
-The Docker volume seeded with structure model files from
-`data/raw/20260514_new_web_data/best_structure/`. Structure asset API routes
-serve files from this volume instead of a storage bucket service.
+The filesystem root for structure model files. In Docker-only VM deployment this
+is `/app/data/raw/20260514_new_web_data/best_structure` inside the app image.
+Structure asset API routes serve files from this root instead of a storage
+bucket service.

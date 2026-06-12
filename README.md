@@ -1,9 +1,9 @@
 # MemPPI-Atlas
 
 MemPPI-Atlas is a Next.js 14 Pages Router application for exploring
-endogenous transmembrane protein-protein interaction networks. The app uses a
-Supabase-compatible Postgres REST API for graph and structure metadata,
-Cytoscape.js for network visualization, and NGL for 3D structure viewing.
+endogenous transmembrane protein-protein interaction networks. In file-mode
+deployment, the app reads graph and structure metadata from local CSV files and
+uses Cytoscape.js for network visualization and NGL for 3D structure viewing.
 
 ## Current App Surface
 
@@ -18,7 +18,7 @@ Cytoscape.js for network visualization, and NGL for 3D structure viewing.
 ## Tech Stack
 
 - Next.js 14 (Pages Router) + React 18 + TypeScript
-- Postgres + PostgREST behind a Supabase-compatible nginx gateway
+- Local CSV data adapter for Docker-only VM deployment
 - Cytoscape.js + `cytoscape-fcose`
 - Tailwind CSS utilities in a custom global stylesheet
 - Jest + React Testing Library
@@ -41,7 +41,6 @@ data/
   supabase-import/      Generated CSVs ready for import
 scripts/                Data preparation and validation utilities
 sql/                    Base schema and SQL setup scripts
-supabase/               Supabase local config, seeds, and migrations
 tests/                  Integration, page, component, and unit tests
 docs/                   Current docs plus archived milestone notes
 product_vision/         Product framing and current scope summary
@@ -53,8 +52,6 @@ product_vision/         Product framing and current scope summary
 
 - Node.js 18.17+ or 20+
 - npm
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` pointing at a
-  Supabase-compatible REST gateway
 
 ### Install
 
@@ -67,16 +64,17 @@ npm install
 Create `.env.local` with:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+MEMPPI_DATA_MODE=file
+MEMPPI_DATA_ROOT=data/supabase-import/20260514_new_web_data
+STRUCTURE_ASSET_ROOT=data/raw/20260514_new_web_data/best_structure
 
 # Optional; defaults to "structure-models"
 SUPABASE_STRUCTURE_BUCKET=structure-models
 NEXT_PUBLIC_SUPABASE_STRUCTURE_BUCKET=structure-models
 ```
 
-The app throws during startup if `NEXT_PUBLIC_SUPABASE_URL` or
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` are missing.
+If `MEMPPI_DATA_MODE` is not `file`, the app expects Supabase-compatible
+environment variables for non-VM deployments.
 
 ### Run
 
@@ -125,15 +123,16 @@ operation. Build the bundle on a local machine with Node.js/npm available:
 npm run docker:vm:bundle
 ```
 
-Copy `dist/vm-docker/` to the VM and run:
+Copy `vm-docker-bundle/` to the VM and run:
 
 ```bash
 ./load-and-run.sh
 ```
 
 The VM does not need Node.js, npm, npx, psql, or the Supabase CLI. The VM stack
-runs Postgres, PostgREST, nginx, the Next.js app, and a local structure asset
-volume. Storage bucket upload flows are not a supported deployment path.
+runs only the Next.js app container, with the 0514 graph data and relocated
+structure assets built into the image. Storage bucket upload flows are not a
+supported deployment path.
 
 See [Docker-only VM Deployment](docs/local-supabase-docker.md).
 
