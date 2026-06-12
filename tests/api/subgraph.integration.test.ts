@@ -52,6 +52,7 @@ describe("/api/subgraph integration", () => {
       if (table === "edges") {
         const chain = {
           eq: jest.fn().mockReturnThis(),
+          ilike: jest.fn().mockReturnThis(),
           or: jest.fn().mockReturnThis(),
           gte: jest.fn().mockReturnThis(),
           order: jest.fn().mockReturnThis(),

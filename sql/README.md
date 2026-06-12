@@ -1,7 +1,8 @@
 # SQL Setup
 
-This directory contains the base SQL used to bootstrap the Supabase database
-for MemPPI-Atlas.
+This directory contains base SQL for the MemPPI-Atlas Postgres schema. The
+supported VM deployment path builds a Docker database image locally; the VM only
+runs docker/docker compose.
 
 ## Files
 
@@ -13,46 +14,48 @@ Creates the base `nodes` and `edges` tables plus indexes.
 
 Enables Row Level Security and grants public read access to the base tables.
 
-### `03_import_data.sql`
-
-Reference import instructions for loading CSV data into Supabase.
-
 ### `04_graph_layout_cache.sql`
 
 Creates `graph_layout_cache`, which stores Cytoscape node positions keyed by a
 hashed graph signature.
 
-## What Is Not In This Folder
+## Docker-Owned Schema
 
-The structure-model expansion is not part of the base SQL sequence. It lives in
-the Supabase migration:
+The supported Docker database image uses schema/init files in
+`docker/postgres-init/`:
 
-- `supabase/migrations/20260409173000_add_structure_models_and_edge_evidence.sql`
+- `010_core_network_schema.sql`
+- `020_structure_models.sql`
+- `030_import.sql`
 
-That migration:
+Those files:
 
 - adds edge-evidence columns to `edges`
 - creates `structure_models`
 - adds indexes
 - enables RLS for `structure_models`
+- imports the 0514 graph CSVs and relocated structure metadata
 
-## Recommended Execution Order
+## Reference Execution Order
 
-1. Run `npm run prepare:data:20260407`.
-2. Apply `01_create_tables.sql`.
-3. Import `nodes.csv` and `edges.csv`.
-4. Apply `04_graph_layout_cache.sql`.
-5. Apply `02_enable_rls.sql`.
-6. Apply the structure-model migration from `supabase/migrations/`.
-7. Import `structure_models.csv`.
+1. Run `npm run prepare:data`.
+2. Build the Docker database seed image.
+3. Start the VM stack with Docker Compose.
 
 ## Prepared CSV Outputs
 
 The preparation script writes:
 
-- `data/supabase-import/20260407_new_web_data/nodes.csv`
-- `data/supabase-import/20260407_new_web_data/edges.csv`
-- `data/supabase-import/20260407_new_web_data/structure_models.csv`
+- `data/supabase-import/20260514_new_web_data/nodes.csv`
+- `data/supabase-import/20260514_new_web_data/edges.csv`
+
+The structure model metadata is 0407-derived and relocated under:
+
+- `data/supabase-import/20260514_new_web_data/structure_models.csv`
+
+The corresponding structure assets live under:
+
+- `data/raw/20260514_new_web_data/best_structure/`
 
 ## Verification Queries
 
@@ -74,6 +77,8 @@ select 'structure_models' as table_name, count(*) from public.structure_models;
 ## Notes
 
 - `structure_models` depends on `edges` and `nodes`.
-- Structure assets themselves live in Supabase Storage, not in Postgres.
-- The base schema comments still mention older source data names in a few places;
-  the live import pipeline is the `20260407_new_web_data` dataset.
+- Structure assets live in the local structure asset volume, not in Postgres.
+- The current Docker VM data contract uses the 0514 graph dataset plus
+  0407-derived relocated structure model data.
+- Supabase CLI and storage bucket upload flows are not supported VM deployment
+  paths.

@@ -1,9 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { readFile } from "fs/promises";
 import { supabase } from "@/lib/supabase";
 import type { StructureModelRecord } from "@/lib/types";
 import { parseStructureModelId } from "@/lib/structureModels";
 import {
   buildStructureAssetPublicUrl,
+  getStructureAssetContentType,
+  resolveLocalStructureAssetPath,
   type StructureAssetKind,
 } from "@/lib/structureAssets";
 
@@ -11,7 +14,7 @@ const structureSelect =
   "model_id,cif_rel_path,summary_confidences_rel_path,confidences_rel_path";
 
 type ErrorResponse = { error: string };
-type AssetResponse = ErrorResponse;
+type AssetResponse = ErrorResponse | Buffer;
 
 const FILE_NAMES: Record<StructureAssetKind, (modelId: string) => string> = {
   cif: (modelId) => `${modelId}.cif`,
@@ -63,20 +66,43 @@ export default async function handler(
   }
 
   try {
+    const structureRecord = structureData as Pick<
+      StructureModelRecord,
+      "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
+    >;
     const shouldDownload =
       (Array.isArray(req.query.download)
         ? req.query.download[0]
         : req.query.download) === "1";
+    const downloadFileName = shouldDownload
+      ? FILE_NAMES[kindParam](parsedModelId.modelId)
+      : undefined;
+    const localAssetPath = resolveLocalStructureAssetPath(
+      structureRecord,
+      kindParam
+    );
+
+    if (localAssetPath) {
+      const file = await readFile(localAssetPath);
+      res.setHeader("Content-Type", getStructureAssetContentType(kindParam));
+      res.setHeader("Cache-Control", "public, max-age=3600");
+
+      if (downloadFileName) {
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${downloadFileName}"`
+        );
+      }
+
+      res.status(200).send(file);
+      return;
+    }
+
     const redirectUrl = buildStructureAssetPublicUrl(
-      structureData as Pick<
-        StructureModelRecord,
-        "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
-      >,
+      structureRecord,
       kindParam,
       {
-        downloadFileName: shouldDownload
-          ? FILE_NAMES[kindParam](parsedModelId.modelId)
-          : undefined,
+        downloadFileName,
       }
     );
 

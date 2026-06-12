@@ -25,10 +25,11 @@ const structureResponse = {
     folderProtein2: "O00222",
     variant: "plain",
     source: "alphafold3",
-    cifPath: "data/raw/20260407_new_web_data/best_structure/o15303-o00222/o15303-o00222.cif",
+    cifPath:
+      "data/raw/20260514_new_web_data/best_structure/o15303-o00222/o15303-o00222.cif",
     cifSizeBytes: 1145190,
     summaryConfidencesPath:
-      "data/raw/20260407_new_web_data/best_structure/o15303-o00222/summary_confidences.json",
+      "data/raw/20260514_new_web_data/best_structure/o15303-o00222/summary_confidences.json",
     summaryConfidences: { iptm: 0.59, ptm: 0.64, ranking_score: 0.65 },
     summaryIptm: 0.59,
     summaryPtm: 0.64,
@@ -36,7 +37,7 @@ const structureResponse = {
     summaryFractionDisordered: 0.1,
     summaryHasClash: false,
     confidencesPath:
-      "data/raw/20260407_new_web_data/best_structure/o15303-o00222/confidences.json",
+      "data/raw/20260514_new_web_data/best_structure/o15303-o00222/confidences.json",
     confidencesSizeBytes: 28339119,
     hasConfidences: true,
   },
@@ -128,7 +129,9 @@ describe("StructureDetailPage", () => {
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText("AlphaFold3 interaction model")).toBeInTheDocument();
+    expect(
+      screen.getByText("AlphaFold3 interaction model")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("structure-viewer")).toBeInTheDocument();
     expect(screen.getByText("812")).toBeInTheDocument();
     expect(screen.getByText("13,847")).toBeInTheDocument();

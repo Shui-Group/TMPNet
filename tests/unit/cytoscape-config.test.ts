@@ -12,9 +12,9 @@ describe("cytoscape-config", () => {
     expect((rendererOptions?.pixelRatio ?? 0) > 0).toBe(true);
   });
 
-  it("configures fcose layout for fast draft iterations", () => {
+  it("configures fcose layout for stable proof iterations", () => {
     expect(fcoseLayout.name).toBe("fcose");
-    expect(fcoseLayout.quality).toBe("draft");
+    expect(fcoseLayout.quality).toBe("proof");
     expect(fcoseLayout.numIter).toBeGreaterThan(0);
   });
 

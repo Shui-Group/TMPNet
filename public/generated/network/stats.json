@@ -1,1 +1,1 @@
-{"version":"2026-04-10-network-artifact-v1","stats":{"totalNodes":4261,"totalEdges":180062,"familyCounts":{"Other TMPs":2753,"Transporter":605,"GPCR":380,"Ion-channels":306,"Catalytic receptors":217},"enrichedEdgeCount":9352,"predictedEdgeCount":137510}}
+{"version":"2026-05-14-network-artifact-v1","stats":{"totalNodes":4261,"totalEdges":180062,"familyCounts":{"Other TMPs":2753,"Transporter":605,"Ion-channels":306,"GPCR":380,"Catalytic receptors":217},"enrichedEdgeCount":11287,"predictedEdgeCount":137510}}

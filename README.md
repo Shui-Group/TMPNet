@@ -1,9 +1,9 @@
 # MemPPI-Atlas
 
 MemPPI-Atlas is a Next.js 14 Pages Router application for exploring
-endogenous transmembrane protein-protein interaction networks. The app uses
-Supabase for the graph dataset and structure metadata, Cytoscape.js for network
-visualization, and NGL for 3D structure viewing.
+endogenous transmembrane protein-protein interaction networks. The app uses a
+Supabase-compatible Postgres REST API for graph and structure metadata,
+Cytoscape.js for network visualization, and NGL for 3D structure viewing.
 
 ## Current App Surface
 
@@ -18,7 +18,7 @@ visualization, and NGL for 3D structure viewing.
 ## Tech Stack
 
 - Next.js 14 (Pages Router) + React 18 + TypeScript
-- Supabase Postgres + Supabase Storage
+- Postgres + PostgREST behind a Supabase-compatible nginx gateway
 - Cytoscape.js + `cytoscape-fcose`
 - Tailwind CSS utilities in a custom global stylesheet
 - Jest + React Testing Library
@@ -53,7 +53,8 @@ product_vision/         Product framing and current scope summary
 
 - Node.js 18.17+ or 20+
 - npm
-- Supabase project with the MemPPI schema loaded
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` pointing at a
+  Supabase-compatible REST gateway
 
 ### Install
 
@@ -97,15 +98,44 @@ npm run format:check
 npm test
 npm run test:watch
 npm run test:coverage
-npm run prepare:data:20260407
+npm run prepare:data
+npm run prepare:data:20260514
+npm run docker:vm:bundle
 ```
 
-`prepare:data:20260407` normalizes the `20260407_new_web_data` dataset and
-generates:
+`prepare:data` normalizes the 0514 graph dataset and writes:
 
-- `data/supabase-import/20260407_new_web_data/nodes.csv`
-- `data/supabase-import/20260407_new_web_data/edges.csv`
-- `data/supabase-import/20260407_new_web_data/structure_models.csv`
+- `data/supabase-import/20260514_new_web_data/nodes.csv`
+- `data/supabase-import/20260514_new_web_data/edges.csv`
+
+The current structure model dataset is 0407-derived and relocated under the
+0514 layout:
+
+- `data/supabase-import/20260514_new_web_data/structure_models.csv`
+- `data/raw/20260514_new_web_data/best_structure/`
+
+Data files remain local and ignored by Git.
+
+## Docker-only VM Deployment
+
+The supported VM path is local bundle creation followed by Docker-only VM
+operation. Build the bundle on a local machine with Node.js/npm available:
+
+```bash
+npm run docker:vm:bundle
+```
+
+Copy `dist/vm-docker/` to the VM and run:
+
+```bash
+./load-and-run.sh
+```
+
+The VM does not need Node.js, npm, npx, psql, or the Supabase CLI. The VM stack
+runs Postgres, PostgREST, nginx, the Next.js app, and a local structure asset
+volume. Storage bucket upload flows are not a supported deployment path.
+
+See [Docker-only VM Deployment](docs/local-supabase-docker.md).
 
 ## API Summary
 
@@ -123,7 +153,7 @@ generates:
 - `GET /api/structures/[modelId]`
   Returns structure, edge, protein, asset-link, and confidence-summary data.
 - `GET /api/structures/[modelId]/asset?kind=cif|summary|confidences`
-  Redirects to public Supabase Storage assets.
+  Serves structure assets from the configured local structure asset root.
 - `GET /api/test-db`
   Simple connectivity check kept in the repo for local verification.
 
@@ -133,8 +163,8 @@ generates:
 - `edges` stores interaction evidence and filterable edge-level metadata.
 - `graph_layout_cache` stores persisted Cytoscape positions keyed by a hashed
   graph signature.
-- `structure_models` stores AlphaFold3-derived structure metadata and storage
-  paths.
+- `structure_models` stores AlphaFold3-derived structure metadata and local
+  asset paths.
 
 The base schema is in `sql/`, and the structure-model expansion lives in
 `supabase/migrations/20260409173000_add_structure_models_and_edge_evidence.sql`.

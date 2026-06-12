@@ -5,11 +5,12 @@
 MemPPI-Atlas is a monolithic Next.js 14 Pages Router app with three main
 runtime concerns:
 
-1. Supabase-backed graph APIs for proteins, interactions, and structure models.
+1. Supabase-compatible graph APIs for proteins, interactions, and structure
+   models.
 2. Client-side Cytoscape rendering for large network views and focused
    subgraphs.
-3. Structure inspection via an NGL viewer backed by public Supabase Storage
-   assets.
+3. Structure inspection via an NGL viewer backed by a local structure asset
+   volume in Docker deployments.
 
 ## Runtime Flow
 
@@ -45,7 +46,7 @@ runtime concerns:
   - transformed `structure_models` metadata
   - the associated edge
   - both proteins
-  - public asset links
+  - local structure asset links
   - a derived confidence summary parsed from `confidences.json`
 - `src/components/StructureViewer.tsx` lazy-loads NGL from a CDN and colors the
   model by residue confidence.
@@ -54,14 +55,19 @@ runtime concerns:
 
 ### Preparation
 
-`scripts/prepare-csvs-for-import.js` normalizes the `20260407_new_web_data` raw
-dataset into importable CSVs and builds `structure_models.csv`.
+`scripts/prepare-csvs-for-import.js` normalizes the 0514 graph dataset into
+importable CSVs.
 
 Outputs:
 
-- `nodes.csv`
-- `edges.csv`
-- `structure_models.csv`
+- `data/supabase-import/20260514_new_web_data/nodes.csv`
+- `data/supabase-import/20260514_new_web_data/edges.csv`
+
+The current structure model dataset is 0407-derived and relocated into the 0514
+deployment layout:
+
+- `data/supabase-import/20260514_new_web_data/structure_models.csv`
+- `data/raw/20260514_new_web_data/best_structure/`
 
 ### Storage
 
@@ -69,6 +75,9 @@ Outputs:
 - `graph_layout_cache` is created by `sql/04_graph_layout_cache.sql`.
 - `structure_models` and extra edge-evidence columns are added by
   `supabase/migrations/20260409173000_add_structure_models_and_edge_evidence.sql`.
+- The Docker-only VM stack runs Postgres, PostgREST, nginx, the Next.js app, and
+  a local structure asset volume. It does not require Supabase CLI or a storage
+  bucket service on the VM.
 
 ### Query Transform Layer
 

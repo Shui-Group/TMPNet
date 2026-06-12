@@ -146,9 +146,7 @@ Stores or invalidates cached Cytoscape positions.
 {
   "graphKey": "sha256...",
   "layoutVersion": "v1",
-  "positions": [
-    { "id": "P12345", "x": 10, "y": 20 }
-  ]
+  "positions": [{ "id": "P12345", "x": 10, "y": 20 }]
 }
 ```
 
@@ -185,14 +183,16 @@ Returns structure detail for a single model.
 
 ## `GET /api/structures/[modelId]/asset`
 
-Redirects to a public Supabase Storage asset.
+Serves a structure asset from the local structure asset volume when
+`STRUCTURE_ASSET_ROOT` is configured. Non-VM deployments can still fall back to
+a public storage URL.
 
 ### Query Parameters
 
 - `kind`
   One of `cif`, `summary`, or `confidences`.
 - `download`
-  Set to `1` to append a download filename to the public URL.
+  Set to `1` to return the asset with a download filename.
 
 ## `GET /api/test-db`
 

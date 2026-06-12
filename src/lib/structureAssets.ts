@@ -6,6 +6,7 @@ import type {
   StructureModelRecord,
 } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import path from "path";
 
 export type StructureAssetKind = "cif" | "summary" | "confidences";
 
@@ -16,7 +17,7 @@ type ConfidenceJson = {
   token_res_ids?: unknown;
 };
 
-const STRUCTURE_STORAGE_ROOT = "data/raw/20260407_new_web_data/best_structure/";
+const STRUCTURE_STORAGE_ROOT = "data/raw/20260514_new_web_data/best_structure/";
 const DEFAULT_STRUCTURE_STORAGE_BUCKET = "structure-models";
 
 function isNumberArray(value: unknown): value is number[] {
@@ -46,6 +47,64 @@ export function getStructureStorageBucketName(): string {
     process.env.NEXT_PUBLIC_SUPABASE_STRUCTURE_BUCKET ||
     DEFAULT_STRUCTURE_STORAGE_BUCKET
   );
+}
+
+export function getLocalStructureAssetRoot(): string | undefined {
+  return process.env.STRUCTURE_ASSET_ROOT;
+}
+
+export function getStructureAssetContentType(kind: StructureAssetKind): string {
+  return kind === "cif" ? "chemical/x-cif" : "application/json";
+}
+
+export function resolveLocalStructureAssetPath(
+  record: Pick<
+    StructureModelRecord,
+    "cif_rel_path" | "summary_confidences_rel_path" | "confidences_rel_path"
+  >,
+  kind: StructureAssetKind
+): string | null {
+  const localRoot = getLocalStructureAssetRoot();
+  if (!localRoot) {
+    return null;
+  }
+
+  const objectPath = resolveStructureAssetObjectPath(record, kind);
+  const absoluteRoot = path.resolve(localRoot);
+  const absolutePath = path.resolve(absoluteRoot, objectPath);
+  const relativePath = path.relative(absoluteRoot, absolutePath);
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error(
+      `Resolved local asset path is outside structure root: ${kind}`
+    );
+  }
+
+  return absolutePath;
+}
+
+function getStructureAssetPublicBaseUrl(): string | undefined {
+  return (
+    process.env.SUPABASE_PUBLIC_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  );
+}
+
+function applyPublicSupabaseBase(publicUrl: string): URL {
+  const url = new URL(publicUrl);
+  const publicBaseUrl = getStructureAssetPublicBaseUrl();
+
+  if (!publicBaseUrl) {
+    return url;
+  }
+
+  const publicBase = new URL(publicBaseUrl);
+  const basePath = publicBase.pathname.replace(/\/$/, "");
+  url.protocol = publicBase.protocol;
+  url.hostname = publicBase.hostname;
+  url.port = publicBase.port;
+  url.pathname = `${basePath}${url.pathname}`;
+
+  return url;
 }
 
 export function resolveStructureAssetObjectPath(
@@ -99,7 +158,7 @@ export function buildStructureAssetPublicUrl(
     data: { publicUrl },
   } = supabase.storage.from(bucketName).getPublicUrl(objectPath);
 
-  const url = new URL(publicUrl);
+  const url = applyPublicSupabaseBase(publicUrl);
   if (options?.downloadFileName) {
     url.searchParams.set("download", options.downloadFileName);
   }

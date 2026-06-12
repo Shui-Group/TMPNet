@@ -1,5 +1,5 @@
 -- MemPPI-Atlas Database Schema
--- Based on 20251202 CSV data structure
+-- Based on the current MemPPI graph CSV structure.
 
 -- Drop tables if they exist (for clean reinstall)
 DROP TABLE IF EXISTS edges CASCADE;

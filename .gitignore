@@ -50,3 +50,6 @@ venv/
 datasets/
 data/supabase-import/
 data/
+
+# Local Docker VM bundle
+vm-docker-bundle/

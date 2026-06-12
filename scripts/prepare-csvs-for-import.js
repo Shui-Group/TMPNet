@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Normalizes the 20260407 website dataset for database import and builds a
+ * Normalizes the 20260514 website dataset for database import and builds a
  * manifest for the edge-level structure models in best_structure/.
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -9,7 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 
-const DEFAULT_DATASET = "20260407_new_web_data";
+const DEFAULT_DATASET = "20260514_new_web_data";
 const DEFAULT_RAW_DIR = path.join(
   __dirname,
   "..",
@@ -30,14 +30,14 @@ const NODE_HEADER_MAP = {
   "Entry.Name": "entry_name",
   Description: "description",
   Family: "family",
-  "Expression.tissue": "expression_tissue",
   gene_symbol: "gene_symbol",
+  "Expression.tissue": "expression_tissue",
 };
 
 const EDGE_HEADER_MAP = {
+  Edge: "edge",
   Protein2: "protein2",
   Protein1: "protein1",
-  Edge: "edge",
   Fusion_Pred_Prob: "fusion_pred_prob",
   Enriched_tissue: "enriched_tissue",
   Tissue_enriched_confidence: "tissue_enriched_confidence",

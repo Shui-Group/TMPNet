@@ -9,12 +9,14 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare:data:20260407": "node scripts/prepare-csvs-for-import.js",
-    "prepare:data:20260514": "node scripts/prepare-csvs-for-import.js --raw-dir data/raw/20260514_new_web_data --output-dir data/supabase-import/20260514_new_web_data --skip-structures",
+    "prepare:data": "node scripts/prepare-csvs-for-import.js",
+    "prepare:data:20260514": "npm run prepare:data",
     "build:network-artifacts": "node scripts/build-network-artifacts.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "docker:local-supabase": "docker compose --env-file .env.vm -f docker-compose.local-supabase.yml up -d",
+    "docker:vm:bundle": "scripts/build-vm-docker-bundle.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.76.1",

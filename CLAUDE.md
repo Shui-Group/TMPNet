@@ -7,7 +7,9 @@ This file summarizes the current repository state for agent tooling.
 MemPPI-Atlas is a Next.js 14 Pages Router app for exploring endogenous
 transmembrane protein-protein interaction networks. It combines Supabase-backed
 graph APIs, Cytoscape-based network rendering, and an NGL-powered structure
-viewer for AlphaFold3 interaction models.
+viewer for AlphaFold3 interaction models. The supported VM deployment path is
+Docker-only: the VM runs Docker Compose, while local machines build the image
+bundle.
 
 ## Commands
 
@@ -21,7 +23,8 @@ npm run format:check
 npm test
 npm run test:watch
 npm run test:coverage
-npm run prepare:data:20260407
+npm run prepare:data
+npm run docker:vm:bundle
 ```
 
 ## Live Routes
@@ -43,10 +46,10 @@ npm run prepare:data:20260407
 
 ## Data Flow
 
-1. Raw dataset in `data/raw/20260407_new_web_data`
+1. Raw graph dataset in `data/raw/20260514_new_web_data`
 2. `scripts/prepare-csvs-for-import.js` generates import-ready CSVs
-3. Base SQL creates `nodes`, `edges`, and `graph_layout_cache`
-4. Supabase migration creates `structure_models` and extra edge columns
+3. Docker init SQL creates `nodes`, `edges`, and `graph_layout_cache`
+4. Docker init SQL creates `structure_models` and extra edge columns
 5. API routes transform rows into frontend response types
 6. Frontend pages render Cytoscape graphs or NGL structure views
 

@@ -1,0 +1,13 @@
+*
+
+!docker/
+!docker/postgres-init/
+!docker/postgres-init/001_roles.sh
+!docker/postgres-init/010_core_network_schema.sql
+!docker/postgres-init/020_structure_models.sql
+!docker/postgres-init/030_import.sql
+
+!data/
+!data/supabase-import/
+!data/supabase-import/20260514_new_web_data/
+!data/supabase-import/20260514_new_web_data/**

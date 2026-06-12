@@ -1,0 +1,15 @@
+.git
+.next
+.vercel
+coverage
+data
+node_modules
+logs
+
+.env
+.env.*
+.env*.local
+
+*.log
+*.tsbuildinfo
+.DS_Store

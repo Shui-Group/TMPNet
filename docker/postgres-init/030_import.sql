@@ -1,0 +1,7 @@
+\set ON_ERROR_STOP on
+
+\copy public.nodes (protein, entry_name, description, family, gene_symbol, expression_tissue) FROM '/seed/data/supabase-import/20260514_new_web_data/nodes.csv' WITH (FORMAT csv, HEADER true, FORCE_NULL (entry_name, description, family, gene_symbol, expression_tissue))
+
+\copy public.edges (edge, protein2, protein1, fusion_pred_prob, enriched_tissue, tissue_enriched_confidence, positive_type, gene_symbol1, gene_symbol2, string_combined_score, biogrid_experimental_system_type, hitpredict_confidence) FROM '/seed/data/supabase-import/20260514_new_web_data/edges.csv' WITH (FORMAT csv, HEADER true, FORCE_NULL (fusion_pred_prob, enriched_tissue, tissue_enriched_confidence, positive_type, gene_symbol1, gene_symbol2, string_combined_score, biogrid_experimental_system_type, hitpredict_confidence))
+
+\copy public.structure_models (model_id, edge, protein1, protein2, folder_protein1, folder_protein2, variant, source, cif_rel_path, cif_size_bytes, summary_confidences_rel_path, summary_confidences, summary_iptm, summary_ptm, summary_ranking_score, summary_fraction_disordered, summary_has_clash, confidences_rel_path, confidences_size_bytes, has_confidences) FROM '/seed/data/supabase-import/20260514_new_web_data/structure_models.csv' WITH (FORMAT csv, HEADER true, FORCE_NULL (summary_iptm, summary_ptm, summary_ranking_score, summary_fraction_disordered, confidences_rel_path, confidences_size_bytes))
