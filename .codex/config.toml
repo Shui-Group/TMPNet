@@ -1,0 +1,40 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+# Project-local Codex configuration for MemPPI-Atlas multiagent workflows.
+# Keep this focused on agents that help with project mapping, verification
+# planning, scoped edits, review, and documentation consistency for this
+# Next.js/Supabase repository.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"
+approvals_reviewer = "auto_review"
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+startup_timeout_sec = 30
+
+[agents]
+max_threads = 6
+max_depth = 1
+
+[agents.corpus_mapper]
+description = "Read-only mapper for Next.js pages, API routes, components, libs, scripts, data, SQL, Supabase migrations, tests, and docs."
+config_file = "agents/corpus-mapper.toml"
+
+[agents.evaluation_planner]
+description = "Read-only planner for API, UI, data-transform, Supabase, Docker, and regression-test verification."
+config_file = "agents/evaluation-planner.toml"
+
+[agents.implementation_worker]
+description = "Scoped implementation worker for assigned Next.js, React, Supabase, SQL, script, test, config, or documentation changes."
+config_file = "agents/implementation-worker.toml"
+
+[agents.reviewer]
+description = "Reviewer focused on correctness, data contracts, API behavior, UI regressions, Supabase security, and missing tests."
+config_file = "agents/reviewer.toml"
+
+[agents.docs_guard]
+description = "Read-only documentation guard for README, docs, SQL/data notes, local Supabase setup, and shipped UI/API behavior."
+config_file = "agents/docs-guard.toml"
