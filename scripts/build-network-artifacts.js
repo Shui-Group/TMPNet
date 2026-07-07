@@ -6,21 +6,21 @@ const readline = require("readline");
 const familyBuckets = require("../src/lib/familyBuckets.json");
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
-const ARTIFACT_VERSION = "2026-05-14-network-artifact-v1";
+const ARTIFACT_VERSION = "2026-06-27-network-artifact-v1";
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DEFAULT_NODES_PATH = path.join(
   ROOT_DIR,
   "data",
   "supabase-import",
-  "20260514_new_web_data",
+  "20260627_web_data",
   "nodes.csv"
 );
 const DEFAULT_EDGES_PATH = path.join(
   ROOT_DIR,
   "data",
   "supabase-import",
-  "20260514_new_web_data",
+  "20260627_web_data",
   "edges.csv"
 );
 const DEFAULT_OUTPUT_DIR = path.join(

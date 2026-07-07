@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Normalizes the 20260514 website dataset for database import and builds a
- * manifest for the edge-level structure models in best_structure/.
+ * Normalizes the website dataset for database import and builds a manifest for
+ * edge-level structure models when best_structure/ is available.
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
 
@@ -9,14 +9,8 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 
-const DEFAULT_DATASET = "20260514_new_web_data";
-const DEFAULT_RAW_DIR = path.join(
-  __dirname,
-  "..",
-  "data",
-  "raw",
-  DEFAULT_DATASET
-);
+const DEFAULT_DATASET = "20260627_web_data";
+const DEFAULT_RAW_DIR = path.join(__dirname, "..", "data");
 const DEFAULT_OUTPUT_DIR = path.join(
   __dirname,
   "..",
@@ -25,29 +19,62 @@ const DEFAULT_OUTPUT_DIR = path.join(
   DEFAULT_DATASET
 );
 
-const NODE_HEADER_MAP = {
-  protein: "protein",
-  "Entry.Name": "entry_name",
-  Description: "description",
-  Family: "family",
-  gene_symbol: "gene_symbol",
-  "Expression.tissue": "expression_tissue",
+const NODE_COLUMN_SOURCES = {
+  protein: ["protein", "Protein"],
+  entry_name: ["entry_name", "Entry.Name"],
+  description: ["description", "Description"],
+  family: ["family", "Family", "TMP_families"],
+  gene_symbol: ["gene_symbol", "Gene.Names", "hgnc_symbol"],
+  expression_tissue: [
+    "expression_tissue",
+    "Expression.tissue",
+    "Detected_tissues",
+  ],
 };
 
-const EDGE_HEADER_MAP = {
-  Edge: "edge",
-  Protein2: "protein2",
-  Protein1: "protein1",
-  Fusion_Pred_Prob: "fusion_pred_prob",
-  Enriched_tissue: "enriched_tissue",
-  Tissue_enriched_confidence: "tissue_enriched_confidence",
-  Positive_type: "positive_type",
-  gene_symbol1: "gene_symbol1",
-  gene_symbol2: "gene_symbol2",
-  String_combined_score: "string_combined_score",
-  "Biogrid_Experimental.System.Type": "biogrid_experimental_system_type",
-  Hitpredict_Confidence: "hitpredict_confidence",
+const EDGE_COLUMN_SOURCES = {
+  edge: ["edge", "Edge"],
+  protein2: ["protein2", "Protein2"],
+  protein1: ["protein1", "Protein1"],
+  fusion_pred_prob: ["fusion_pred_prob", "Fusion_Pred_Prob", "Probability"],
+  enriched_tissue: ["enriched_tissue", "Enriched_tissue", "Enriched_tissues"],
+  tissue_enriched_confidence: [
+    "tissue_enriched_confidence",
+    "Tissue_enriched_confidence",
+  ],
+  positive_type: ["positive_type", "Positive_type"],
+  gene_symbol1: ["gene_symbol1", "Hgnc_symbol1"],
+  gene_symbol2: ["gene_symbol2", "Hgnc_symbol2"],
+  string_combined_score: ["string_combined_score", "String_combined_score"],
+  biogrid_experimental_system_type: [
+    "biogrid_experimental_system_type",
+    "Biogrid_Experimental.System.Type",
+  ],
+  hitpredict_confidence: ["hitpredict_confidence", "Hitpredict_Confidence"],
 };
+
+const STRUCTURE_HEADERS = [
+  "model_id",
+  "edge",
+  "protein1",
+  "protein2",
+  "folder_protein1",
+  "folder_protein2",
+  "variant",
+  "source",
+  "cif_rel_path",
+  "cif_size_bytes",
+  "summary_confidences_rel_path",
+  "summary_confidences",
+  "summary_iptm",
+  "summary_ptm",
+  "summary_ranking_score",
+  "summary_fraction_disordered",
+  "summary_has_clash",
+  "confidences_rel_path",
+  "confidences_size_bytes",
+  "has_confidences",
+];
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -59,7 +86,7 @@ function parseArgs(args = process.argv.slice(2)) {
   const config = {
     rawDir: DEFAULT_RAW_DIR,
     outputDir: DEFAULT_OUTPUT_DIR,
-    includeStructures: true,
+    includeStructures: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -124,6 +151,28 @@ function normalizeValue(value) {
   return value;
 }
 
+function getFirstValue(row, candidates) {
+  for (const candidate of candidates) {
+    if (Object.prototype.hasOwnProperty.call(row, candidate)) {
+      return row[candidate];
+    }
+  }
+  return "";
+}
+
+function normalizeAssociationEvidence(value) {
+  const normalized = value.trim().toLowerCase();
+
+  if (!normalized) return "";
+  if (normalized === "reported") return "experiment";
+  if (normalized === "tmpnet predicted") return "prediction";
+  if (normalized === "reported/tmpnet predicted") {
+    return "experiment/prediction";
+  }
+
+  return value;
+}
+
 function pairKey(protein1, protein2) {
   return [protein1, protein2]
     .map((protein) => protein.trim().toUpperCase())
@@ -178,33 +227,31 @@ async function readCsvRows(filePath) {
   return rows;
 }
 
-async function normalizeCsv(inputFile, outputFile, headerMap) {
+async function normalizeCsv(inputFile, outputFile, columnSources, transformRow) {
   const sourceRows = await readCsvRows(inputFile);
-  const inputHeaders = Object.keys(sourceRows[0] || {}).length
-    ? Object.keys(sourceRows[0])
-    : Object.keys(headerMap);
-  const mappedHeaders = inputHeaders.map((header) => headerMap[header]);
+  const mappedHeaders = Object.keys(columnSources);
+  const normalizedRows = sourceRows.map((sourceRow) => {
+    const row = {};
 
-  if (mappedHeaders.some((header) => !header)) {
-    throw new Error(
-      `Unmapped headers found in ${path.basename(inputFile)}: ${inputHeaders
-        .filter((header) => !headerMap[header])
-        .join(", ")}`
-    );
-  }
+    mappedHeaders.forEach((header) => {
+      row[header] = normalizeValue(
+        getFirstValue(sourceRow, columnSources[header])
+      );
+    });
+
+    return transformRow ? transformRow(row, sourceRow) : row;
+  });
 
   const output = fs.createWriteStream(outputFile);
   output.write(`${mappedHeaders.map(csvEscape).join(",")}\n`);
 
-  for (const sourceRow of sourceRows) {
-    const values = inputHeaders.map((header) =>
-      normalizeValue(sourceRow[header])
-    );
+  for (const row of normalizedRows) {
+    const values = mappedHeaders.map((header) => row[header]);
     output.write(`${values.map(csvEscape).join(",")}\n`);
   }
 
   output.end();
-  return sourceRows;
+  return normalizedRows;
 }
 
 async function buildStructureManifest(
@@ -217,7 +264,7 @@ async function buildStructureManifest(
   const nodeSet = new Set(nodeRows.map((row) => row.protein.toUpperCase()));
 
   for (const edgeRow of edgeRows) {
-    const key = pairKey(edgeRow.Protein1, edgeRow.Protein2);
+    const key = pairKey(edgeRow.protein1, edgeRow.protein2);
     if (edgeByPair.has(key)) {
       throw new Error(`Duplicate edge pair detected for ${key}`);
     }
@@ -233,30 +280,7 @@ async function buildStructureManifest(
   const outputFile = path.join(outputDir, "structure_models.csv");
   const output = fs.createWriteStream(outputFile);
 
-  const headers = [
-    "model_id",
-    "edge",
-    "protein1",
-    "protein2",
-    "folder_protein1",
-    "folder_protein2",
-    "variant",
-    "source",
-    "cif_rel_path",
-    "cif_size_bytes",
-    "summary_confidences_rel_path",
-    "summary_confidences",
-    "summary_iptm",
-    "summary_ptm",
-    "summary_ranking_score",
-    "summary_fraction_disordered",
-    "summary_has_clash",
-    "confidences_rel_path",
-    "confidences_size_bytes",
-    "has_confidences",
-  ];
-
-  output.write(`${headers.map(csvEscape).join(",")}\n`);
+  output.write(`${STRUCTURE_HEADERS.map(csvEscape).join(",")}\n`);
 
   for (const dirName of structureDirs) {
     const parsed = parseModelId(dirName);
@@ -283,9 +307,9 @@ async function buildStructureManifest(
 
     const record = [
       dirName,
-      edgeRow.Edge,
-      edgeRow.Protein1,
-      edgeRow.Protein2,
+      edgeRow.edge,
+      edgeRow.protein1,
+      edgeRow.protein2,
       parsed.folderProtein1,
       parsed.folderProtein2,
       parsed.variant,
@@ -312,27 +336,57 @@ async function buildStructureManifest(
   return structureDirs.length;
 }
 
+async function writeEmptyStructureManifest(outputDir) {
+  await fs.promises.writeFile(
+    path.join(outputDir, "structure_models.csv"),
+    `${STRUCTURE_HEADERS.map(csvEscape).join(",")}\n`,
+    "utf8"
+  );
+}
+
+function firstExistingPath(paths) {
+  const existingPath = paths.find((filePath) => fs.existsSync(filePath));
+  if (!existingPath) {
+    throw new Error(`None of these input files exist: ${paths.join(", ")}`);
+  }
+  return existingPath;
+}
+
 async function main() {
   const config = parseArgs();
   const structureDir = path.join(config.rawDir, "best_structure");
+  const nodeInputFile = firstExistingPath([
+    path.join(config.rawDir, "00.Web_node_20260627.csv"),
+    path.join(config.rawDir, "node_info.csv"),
+  ]);
+  const edgeInputFile = firstExistingPath([
+    path.join(config.rawDir, "00.Web_edge_20260627.csv"),
+    path.join(config.rawDir, "edge_info.csv"),
+  ]);
 
   ensureDir(config.outputDir);
 
   const nodes = await normalizeCsv(
-    path.join(config.rawDir, "node_info.csv"),
+    nodeInputFile,
     path.join(config.outputDir, "nodes.csv"),
-    NODE_HEADER_MAP
+    NODE_COLUMN_SOURCES
   );
 
   const edges = await normalizeCsv(
-    path.join(config.rawDir, "edge_info.csv"),
+    edgeInputFile,
     path.join(config.outputDir, "edges.csv"),
-    EDGE_HEADER_MAP
+    EDGE_COLUMN_SOURCES,
+    (row, sourceRow) => ({
+      ...row,
+      positive_type:
+        row.positive_type ||
+        normalizeAssociationEvidence(sourceRow.Association_evidence || ""),
+    })
   );
 
   const nodeSet = new Set(nodes.map((node) => node.protein));
   const orphanEdges = edges.filter(
-    (edge) => !nodeSet.has(edge.Protein1) || !nodeSet.has(edge.Protein2)
+    (edge) => !nodeSet.has(edge.protein1) || !nodeSet.has(edge.protein2)
   );
 
   if (orphanEdges.length > 0) {
@@ -352,6 +406,8 @@ async function main() {
       structureDir,
       config.outputDir
     );
+  } else {
+    await writeEmptyStructureManifest(config.outputDir);
   }
 
   console.log(`Prepared ${nodes.length} nodes for import`);

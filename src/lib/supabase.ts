@@ -8,7 +8,7 @@ if (useLocalFileData) {
   console.info(
     `Using local MemPPI data files from ${
       process.env.MEMPPI_DATA_ROOT ||
-      "data/supabase-import/20260514_new_web_data"
+      "data/supabase-import/20260627_web_data"
     }`
   );
 }

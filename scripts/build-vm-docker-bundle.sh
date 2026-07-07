@@ -40,8 +40,8 @@ cp docs/local-supabase-docker.md "$OUT_DIR/README.md"
 cat > "$OUT_DIR/.env.vm" <<EOF
 APP_PORT=${APP_PORT:-3000}
 MEMPPI_DATA_MODE=file
-MEMPPI_DATA_ROOT=/app/data/supabase-import/20260514_new_web_data
-STRUCTURE_ASSET_ROOT=/app/data/raw/20260514_new_web_data/best_structure
+MEMPPI_DATA_ROOT=/app/data/supabase-import/20260627_web_data
+STRUCTURE_ASSET_ROOT=/app/data/raw/20260627_web_data/best_structure
 NEXT_PUBLIC_SUPABASE_STRUCTURE_BUCKET=structure-models
 SUPABASE_STRUCTURE_BUCKET=structure-models
 EOF

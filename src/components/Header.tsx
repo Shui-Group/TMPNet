@@ -8,16 +8,16 @@ export default function Header({ title = "MemPPI" }: HeaderProps) {
   const handleDownload = () => {
     // Trigger downloads for the latest prepared dataset files.
     const link1 = document.createElement("a");
-    link1.href = "/20260514_nodes.csv";
-    link1.download = "20260514_nodes.csv";
+    link1.href = "/20260627_nodes.csv";
+    link1.download = "20260627_nodes.csv";
     document.body.appendChild(link1);
     link1.click();
     document.body.removeChild(link1);
 
     setTimeout(() => {
       const link2 = document.createElement("a");
-      link2.href = "/20260514_edges.csv";
-      link2.download = "20260514_edges.csv";
+      link2.href = "/20260627_edges.csv";
+      link2.download = "20260627_edges.csv";
       document.body.appendChild(link2);
       link2.click();
       document.body.removeChild(link2);

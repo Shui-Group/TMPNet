@@ -10,7 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare:data": "node scripts/prepare-csvs-for-import.js",
-    "prepare:data:20260514": "npm run prepare:data",
+    "prepare:data:20260627": "npm run prepare:data",
     "build:network-artifacts": "node scripts/build-network-artifacts.js",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -38,7 +38,7 @@ type DataStore = {
 
 let cachedStore: Promise<DataStore> | null = null;
 
-const DEFAULT_DATA_ROOT = "data/supabase-import/20260514_new_web_data";
+const DEFAULT_DATA_ROOT = "data/supabase-import/20260627_web_data";
 
 function getDataRoot(): string {
   return path.resolve(process.env.MEMPPI_DATA_ROOT || DEFAULT_DATA_ROOT);

@@ -9,5 +9,5 @@
 
 !data/
 !data/supabase-import/
-!data/supabase-import/20260514_new_web_data/
-!data/supabase-import/20260514_new_web_data/**
+!data/supabase-import/20260627_web_data/
+!data/supabase-import/20260627_web_data/**

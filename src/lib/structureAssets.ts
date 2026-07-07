@@ -18,7 +18,7 @@ type ConfidenceJson = {
   token_res_ids?: unknown;
 };
 
-const STRUCTURE_STORAGE_ROOT = "data/raw/20260514_new_web_data/best_structure/";
+const STRUCTURE_STORAGE_ROOT = "data/raw/20260627_web_data/best_structure/";
 const DEFAULT_STRUCTURE_STORAGE_BUCKET = "structure-models";
 
 function isNumberArray(value: unknown): value is number[] {
