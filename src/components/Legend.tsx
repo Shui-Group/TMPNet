@@ -9,14 +9,23 @@ interface LegendItem {
 export default function Legend() {
   const nodeItems: LegendItem[] = [
     { color: familyColorMap.GPCR, label: familyLabelMap.GPCR }, // GPCRs
-    { color: familyColorMap["Ion-channels"], label: familyLabelMap["Ion-channels"] }, // Ion-channels
+    {
+      color: familyColorMap["Ion-channels"],
+      label: familyLabelMap["Ion-channels"],
+    }, // Ion-channels
     { color: familyColorMap.Transporter, label: familyLabelMap.Transporter }, // Transporters
-    { color: familyColorMap["Catalytic receptors"], label: familyLabelMap["Catalytic receptors"] }, // Catalytic receptors
-    { color: familyColorMap["Other TMPs"], label: familyLabelMap["Other TMPs"] }, // Other TMPs
+    {
+      color: familyColorMap["Catalytic receptors"],
+      label: familyLabelMap["Catalytic receptors"],
+    }, // Catalytic receptors
+    {
+      color: familyColorMap["Other TMPs"],
+      label: familyLabelMap["Other TMPs"],
+    }, // Other TMPs
   ];
   const edgeItems: LegendItem[] = [
-    { color: edgeColors.experimental, label: "Experimental" },
-    { color: edgeColors.predicted, label: "Predicted" },
+    { color: edgeColors.experimental, label: "Reported" },
+    { color: edgeColors.predicted, label: "TMPNet predicted" },
   ];
 
   return (
@@ -24,7 +33,9 @@ export default function Legend() {
       <h3 className="text-sm font-semibold text-gray-900 mb-3">Legend</h3>
       <div className="space-y-3">
         <div>
-          <p className="text-xs font-semibold text-gray-700 mb-2">Nodes</p>
+          <p className="text-xs font-semibold text-gray-700 mb-2">
+            TMP families
+          </p>
           <div className="space-y-2">
             {nodeItems.map((item) => (
               <div key={item.label} className="flex items-center gap-2">
@@ -38,7 +49,9 @@ export default function Legend() {
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold text-gray-700 mb-2">Edges</p>
+          <p className="text-xs font-semibold text-gray-700 mb-2">
+            Association evidences
+          </p>
           <div className="space-y-2">
             {edgeItems.map((item) => (
               <div key={item.label} className="flex items-center gap-2">

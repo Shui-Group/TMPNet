@@ -87,11 +87,11 @@ describe("Subgraph page", () => {
     render(<SubgraphPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Subgraph for: P12345")).toBeInTheDocument();
-      expect(screen.getByTestId("Node Information")).toHaveTextContent(
-        "1"
-      );
-      expect(screen.getByTestId("Edge Information")).toHaveTextContent(
+      expect(
+        screen.getByText("Sub-network centered on P12345")
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("Protein Information")).toHaveTextContent("1");
+      expect(screen.getByTestId("Association Information")).toHaveTextContent(
         "1"
       );
     });

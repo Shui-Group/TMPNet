@@ -80,13 +80,7 @@ function summarizeTissues(protein: NodeResponse | undefined) {
     return "No tissue annotation";
   }
 
-  const preview = protein.expressionTissue.slice(0, 5).join(", ");
-  const remaining = protein.expressionTissue.length - 5;
-  if (remaining <= 0) {
-    return preview;
-  }
-
-  return `${preview}, +${remaining} more`;
+  return protein.expressionTissue.join(", ");
 }
 
 export default function StructureDetailPage() {
@@ -187,7 +181,7 @@ export default function StructureDetailPage() {
   return (
     <>
       <Head>
-        <title>{title} | MemPPI-Atlas</title>
+        <title>{`${title} | TMPNet`}</title>
         <meta
           name="description"
           content="Inspect AlphaFold3 transmembrane protein interaction structure models and residue confidence."
@@ -198,8 +192,8 @@ export default function StructureDetailPage() {
         <Header />
 
         <main className="relative overflow-hidden">
-          <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,_rgba(110,144,95,0.18),_transparent_60%)]" />
-          <div className="mx-auto max-w-[1440px] px-6 pb-16 pt-8 lg:px-10">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,_rgba(110,144,95,0.18),_transparent_60%)]" />
+          <div className="relative mx-auto max-w-[1440px] px-6 pb-16 pt-8 lg:px-10">
             <div className="mb-8 flex items-center justify-between">
               <Link
                 href="/network"
@@ -299,9 +293,13 @@ export default function StructureDetailPage() {
                           </dd>
                         </div>
                         <div className="flex items-baseline justify-between gap-4 border-b border-stone-200/70 pb-3">
-                          <dt className="text-stone-500">Disordered fraction</dt>
+                          <dt className="text-stone-500">
+                            Disordered fraction
+                          </dt>
                           <dd className="font-semibold text-stone-900">
-                            {formatPercent(data.model.summaryFractionDisordered)}
+                            {formatPercent(
+                              data.model.summaryFractionDisordered
+                            )}
                           </dd>
                         </div>
                         <div className="flex items-baseline justify-between gap-4">
@@ -404,7 +402,10 @@ export default function StructureDetailPage() {
                         </div>
                         <div className="grid gap-6 md:grid-cols-2">
                           {[proteinA, proteinB].map((protein, index) => (
-                            <article key={protein?.id ?? index}>
+                            <article
+                              key={protein?.id ?? index}
+                              className="min-w-0"
+                            >
                               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                                 Protein {index + 1}
                               </p>
@@ -415,7 +416,8 @@ export default function StructureDetailPage() {
                                 {protein?.entryName || protein?.id || "NA"}
                               </p>
                               <p className="mt-4 text-sm leading-6 text-stone-600">
-                                {protein?.description || "No description available."}
+                                {protein?.description ||
+                                  "No description available."}
                               </p>
                               <dl className="mt-5 space-y-2 text-sm text-stone-600">
                                 <div className="flex items-start justify-between gap-4">
@@ -430,9 +432,9 @@ export default function StructureDetailPage() {
                                     {protein?.id || "NA"}
                                   </dd>
                                 </div>
-                                <div className="flex items-start justify-between gap-4">
+                                <div className="space-y-1">
                                   <dt className="text-stone-500">Tissues</dt>
-                                  <dd className="max-w-[16rem] text-right font-medium text-stone-900">
+                                  <dd className="break-words font-medium leading-6 text-stone-900 [overflow-wrap:anywhere]">
                                     {summarizeTissues(protein)}
                                   </dd>
                                 </div>
@@ -498,43 +500,29 @@ export default function StructureDetailPage() {
                                   </dd>
                                 </div>
                                 <div className="flex justify-between gap-4">
-                                  <dt className="text-stone-500">Mean pLDDT</dt>
+                                  <dt className="text-stone-500">
+                                    Average pLDDT
+                                  </dt>
                                   <dd className="font-semibold text-stone-900">
                                     {formatScore(confidenceSummary.meanPlddt)}
                                   </dd>
                                 </div>
                                 <div className="flex justify-between gap-4">
+                                  <dt className="text-stone-500">
+                                    Average iPTM
+                                  </dt>
+                                  <dd className="font-semibold text-stone-900">
+                                    {formatScore(data.model.summaryIptm)}
+                                  </dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
                                   <dt className="text-stone-500">Range</dt>
                                   <dd className="font-semibold text-stone-900">
-                                      {formatScore(
-                                      confidenceSummary.minPlddt
-                                    )}{" "}
-                                    -{" "}
+                                    {formatScore(confidenceSummary.minPlddt)} -{" "}
                                     {formatScore(confidenceSummary.maxPlddt)}
                                   </dd>
                                 </div>
                               </dl>
-                            </div>
-
-                            <div className="mt-6 border-t border-stone-200 pt-5">
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                                Chains
-                              </p>
-                              <div className="mt-3 space-y-2">
-                                {confidenceSummary.chains.map((chain) => (
-                                  <div
-                                    key={chain.chainId}
-                                    className="flex items-center justify-between text-sm"
-                                  >
-                                    <span className="text-stone-600">
-                                      Chain {chain.chainId}
-                                    </span>
-                                    <span className="font-semibold text-stone-900">
-                                      {formatScore(chain.meanPlddt)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
                             </div>
                           </>
                         )}

@@ -18,6 +18,14 @@ const DEFAULT_OUTPUT_DIR = path.join(
   "supabase-import",
   DEFAULT_DATASET
 );
+const DEFAULT_STRUCTURE_DIR = path.join(
+  __dirname,
+  "..",
+  "data",
+  "raw",
+  DEFAULT_DATASET,
+  "best_structure"
+);
 
 const NODE_COLUMN_SOURCES = {
   protein: ["protein", "Protein"],
@@ -86,6 +94,7 @@ function parseArgs(args = process.argv.slice(2)) {
   const config = {
     rawDir: DEFAULT_RAW_DIR,
     outputDir: DEFAULT_OUTPUT_DIR,
+    structureDir: DEFAULT_STRUCTURE_DIR,
     includeStructures: false,
   };
 
@@ -99,6 +108,11 @@ function parseArgs(args = process.argv.slice(2)) {
     } else if (arg === "--output-dir" && next) {
       config.outputDir = path.resolve(__dirname, "..", next);
       index += 1;
+    } else if (arg === "--structure-dir" && next) {
+      config.structureDir = path.resolve(__dirname, "..", next);
+      index += 1;
+    } else if (arg === "--include-structures") {
+      config.includeStructures = true;
     } else if (arg === "--skip-structures") {
       config.includeStructures = false;
     }
@@ -265,7 +279,11 @@ async function buildStructureManifest(
 
   for (const edgeRow of edgeRows) {
     const key = pairKey(edgeRow.protein1, edgeRow.protein2);
-    if (edgeByPair.has(key)) {
+    const existingEdge = edgeByPair.get(key);
+    if (existingEdge) {
+      if (existingEdge.edge === edgeRow.edge) {
+        continue;
+      }
       throw new Error(`Duplicate edge pair detected for ${key}`);
     }
     edgeByPair.set(key, edgeRow);
@@ -354,7 +372,7 @@ function firstExistingPath(paths) {
 
 async function main() {
   const config = parseArgs();
-  const structureDir = path.join(config.rawDir, "best_structure");
+  const structureDir = config.structureDir;
   const nodeInputFile = firstExistingPath([
     path.join(config.rawDir, "00.Web_node_20260627.csv"),
     path.join(config.rawDir, "node_info.csv"),

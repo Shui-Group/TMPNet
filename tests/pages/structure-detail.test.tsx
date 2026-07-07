@@ -135,6 +135,10 @@ describe("StructureDetailPage", () => {
     expect(screen.getByTestId("structure-viewer")).toBeInTheDocument();
     expect(screen.getByText("812")).toBeInTheDocument();
     expect(screen.getByText("13,847")).toBeInTheDocument();
+    expect(screen.getByText("Average pLDDT")).toBeInTheDocument();
+    expect(screen.getByText("Average iPTM")).toBeInTheDocument();
+    expect(screen.queryByText("Chains")).not.toBeInTheDocument();
+    expect(screen.queryByText("Chain A")).not.toBeInTheDocument();
   });
 
   it("renders a not-found state when the API returns 404", async () => {

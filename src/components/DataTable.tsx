@@ -224,7 +224,7 @@ export default function DataTable<Row extends TableRow = TableRow>({
             onClick={downloadCSV}
             className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Save Table CSV
+            Download CSV
           </button>
         </div>
       </div>

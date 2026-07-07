@@ -55,7 +55,7 @@ export default function SubgraphPage() {
     const message =
       err instanceof Error
         ? err.message
-        : "Failed to initialise subgraph viewer";
+        : "Failed to initialise sub-network viewer";
     setGraphError(message);
     console.error("Error initialising Cytoscape:", err);
   }, []);
@@ -196,13 +196,17 @@ export default function SubgraphPage() {
     );
   }, [data]);
 
-  const queryHeading = useMemo(() => {
+  const queryDisplay = useMemo(() => {
     return queryProteinDetails
-      .map((queryProtein) =>
-        queryProtein.wasGeneSymbolSearch
-          ? queryProtein.searchedTerm
-          : queryProtein.proteinId
-      )
+      .map((queryProtein) => {
+        const primary =
+          queryProtein.geneSymbol ||
+          queryProtein.searchedTerm ||
+          queryProtein.proteinId;
+        return primary === queryProtein.proteinId
+          ? primary
+          : `${primary} (${queryProtein.proteinId})`;
+      })
       .join(", ");
   }, [queryProteinDetails]);
 
@@ -224,14 +228,14 @@ export default function SubgraphPage() {
           : "Single-seed neighborhood",
       },
       {
-        label: "Visible nodes",
+        label: "TMPs",
         value: data.nodes.length.toLocaleString(),
-        note: "Ranked by 1-hop context",
+        note: "Ranked by 1-hop association context",
       },
       {
-        label: "Visible edges",
+        label: "Associations",
         value: data.edges.length.toLocaleString(),
-        note: "Experimental + predicted",
+        note: "Reported + TMPNet predicted",
       },
       {
         label: "Structure links",
@@ -273,7 +277,9 @@ export default function SubgraphPage() {
         }
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch subgraph: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch sub-network: ${response.statusText}`
+          );
         }
 
         const subgraphData = (await response.json()) as SubgraphData;
@@ -298,7 +304,9 @@ export default function SubgraphPage() {
         setGraphElements(elements);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Failed to fetch subgraph data";
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch sub-network data";
         setError(message);
         console.error("Error fetching subgraph:", err);
       } finally {
@@ -361,7 +369,7 @@ export default function SubgraphPage() {
             Back to network
           </button>
           <div className="hidden rounded-full border border-sky-100 bg-sky-50/80 px-3 py-1 text-xs font-medium tracking-[0.16em] text-sky-700 sm:block">
-            SUBGRAPH EXPLORER
+            SUB-NETWORK EXPLORER
           </div>
         </div>
       </div>
@@ -369,7 +377,7 @@ export default function SubgraphPage() {
       <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
         {loading && (
           <div className="flex min-h-[calc(100vh-220px)] items-center justify-center rounded-[32px] border border-white/60 bg-white/75 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur">
-            <LoadingSpinner label="Loading subnetwork..." size="lg" />
+            <LoadingSpinner label="Loading sub-network..." size="lg" />
           </div>
         )}
 
@@ -377,7 +385,7 @@ export default function SubgraphPage() {
           <div className="flex min-h-[calc(100vh-220px)] items-center justify-center rounded-[32px] border border-white/60 bg-white/75 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur">
             <div className="max-w-md rounded-[28px] border border-red-200/80 bg-white p-8 text-center shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-                Error Loading Subgraph
+                Error Loading sub-network
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-600">{error}</p>
               <button
@@ -396,15 +404,15 @@ export default function SubgraphPage() {
               <aside className="space-y-5">
                 <div className="overflow-hidden rounded-[32px] border border-white/70 bg-white/82 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur">
                   <div className="inline-flex rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700">
-                    Network Snapshot
+                    SUB-NETWORK SUMMARY
                   </div>
                   <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                    Subgraph for: {queryHeading}
+                    Sub-network centered on {queryDisplay}
                   </h1>
                   <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
-                    A focused interaction view centered on the selected protein
-                    set, designed for quick reading before deeper table
-                    inspection.
+                    A focused TMP association view centered on the query protein
+                    set, designed for rapid overview before detailed
+                    table-level review.
                   </p>
 
                   <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -507,7 +515,7 @@ export default function SubgraphPage() {
                             Results truncated
                           </p>
                           <p className="mt-1 text-sm leading-6 text-amber-800">
-                            The subgraph has been limited due to size
+                            The sub-network has been limited due to size
                             constraints.
                             {data.truncated.nodes &&
                               " Some nodes have been excluded."}
@@ -525,17 +533,17 @@ export default function SubgraphPage() {
                   <div className="mb-4 flex flex-col gap-4 border-b border-slate-200/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Interaction Map
+                        TMPNet ASSOCIATION MAP
                       </p>
                       <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                         {isMultipleMode
-                          ? "Shared subnetwork landscape"
-                          : "Immediate neighborhood graph"}
+                          ? "Shared sub-network landscape"
+                          : "1-hop TMP association sub-network"}
                       </h2>
                       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                        Query proteins stay visually anchored while neighbors
-                        radiate outward, making family patterns and edge types
-                        easier to scan at a glance.
+                        Query proteins are fixed at the center, and 1-hop
+                        associated TMPs are arranged radially for rapid
+                        inspection of protein families and association evidence.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -564,14 +572,14 @@ export default function SubgraphPage() {
                         layoutMetadata={graphLayout}
                         customStyles={subgraphStyles}
                       />
-                      <div className="pointer-events-auto absolute right-4 top-4 z-20 rounded-[28px] border border-white/80 bg-white/90 p-1 shadow-[0_18px_45px_rgba(15,23,42,0.12)] backdrop-blur">
+                      <div className="pointer-events-auto absolute right-4 top-4 z-20">
                         <Legend />
                       </div>
                       {graphError && (
                         <div className="absolute inset-0 z-30 flex items-center justify-center">
                           <div className="max-w-sm rounded-[24px] border border-red-200 bg-white/95 p-5 text-center shadow-lg">
                             <p className="text-sm font-semibold text-red-600">
-                              Unable to load subgraph
+                              Unable to load sub-network
                             </p>
                             <p className="mt-2 text-xs text-red-500">
                               {graphError}
@@ -592,11 +600,10 @@ export default function SubgraphPage() {
                     Reference Tables
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                    Readout and export
+                    Tables and export
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Searchable tables for manual review, export, and structure
-                    follow-up.
+                    Tables for manual review, export, and structure follow-up.
                   </p>
                 </div>
                 <div className="text-xs text-slate-500">
@@ -607,14 +614,14 @@ export default function SubgraphPage() {
 
               <div className="grid gap-6">
                 <DataTable
-                  caption="Node Information"
+                  caption="Protein Information"
                   columns={nodeColumns}
                   data={formattedNodes}
                   exportData={exportableNodes}
                   exportFileName="nodes.csv"
                 />
                 <DataTable
-                  caption="Edge Information"
+                  caption="Association Information"
                   columns={edgeColumns}
                   data={formattedEdges}
                   exportData={exportableEdges}

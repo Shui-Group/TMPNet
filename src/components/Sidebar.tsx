@@ -11,7 +11,7 @@ export default function Sidebar({ stats, meta }: SidebarProps) {
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-gray-900">Network Summary</h2>
         <p className="text-sm text-gray-600">
-          The total graph shows the full MemPPI interaction network without
+          The total graph shows the full TMPNet interaction network without
           sidebar filtering.
         </p>
       </div>

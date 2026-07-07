@@ -60,7 +60,7 @@ export default function SearchBar({
     // Navigate to subgraph page with query params
     // Convert to uppercase for consistency if needed, or keep as is?
     // UniProt IDs are uppercase, Gene symbols often uppercase. Let's uppercase.
-    const queryString = ids.map(id => id.toUpperCase()).join(",");
+    const queryString = ids.map((id) => id.toUpperCase()).join(",");
     router.push(`/subgraph?proteins=${queryString}`);
   };
 
@@ -79,22 +79,22 @@ export default function SearchBar({
   };
 
   return (
-    <div className={className}>
+    <div className={className || "w-full"}>
       <div className="flex flex-col items-center">
         <form onSubmit={handleSubmit} className="w-full">
-          <div className="bg-white rounded-full shadow-lg border border-gray-300 flex items-center px-4 py-3 w-[600px] max-w-[90vw]">
+          <div className="mx-auto flex w-full max-w-[280px] items-center rounded-full border border-gray-300 bg-white px-4 py-3 shadow-lg sm:max-w-[600px]">
             <input
               type="text"
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="flex-1 outline-none text-gray-700 text-sm"
+              className="min-w-0 flex-1 outline-none text-gray-700 text-sm"
               aria-label="Search proteins"
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+              className="flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200 text-sm font-medium sm:px-6"
             >
               Search
             </button>

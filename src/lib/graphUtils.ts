@@ -31,7 +31,7 @@ export const familyColorMap: Record<string, string> = {
 // Family labels for display (plural forms)
 export const familyLabelMap: Record<string, string> = {
   GPCR: "GPCRs",
-  "Ion-channels": "Ion-channels",
+  "Ion-channels": "Ion channels",
   Transporter: "Transporters",
   "Catalytic receptors": "Catalytic receptors",
   "Other TMPs": "Other TMPs",

@@ -7,8 +7,11 @@ describe("Legend", () => {
     render(<Legend />);
 
     expect(screen.getByText("Legend")).toBeInTheDocument();
-    expect(screen.getByText("Experimental")).toBeInTheDocument();
-    expect(screen.getByText("Predicted")).toBeInTheDocument();
+    expect(screen.getByText("Association evidences")).toBeInTheDocument();
+    expect(screen.getByText("Reported")).toBeInTheDocument();
+    expect(screen.getByText("TMPNet predicted")).toBeInTheDocument();
+    expect(screen.getByText("TMP families")).toBeInTheDocument();
     expect(screen.getByText("GPCRs")).toBeInTheDocument();
+    expect(screen.getByText("Ion channels")).toBeInTheDocument();
   });
 });
