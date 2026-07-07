@@ -400,64 +400,61 @@ export default function SubgraphPage() {
 
         {!loading && !error && data && (
           <div className="space-y-8">
-            <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-              <aside className="space-y-5">
-                <div className="overflow-hidden rounded-[32px] border border-white/70 bg-white/82 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur">
+            <section className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+              <aside className="space-y-4">
+                <div className="overflow-hidden rounded-[26px] border border-white/70 bg-white/82 p-4 shadow-[0_20px_55px_rgba(15,23,42,0.07)] backdrop-blur">
                   <div className="inline-flex rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700">
                     SUB-NETWORK SUMMARY
                   </div>
-                  <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
+                  <h1 className="mt-3 text-xl font-semibold tracking-tight text-slate-950">
                     Sub-network centered on {queryDisplay}
                   </h1>
-                  <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
                     A focused TMP association view centered on the query protein
                     set, designed for rapid overview before detailed
                     table-level review.
                   </p>
 
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <div className="mt-4 grid grid-cols-2 gap-2">
                     {summaryCards.map((card) => (
                       <div
                         key={card.label}
-                        className="rounded-[24px] border border-slate-200/80 bg-slate-50/90 px-4 py-4"
+                        className="rounded-[16px] border border-slate-200/80 bg-slate-50/90 px-3 py-2.5"
                       >
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                           {card.label}
                         </p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                        <p className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
                           {card.value}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
                           {card.note}
                         </p>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                <div className="rounded-[32px] border border-white/70 bg-white/82 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Query Inputs
-                      </p>
-                      <h2 className="mt-2 text-xl font-semibold text-slate-950">
-                        Queried proteins
-                      </h2>
+                  <div className="mt-4 border-t border-slate-200/80 pt-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          Query Inputs
+                        </p>
+                        <h2 className="mt-1 text-base font-semibold text-slate-950">
+                          Queried proteins
+                        </h2>
+                      </div>
+                      <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                        {queryProteinDetails.length}
+                      </div>
                     </div>
-                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-                      {queryProteinDetails.length}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 space-y-3">
                     {queryProteinDetails.map((queryProtein) => (
                       <div
                         key={queryProtein.proteinId}
-                        className="rounded-[24px] border border-slate-200/80 bg-white px-4 py-4 shadow-sm"
+                        className="mt-3 border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0"
                       >
                         <div className="flex flex-wrap items-baseline gap-2">
-                          <span className="text-lg font-semibold tracking-tight text-slate-950">
+                          <span className="text-base font-semibold tracking-tight text-slate-950">
                             {queryProtein.wasGeneSymbolSearch
                               ? queryProtein.searchedTerm
                               : queryProtein.proteinId}
@@ -468,26 +465,30 @@ export default function SubgraphPage() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                          <p>
-                            <span className="font-medium text-slate-800">
-                              Entry Name:
-                            </span>{" "}
-                            {queryProtein.entryName || "N/A"}
-                          </p>
-                          <p>
-                            <span className="font-medium text-slate-800">
-                              Gene Symbol:
-                            </span>{" "}
-                            {queryProtein.geneSymbol || "N/A"}
-                          </p>
-                          <p className="leading-6">
-                            <span className="font-medium text-slate-800">
-                              Description:
-                            </span>{" "}
-                            {queryProtein.description || "N/A"}
-                          </p>
-                        </div>
+                        <dl className="mt-2 grid gap-1.5 text-sm text-slate-600">
+                          <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
+                            <dt className="font-medium text-slate-800">
+                              Entry
+                            </dt>
+                            <dd className="min-w-0 break-words">
+                              {queryProtein.entryName || "N/A"}
+                            </dd>
+                          </div>
+                          <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
+                            <dt className="font-medium text-slate-800">Gene</dt>
+                            <dd className="min-w-0 break-words">
+                              {queryProtein.geneSymbol || "N/A"}
+                            </dd>
+                          </div>
+                          <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
+                            <dt className="font-medium text-slate-800">
+                              Description
+                            </dt>
+                            <dd className="min-w-0 break-words leading-5">
+                              {queryProtein.description || "N/A"}
+                            </dd>
+                          </div>
+                        </dl>
                       </div>
                     ))}
                   </div>
@@ -563,7 +564,7 @@ export default function SubgraphPage() {
                     <div className="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-sky-100/60 blur-3xl" />
                     <div className="pointer-events-none absolute bottom-8 right-10 h-52 w-52 rounded-full bg-violet-100/50 blur-3xl" />
 
-                    <div className="relative h-[560px] min-h-[480px] lg:h-[calc(100vh-250px)]">
+                    <div className="relative h-[420px] min-h-[380px] sm:h-[460px] lg:h-[clamp(420px,48vh,520px)] 2xl:h-[540px]">
                       <NetworkGraph
                         elements={graphElements}
                         isLoading={false}

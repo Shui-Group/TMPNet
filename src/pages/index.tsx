@@ -170,7 +170,7 @@ export default function Home() {
           </p>
           <div className="mx-auto mt-4 max-w-5xl break-words text-sm text-gray-600">
             <p className="font-semibold text-gray-800">Contact</p>
-            <p>E-mail: shuiwq@@shanghaitech.edu.cn</p>
+            <p>E-mail: shuiwq@shanghaitech.edu.cn</p>
             <p>
               Address: 393 Middle Huaxia Road,
               <span className="sm:hidden">
