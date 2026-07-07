@@ -5,7 +5,7 @@ VM does not need Node.js, npm, npx, psql, a local database, or the Supabase CLI.
 
 ## What The Bundle Contains
 
-- `memppi-atlas:file-data`: the prebuilt Next.js standalone app with the 0514
+- `memppi-atlas:file-data`: the prebuilt Next.js standalone app with the 20260627
   graph CSVs and relocated structure assets copied into the image.
 - `docker-compose.yml`: a single-service Compose file that starts the app.
 - `.env.vm`: runtime port and file-mode data paths.
@@ -17,16 +17,16 @@ Structure asset API routes serve files from the image path configured by
 
 ## Data Contract
 
-The runtime graph dataset is the 0514 import dataset:
+The runtime graph dataset is the 20260627 import dataset:
 
-- `data/supabase-import/20260514_new_web_data/nodes.csv`
-- `data/supabase-import/20260514_new_web_data/edges.csv`
+- `data/supabase-import/20260627_web_data/nodes.csv`
+- `data/supabase-import/20260627_web_data/edges.csv`
 
 The structure model dataset remains 0407-derived, but it is relocated under the
-0514 paths used by the Docker bundle:
+20260627 paths used by the Docker bundle:
 
-- `data/supabase-import/20260514_new_web_data/structure_models.csv`
-- `data/raw/20260514_new_web_data/best_structure/`
+- `data/supabase-import/20260627_web_data/structure_models.csv`
+- `data/raw/20260627_web_data/best_structure/`
 
 These files are local deployment inputs and remain ignored by Git.
 

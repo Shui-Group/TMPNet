@@ -21,7 +21,7 @@ const copyColumnsFor = (sql: string, tableName: string) => {
 };
 
 describe("Docker VM file-mode deployment", () => {
-  it("imports 0514 nodes through the Docker database seed", () => {
+  it("imports 20260627 nodes through the Docker database seed", () => {
     const dockerfilePath = path.join(repoRoot, "docker/db-seed.Dockerfile");
     const importSqlPath = path.join(
       repoRoot,
@@ -29,7 +29,7 @@ describe("Docker VM file-mode deployment", () => {
     );
     const nodesCsvPath = path.join(
       repoRoot,
-      "data/supabase-import/20260514_new_web_data/nodes.csv"
+      "data/supabase-import/20260627_web_data/nodes.csv"
     );
 
     const dockerfile = fs.readFileSync(dockerfilePath, "utf8");
@@ -37,41 +37,41 @@ describe("Docker VM file-mode deployment", () => {
     const nodesHeader = readCsvHeader(nodesCsvPath);
 
     expect(dockerfile).toContain(
-      "COPY data/supabase-import/20260514_new_web_data /seed/data/supabase-import/20260514_new_web_data"
+      "COPY data/supabase-import/20260627_web_data /seed/data/supabase-import/20260627_web_data"
     );
     expect(importSql).toContain(
-      "FROM '/seed/data/supabase-import/20260514_new_web_data/nodes.csv'"
+      "FROM '/seed/data/supabase-import/20260627_web_data/nodes.csv'"
     );
     expect(copyColumnsFor(importSql, "nodes")).toEqual(nodesHeader);
   });
 
-  it("imports 0514 edges through the Docker database seed", () => {
+  it("imports 20260627 edges through the Docker database seed", () => {
     const importSqlPath = path.join(
       repoRoot,
       "docker/postgres-init/030_import.sql"
     );
     const edgesCsvPath = path.join(
       repoRoot,
-      "data/supabase-import/20260514_new_web_data/edges.csv"
+      "data/supabase-import/20260627_web_data/edges.csv"
     );
 
     const importSql = fs.readFileSync(importSqlPath, "utf8");
     const edgesHeader = readCsvHeader(edgesCsvPath);
 
     expect(importSql).toContain(
-      "FROM '/seed/data/supabase-import/20260514_new_web_data/edges.csv'"
+      "FROM '/seed/data/supabase-import/20260627_web_data/edges.csv'"
     );
     expect(copyColumnsFor(importSql, "edges")).toEqual(edgesHeader);
   });
 
-  it("imports relocated 0514 structure models through the Docker database seed", () => {
+  it("imports relocated 20260627 structure models through the Docker database seed", () => {
     const importSqlPath = path.join(
       repoRoot,
       "docker/postgres-init/030_import.sql"
     );
     const structureModelsPath = path.join(
       repoRoot,
-      "data/supabase-import/20260514_new_web_data/structure_models.csv"
+      "data/supabase-import/20260627_web_data/structure_models.csv"
     );
 
     expect(fs.existsSync(structureModelsPath)).toBe(true);
@@ -86,15 +86,15 @@ describe("Docker VM file-mode deployment", () => {
     ].join("/");
 
     expect(importSql).toContain(
-      "FROM '/seed/data/supabase-import/20260514_new_web_data/structure_models.csv'"
+      "FROM '/seed/data/supabase-import/20260627_web_data/structure_models.csv'"
     );
-    expect(structureModels).toContain(
-      "data/raw/20260514_new_web_data/best_structure/"
+    expect(copyColumnsFor(importSql, "structure_models")).toEqual(
+      readCsvHeader(structureModelsPath)
     );
     expect(structureModels).not.toContain(`${retiredStructureRoot}/`);
   });
 
-  it("packages relocated 0514 structure assets in the Docker assets image", () => {
+  it("packages relocated 20260627 structure assets in the Docker assets image", () => {
     const dockerfilePath = path.join(repoRoot, "docker/assets.Dockerfile");
     const dockerignorePath = path.join(
       repoRoot,
@@ -102,7 +102,7 @@ describe("Docker VM file-mode deployment", () => {
     );
     const structureAssetsPath = path.join(
       repoRoot,
-      "data/raw/20260514_new_web_data/best_structure"
+      "data/raw/20260627_web_data/best_structure"
     );
 
     const dockerfile = fs.readFileSync(dockerfilePath, "utf8");
@@ -110,10 +110,10 @@ describe("Docker VM file-mode deployment", () => {
 
     expect(fs.existsSync(structureAssetsPath)).toBe(true);
     expect(dockerfile).toContain(
-      "COPY data/raw/20260514_new_web_data/best_structure /seed/structure-assets"
+      "COPY data/raw/20260627_web_data/best_structure /seed/structure-assets"
     );
     expect(dockerignore).toContain(
-      "!data/raw/20260514_new_web_data/best_structure/**"
+      "!data/raw/20260627_web_data/best_structure/**"
     );
   });
 
@@ -154,10 +154,10 @@ describe("Docker VM file-mode deployment", () => {
     expect(compose).toContain("memppi-atlas:file-data");
     expect(compose).toContain("MEMPPI_DATA_MODE: file");
     expect(compose).toContain(
-      "MEMPPI_DATA_ROOT: /app/data/supabase-import/20260514_new_web_data"
+      "MEMPPI_DATA_ROOT: /app/data/supabase-import/20260627_web_data"
     );
     expect(compose).toContain(
-      "STRUCTURE_ASSET_ROOT: /app/data/raw/20260514_new_web_data/best_structure"
+      "STRUCTURE_ASSET_ROOT: /app/data/raw/20260627_web_data/best_structure"
     );
     expect(compose).not.toContain("db:");
     expect(compose).not.toContain("rest:");
@@ -168,7 +168,7 @@ describe("Docker VM file-mode deployment", () => {
     expect(compose).not.toContain("host.docker.internal");
     expect(envExample).toContain("MEMPPI_DATA_MODE=file");
     expect(envExample).toContain(
-      "MEMPPI_DATA_ROOT=/app/data/supabase-import/20260514_new_web_data"
+      "MEMPPI_DATA_ROOT=/app/data/supabase-import/20260627_web_data"
     );
   });
 
@@ -181,16 +181,16 @@ describe("Docker VM file-mode deployment", () => {
 
     expect(dockerfile).toContain("ENV MEMPPI_DATA_MODE=file");
     expect(dockerfile).toContain(
-      "COPY --from=builder --chown=nextjs:nodejs /app/data/supabase-import/20260514_new_web_data ./data/supabase-import/20260514_new_web_data"
+      "COPY --from=builder --chown=nextjs:nodejs /app/data/supabase-import/20260627_web_data ./data/supabase-import/20260627_web_data"
     );
     expect(dockerfile).toContain(
-      "COPY --from=builder --chown=nextjs:nodejs /app/data/raw/20260514_new_web_data/best_structure ./data/raw/20260514_new_web_data/best_structure"
+      "COPY --from=builder --chown=nextjs:nodejs /app/data/raw/20260627_web_data/best_structure ./data/raw/20260627_web_data/best_structure"
     );
     expect(dockerignore).toContain(
-      "!data/supabase-import/20260514_new_web_data/**"
+      "!data/supabase-import/20260627_web_data/**"
     );
     expect(dockerignore).toContain(
-      "!data/raw/20260514_new_web_data/best_structure/**"
+      "!data/raw/20260627_web_data/best_structure/**"
     );
   });
 
@@ -220,13 +220,13 @@ describe("Docker VM file-mode deployment", () => {
     );
 
     expect(importSql).toContain(
-      "data/supabase-import/20260514_new_web_data/nodes.csv"
+      "data/supabase-import/20260627_web_data/nodes.csv"
     );
     expect(importSql).toContain(
-      "data/supabase-import/20260514_new_web_data/edges.csv"
+      "data/supabase-import/20260627_web_data/edges.csv"
     );
     expect(importSql).toContain(
-      "data/supabase-import/20260514_new_web_data/structure_models.csv"
+      "data/supabase-import/20260627_web_data/structure_models.csv"
     );
   });
 

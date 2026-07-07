@@ -24,10 +24,10 @@ const structureRow = {
   variant: "plain",
   source: "alphafold3",
   cif_rel_path:
-    "data/raw/20260514_new_web_data/best_structure/o15303-o00222/o15303-o00222.cif",
+    "data/raw/20260627_web_data/best_structure/o15303-o00222/o15303-o00222.cif",
   cif_size_bytes: 1145190,
   summary_confidences_rel_path:
-    "data/raw/20260514_new_web_data/best_structure/o15303-o00222/summary_confidences.json",
+    "data/raw/20260627_web_data/best_structure/o15303-o00222/summary_confidences.json",
   summary_confidences: {
     iptm: 0.59,
     ptm: 0.64,
@@ -41,7 +41,7 @@ const structureRow = {
   summary_fraction_disordered: 0.1,
   summary_has_clash: false,
   confidences_rel_path:
-    "data/raw/20260514_new_web_data/best_structure/o15303-o00222/confidences.json",
+    "data/raw/20260627_web_data/best_structure/o15303-o00222/confidences.json",
   confidences_size_bytes: 1000,
   has_confidences: true,
 };

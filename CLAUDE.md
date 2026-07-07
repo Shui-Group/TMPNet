@@ -46,7 +46,7 @@ npm run docker:vm:bundle
 
 ## Data Flow
 
-1. Raw graph dataset in `data/raw/20260514_new_web_data`
+1. Raw graph dataset in `data/raw/20260627_web_data`
 2. `scripts/prepare-csvs-for-import.js` generates import-ready CSVs
 3. Docker init SQL creates `nodes`, `edges`, and `graph_layout_cache`
 4. Docker init SQL creates `structure_models` and extra edge columns

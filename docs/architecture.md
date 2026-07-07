@@ -55,24 +55,24 @@ runtime concerns:
 
 ### Preparation
 
-`scripts/prepare-csvs-for-import.js` normalizes the 0514 graph dataset into
+`scripts/prepare-csvs-for-import.js` normalizes the 20260627 graph dataset into
 importable CSVs.
 
 Outputs:
 
-- `data/supabase-import/20260514_new_web_data/nodes.csv`
-- `data/supabase-import/20260514_new_web_data/edges.csv`
+- `data/supabase-import/20260627_web_data/nodes.csv`
+- `data/supabase-import/20260627_web_data/edges.csv`
 
-The current structure model dataset is 0407-derived and relocated into the 0514
+The current structure model dataset is 0407-derived and relocated into the 20260627
 deployment layout:
 
-- `data/supabase-import/20260514_new_web_data/structure_models.csv`
-- `data/raw/20260514_new_web_data/best_structure/`
+- `data/supabase-import/20260627_web_data/structure_models.csv`
+- `data/raw/20260627_web_data/best_structure/`
 
 ### Storage
 
 - File-mode Docker VM deployment reads `nodes`, `edges`, and
-  `structure_models` directly from the 0514 CSV files copied into the app image.
+  `structure_models` directly from the 20260627 CSV files copied into the app image.
 - The Docker-only VM stack runs only the Next.js app container. It does not
   require Supabase CLI, psql, a local database service, or a storage bucket
   service on the VM.

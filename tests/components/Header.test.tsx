@@ -13,7 +13,7 @@ describe("Header", () => {
     jest.restoreAllMocks();
   });
 
-  it("downloads the versioned 20260514 public graph CSV files", () => {
+  it("downloads the versioned 20260627 public graph CSV files", () => {
     const clickedDownloads: Array<{ href: string; download: string }> = [];
     const originalCreateElement = document.createElement.bind(document);
 
@@ -41,8 +41,8 @@ describe("Header", () => {
     });
 
     expect(clickedDownloads).toEqual([
-      { href: "/20260514_nodes.csv", download: "20260514_nodes.csv" },
-      { href: "/20260514_edges.csv", download: "20260514_edges.csv" },
+      { href: "/20260627_nodes.csv", download: "20260627_nodes.csv" },
+      { href: "/20260627_edges.csv", download: "20260627_edges.csv" },
     ]);
   });
 });

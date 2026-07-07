@@ -108,20 +108,20 @@ Notes:
 - Structure assets are stored in the local structure asset volume, not in the
   database itself.
 - Relative asset paths are expected to live under
-  `data/raw/20260514_new_web_data/best_structure/`.
+  `data/raw/20260627_web_data/best_structure/`.
 
 ## Dataset Contract
 
 The runtime graph dataset comes from:
 
-- `data/supabase-import/20260514_new_web_data/nodes.csv`
-- `data/supabase-import/20260514_new_web_data/edges.csv`
+- `data/supabase-import/20260627_web_data/nodes.csv`
+- `data/supabase-import/20260627_web_data/edges.csv`
 
-The structure model dataset is 0407-derived and relocated into the 0514
+The structure model dataset is 0407-derived and relocated into the 20260627
 deployment layout:
 
-- `data/supabase-import/20260514_new_web_data/structure_models.csv`
-- `data/raw/20260514_new_web_data/best_structure/`
+- `data/supabase-import/20260627_web_data/structure_models.csv`
+- `data/raw/20260627_web_data/best_structure/`
 
 Data files are local deployment inputs and remain ignored by Git.
 

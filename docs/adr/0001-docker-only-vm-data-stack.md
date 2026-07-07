@@ -24,7 +24,7 @@ docker compose --env-file .env.vm up -d
 The VM stack contains:
 
 - the Next.js app image
-- the 0514 graph CSVs copied into the app image
+- the 20260627 graph CSVs copied into the app image
 - the relocated 0407-derived structure metadata and assets copied into the app
   image
 - the local file data adapter selected by `MEMPPI_DATA_MODE=file`

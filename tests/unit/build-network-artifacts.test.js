@@ -10,13 +10,13 @@ const {
 } = require("../../scripts/build-network-artifacts.js");
 
 describe("build-network-artifacts defaults", () => {
-  it("uses the 20260514 Supabase import dataset by default", () => {
+  it("uses the 20260627 Supabase import dataset by default", () => {
     expect(DEFAULT_NODES_PATH).toBe(
       path.join(
         process.cwd(),
         "data",
         "supabase-import",
-        "20260514_new_web_data",
+        "20260627_web_data",
         "nodes.csv"
       )
     );
@@ -25,7 +25,7 @@ describe("build-network-artifacts defaults", () => {
         process.cwd(),
         "data",
         "supabase-import",
-        "20260514_new_web_data",
+        "20260627_web_data",
         "edges.csv"
       )
     );
@@ -45,7 +45,7 @@ describe("build-network-artifacts defaults", () => {
     expect(config.fullLimit).toBe(1000);
   });
 
-  it("writes 20260514-versioned network artifacts", () => {
+  it("writes 20260627-versioned network artifacts", () => {
     const tempDir = fs.mkdtempSync(
       path.join(os.tmpdir(), "memppi-network-artifacts-")
     );
@@ -93,13 +93,13 @@ describe("build-network-artifacts defaults", () => {
         fs.readFileSync(path.join(outputDir, "overview.cyto.json"), "utf8")
       );
 
-      expect(stats.version).toBe("2026-05-14-network-artifact-v1");
-      expect(overview.version).toBe("2026-05-14-network-artifact-v1");
+      expect(stats.version).toBe("2026-06-27-network-artifact-v1");
+      expect(overview.version).toBe("2026-06-27-network-artifact-v1");
       expect(overview.meta.artifactVersion).toBe(
-        "2026-05-14-network-artifact-v1"
+        "2026-06-27-network-artifact-v1"
       );
       expect(overview.layout.graphKey).toBe(
-        "artifact:overview:2026-05-14-network-artifact-v1"
+        "artifact:overview:2026-06-27-network-artifact-v1"
       );
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });

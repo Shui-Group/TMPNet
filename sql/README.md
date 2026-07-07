@@ -34,7 +34,7 @@ Those files:
 - creates `structure_models`
 - adds indexes
 - enables RLS for `structure_models`
-- imports the 0514 graph CSVs and relocated structure metadata
+- imports the 20260627 graph CSVs and relocated structure metadata
 
 ## Reference Execution Order
 
@@ -46,16 +46,16 @@ Those files:
 
 The preparation script writes:
 
-- `data/supabase-import/20260514_new_web_data/nodes.csv`
-- `data/supabase-import/20260514_new_web_data/edges.csv`
+- `data/supabase-import/20260627_web_data/nodes.csv`
+- `data/supabase-import/20260627_web_data/edges.csv`
 
 The structure model metadata is 0407-derived and relocated under:
 
-- `data/supabase-import/20260514_new_web_data/structure_models.csv`
+- `data/supabase-import/20260627_web_data/structure_models.csv`
 
 The corresponding structure assets live under:
 
-- `data/raw/20260514_new_web_data/best_structure/`
+- `data/raw/20260627_web_data/best_structure/`
 
 ## Verification Queries
 
@@ -78,7 +78,7 @@ select 'structure_models' as table_name, count(*) from public.structure_models;
 
 - `structure_models` depends on `edges` and `nodes`.
 - Structure assets live in the local structure asset volume, not in Postgres.
-- The current Docker VM data contract uses the 0514 graph dataset plus
+- The current Docker VM data contract uses the 20260627 graph dataset plus
   0407-derived relocated structure model data.
 - Supabase CLI and storage bucket upload flows are not supported VM deployment
   paths.

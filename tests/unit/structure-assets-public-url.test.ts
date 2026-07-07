@@ -37,7 +37,7 @@ describe("structure asset public URLs", () => {
     const publicUrl = buildStructureAssetPublicUrl(
       {
         cif_rel_path:
-          "data/raw/20260514_new_web_data/best_structure/o15303-o00222/model.cif",
+          "data/raw/20260627_web_data/best_structure/o15303-o00222/model.cif",
         summary_confidences_rel_path: "",
         confidences_rel_path: null,
       },

@@ -12,7 +12,7 @@ This repository is a Next.js 14 Pages Router app for MemPPI network exploration.
 - `npm run format` rewrites files with Prettier; `npm run format:check` verifies formatting.
 - `npm test` runs the Jest suite; `npm run test:watch` is useful while iterating.
 - `npm run test:coverage` checks coverage thresholds.
-- `npm run prepare:data` normalizes the 20260514 website dataset for Docker database import.
+- `npm run prepare:data` normalizes the 20260627 website dataset for Docker database import.
 
 ## Coding Style & Naming Conventions
 

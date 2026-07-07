@@ -36,7 +36,7 @@ describe("Docker-only VM documentation contract", () => {
     expect(docs).not.toMatch(/Supabase Storage upload/i);
   });
 
-  it("documents the 0514 graph and relocated structure data contract", () => {
+  it("documents the 20260627 graph and relocated structure data contract", () => {
     const docs = [
       "README.md",
       "docs/local-supabase-docker.md",
@@ -48,15 +48,15 @@ describe("Docker-only VM documentation contract", () => {
       .join("\n");
 
     expect(docs).toContain(
-      "data/supabase-import/20260514_new_web_data/nodes.csv"
+      "data/supabase-import/20260627_web_data/nodes.csv"
     );
     expect(docs).toContain(
-      "data/supabase-import/20260514_new_web_data/edges.csv"
+      "data/supabase-import/20260627_web_data/edges.csv"
     );
     expect(docs).toContain(
-      "data/supabase-import/20260514_new_web_data/structure_models.csv"
+      "data/supabase-import/20260627_web_data/structure_models.csv"
     );
-    expect(docs).toContain("data/raw/20260514_new_web_data/best_structure");
+    expect(docs).toContain("data/raw/20260627_web_data/best_structure");
     expect(docs).toMatch(/0407-derived/i);
   });
 

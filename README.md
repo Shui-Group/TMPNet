@@ -65,8 +65,8 @@ Create `.env.local` with:
 
 ```env
 MEMPPI_DATA_MODE=file
-MEMPPI_DATA_ROOT=data/supabase-import/20260514_new_web_data
-STRUCTURE_ASSET_ROOT=data/raw/20260514_new_web_data/best_structure
+MEMPPI_DATA_ROOT=data/supabase-import/20260627_web_data
+STRUCTURE_ASSET_ROOT=data/raw/20260627_web_data/best_structure
 
 # Optional; defaults to "structure-models"
 SUPABASE_STRUCTURE_BUCKET=structure-models
@@ -97,20 +97,20 @@ npm test
 npm run test:watch
 npm run test:coverage
 npm run prepare:data
-npm run prepare:data:20260514
+npm run prepare:data:20260627
 npm run docker:vm:bundle
 ```
 
-`prepare:data` normalizes the 0514 graph dataset and writes:
+`prepare:data` normalizes the 20260627 graph dataset and writes:
 
-- `data/supabase-import/20260514_new_web_data/nodes.csv`
-- `data/supabase-import/20260514_new_web_data/edges.csv`
+- `data/supabase-import/20260627_web_data/nodes.csv`
+- `data/supabase-import/20260627_web_data/edges.csv`
 
 The current structure model dataset is 0407-derived and relocated under the
-0514 layout:
+20260627 layout:
 
-- `data/supabase-import/20260514_new_web_data/structure_models.csv`
-- `data/raw/20260514_new_web_data/best_structure/`
+- `data/supabase-import/20260627_web_data/structure_models.csv`
+- `data/raw/20260627_web_data/best_structure/`
 
 Data files remain local and ignored by Git.
 
@@ -130,7 +130,7 @@ Copy `vm-docker-bundle/` to the VM and run:
 ```
 
 The VM does not need Node.js, npm, npx, psql, or the Supabase CLI. The VM stack
-runs only the Next.js app container, with the 0514 graph data and relocated
+runs only the Next.js app container, with the 20260627 graph data and relocated
 structure assets built into the image. Storage bucket upload flows are not a
 supported deployment path.
 
