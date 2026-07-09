@@ -216,6 +216,10 @@ export default function SubgraphPage() {
 
   const isMultipleMode = queryProteinDetails.length > 1;
 
+  const summaryTitle = isMultipleMode
+    ? `Sub-network centered on ${queryProteinDetails.length} queried proteins`
+    : `Sub-network centered on ${queryDisplay}`;
+
   const summaryCards = useMemo(() => {
     if (!data) return [];
 
@@ -246,6 +250,10 @@ export default function SubgraphPage() {
   }, [data, isMultipleMode, queryProteinDetails.length, structureCount]);
 
   useEffect(() => {
+    if (!router.isReady) {
+      return;
+    }
+
     if (!proteins || typeof proteins !== "string") {
       setLoading(false);
       return;
@@ -315,10 +323,10 @@ export default function SubgraphPage() {
     }
 
     fetchSubgraph();
-  }, [proteins]);
+  }, [proteins, router.isReady]);
 
   // Show error if no proteins parameter
-  if (!proteins) {
+  if (router.isReady && !proteins) {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(186,230,253,0.32),_transparent_30%),linear-gradient(180deg,_#f8fbff_0%,_#f4f6fb_48%,_#eef2f9_100%)]">
         <Header />
@@ -407,7 +415,7 @@ export default function SubgraphPage() {
                     SUB-NETWORK SUMMARY
                   </div>
                   <h1 className="mt-3 text-xl font-semibold tracking-tight text-slate-950">
-                    Sub-network centered on {queryDisplay}
+                    {summaryTitle}
                   </h1>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     A focused TMP association view centered on the query protein
@@ -434,64 +442,6 @@ export default function SubgraphPage() {
                     ))}
                   </div>
 
-                  <div className="mt-4 border-t border-slate-200/80 pt-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Query Inputs
-                        </p>
-                        <h2 className="mt-1 text-base font-semibold text-slate-950">
-                          Queried proteins
-                        </h2>
-                      </div>
-                      <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                        {queryProteinDetails.length}
-                      </div>
-                    </div>
-                    {queryProteinDetails.map((queryProtein) => (
-                      <div
-                        key={queryProtein.proteinId}
-                        className="mt-3 border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0"
-                      >
-                        <div className="flex flex-wrap items-baseline gap-2">
-                          <span className="text-base font-semibold tracking-tight text-slate-950">
-                            {queryProtein.wasGeneSymbolSearch
-                              ? queryProtein.searchedTerm
-                              : queryProtein.proteinId}
-                          </span>
-                          {queryProtein.wasGeneSymbolSearch && (
-                            <span className="text-sm text-slate-500">
-                              ({queryProtein.proteinId})
-                            </span>
-                          )}
-                        </div>
-                        <dl className="mt-2 grid gap-1.5 text-sm text-slate-600">
-                          <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
-                            <dt className="font-medium text-slate-800">
-                              Entry
-                            </dt>
-                            <dd className="min-w-0 break-words">
-                              {queryProtein.entryName || "N/A"}
-                            </dd>
-                          </div>
-                          <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
-                            <dt className="font-medium text-slate-800">Gene</dt>
-                            <dd className="min-w-0 break-words">
-                              {queryProtein.geneSymbol || "N/A"}
-                            </dd>
-                          </div>
-                          <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
-                            <dt className="font-medium text-slate-800">
-                              Description
-                            </dt>
-                            <dd className="min-w-0 break-words leading-5">
-                              {queryProtein.description || "N/A"}
-                            </dd>
-                          </div>
-                        </dl>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
                 {data.truncated &&
@@ -588,6 +538,72 @@ export default function SubgraphPage() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[26px] border border-white/70 bg-white/82 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur sm:p-5">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Query Inputs
+                      </p>
+                      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                        Queried proteins
+                      </h2>
+                    </div>
+                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600">
+                      {queryProteinDetails.length}
+                    </div>
+                  </div>
+
+                  <div className="-mx-1 mt-4 overflow-x-auto px-1 pb-2">
+                    <div className="flex min-w-0 gap-3">
+                      {queryProteinDetails.map((queryProtein) => (
+                        <article
+                          key={queryProtein.proteinId}
+                          className="min-w-[230px] flex-[0_0_230px] rounded-[18px] border border-slate-200/80 bg-slate-50/90 p-4 sm:min-w-[250px] sm:flex-[0_0_250px] xl:min-w-[0] xl:flex-[0_0_calc((100%_-_36px)/4)]"
+                        >
+                          <div className="flex flex-wrap items-baseline gap-2">
+                            <span className="text-lg font-semibold tracking-tight text-slate-950">
+                              {queryProtein.wasGeneSymbolSearch
+                                ? queryProtein.searchedTerm
+                                : queryProtein.proteinId}
+                            </span>
+                            {queryProtein.wasGeneSymbolSearch && (
+                              <span className="text-sm text-slate-500">
+                                ({queryProtein.proteinId})
+                              </span>
+                            )}
+                          </div>
+                          <dl className="mt-3 grid gap-2 text-sm text-slate-600">
+                            <div>
+                              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                Entry
+                              </dt>
+                              <dd className="mt-0.5 min-w-0 break-words font-medium text-slate-800">
+                                {queryProtein.entryName || "N/A"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                Gene
+                              </dt>
+                              <dd className="mt-0.5 min-w-0 break-words font-medium text-slate-800">
+                                {queryProtein.geneSymbol || "N/A"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                Description
+                              </dt>
+                              <dd className="mt-0.5 line-clamp-3 min-w-0 break-words leading-5 text-slate-600">
+                                {queryProtein.description || "N/A"}
+                              </dd>
+                            </div>
+                          </dl>
+                        </article>
+                      ))}
                     </div>
                   </div>
                 </div>

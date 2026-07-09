@@ -26,6 +26,7 @@ let queryState: Record<string, unknown> = {};
 
 jest.mock("next/router", () => ({
   useRouter: () => ({
+    isReady: true,
     push: pushMock,
     query: queryState,
   }),
