@@ -70,9 +70,9 @@ export default function SubgraphPage() {
       { key: "id", label: "Protein" },
       { key: "label", label: "Entry Name" },
       { key: "description", label: "Description" },
-      { key: "geneSymbol", label: "Gene Symbol" },
+      { key: "geneSymbol", label: "Protein Symbol" },
       { key: "family", label: "Family" },
-      { key: "expressionTissue", label: "Expression Tissue" },
+      { key: "expressionTissue", label: "Tissues of expression" },
     ],
     []
   );
@@ -543,27 +543,15 @@ export default function SubgraphPage() {
             </section>
 
             <section className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Reference Tables
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                    Tables and export
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Tables for manual review, export, and structure follow-up.
-                  </p>
-                </div>
-                <div className="text-xs text-slate-500">
-                  Use the built-in filters to narrow specific proteins, tissues,
-                  and edge sources.
-                </div>
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+                  Related tables
+                </h2>
               </div>
 
               <div className="grid gap-6">
                 <DataTable
-                  caption="Protein Information"
+                  caption="TMP Information"
                   columns={nodeColumns}
                   data={formattedNodes}
                   exportData={exportableNodes}

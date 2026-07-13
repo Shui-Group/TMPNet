@@ -17,8 +17,22 @@ jest.mock("@/components/NetworkGraph", () => () => (
 jest.mock(
   "@/components/DataTable",
   () =>
-    ({ caption, data }: { caption: string; data: any[] }) =>
-      <div data-testid={caption}>{data.length}</div>
+    ({
+      caption,
+      data,
+      columns,
+    }: {
+      caption: string;
+      data: any[];
+      columns: Array<{ label: string }>;
+    }) => (
+      <div data-testid={caption}>
+        <span>{data.length}</span>
+        {columns.map((column) => (
+          <span key={column.label}>{column.label}</span>
+        ))}
+      </div>
+    )
 );
 
 const pushMock = jest.fn();
@@ -101,7 +115,7 @@ describe("Subgraph page", () => {
       expect(
         screen.getByText("Sub-network centered on GENE1 (P12345)")
       ).toBeInTheDocument();
-      expect(screen.getByTestId("Protein Information")).toHaveTextContent("1");
+      expect(screen.getByTestId("TMP Information")).toHaveTextContent("1");
       expect(screen.getByTestId("Association Information")).toHaveTextContent(
         "1"
       );
@@ -119,6 +133,18 @@ describe("Subgraph page", () => {
     expect(screen.queryByText(/1-hop/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/rapid/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Query Inputs")).not.toBeInTheDocument();
+    expect(screen.getByText("Related tables")).toBeInTheDocument();
+    expect(screen.getByTestId("TMP Information")).toHaveTextContent("1");
+    expect(screen.getByText("Protein Symbol")).toBeInTheDocument();
+    expect(screen.getByText("Tissues of expression")).toBeInTheDocument();
+    expect(screen.queryByText("Reference Tables")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tables and export")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Tables for manual review/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Use the built-in filters/i)
+    ).not.toBeInTheDocument();
 
     expect(mockFetch).toHaveBeenCalledWith("/api/subgraph?proteins=P12345");
   });
