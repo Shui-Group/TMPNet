@@ -460,7 +460,7 @@ const buildEdgeElements = (edges) =>
         target: edge.target,
         fusionPredProb: edge.fusionPredProb,
         positiveType: edge.positiveType,
-        color: edge.positiveType.includes("experiment") ? "#4C6FB9" : "#C9DBF8",
+        color: edge.positiveType.includes("experiment") ? "#C9DBF8" : "#4C6FB9",
         width: visualWeight.width,
         opacity: visualWeight.opacity,
         layoutPriority: visualWeight.layoutPriority,

@@ -66,6 +66,7 @@ describe("build-network-artifacts defaults", () => {
       [
         "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,positive_type",
         "P1_P2,P1,P2,0.95,brain,prediction",
+        "P2_P1,P2,P1,0.80,heart,experiment",
       ].join("\n")
     );
 
@@ -81,7 +82,7 @@ describe("build-network-artifacts defaults", () => {
           "--output",
           outputDir,
           "--overview-limit",
-          "1",
+          "2",
         ],
         { stdio: "pipe" }
       );
@@ -101,6 +102,13 @@ describe("build-network-artifacts defaults", () => {
       expect(overview.layout.graphKey).toBe(
         "artifact:overview:2026-06-27-network-artifact-v1"
       );
+      const edgeColors = Object.fromEntries(
+        overview.elements
+          .filter((element) => element.data.source && element.data.target)
+          .map((element) => [element.data.positiveType, element.data.color])
+      );
+      expect(edgeColors.prediction).toBe("#4C6FB9");
+      expect(edgeColors.experiment).toBe("#C9DBF8");
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

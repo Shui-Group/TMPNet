@@ -57,8 +57,8 @@ export function getFamilyLabel(family?: string | null): string {
 
 // Edge color shades (only experimental and predicted)
 export const edgeColors = {
-  experimental: "#4C6FB9",
-  predicted: "#C9DBF8",
+  experimental: "#C9DBF8",
+  predicted: "#4C6FB9",
 };
 
 export type NodeDegreeMap = Record<string, number>;

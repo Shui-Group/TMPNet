@@ -8,8 +8,10 @@ describe("Legend", () => {
 
     expect(screen.getByText("Legend")).toBeInTheDocument();
     expect(screen.getByText("Association evidences")).toBeInTheDocument();
-    expect(screen.getByText("Reported")).toBeInTheDocument();
-    expect(screen.getByText("TMPNet predicted")).toBeInTheDocument();
+    expect(screen.getByText("Additional")).toBeInTheDocument();
+    expect(screen.getByText("TMPNet")).toBeInTheDocument();
+    expect(screen.queryByText("Reported")).not.toBeInTheDocument();
+    expect(screen.queryByText("TMPNet predicted")).not.toBeInTheDocument();
     expect(screen.getByText("TMP families")).toBeInTheDocument();
     expect(screen.getByText("GPCRs")).toBeInTheDocument();
     expect(screen.getByText("Ion channels")).toBeInTheDocument();

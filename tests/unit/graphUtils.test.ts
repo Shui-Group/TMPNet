@@ -115,6 +115,11 @@ describe("graphUtils", () => {
       positiveType: "prediction",
     };
 
+    it("uses a light line for Additional and a dark line for TMPNet", () => {
+      expect(edgeColors.experimental).toBe("#C9DBF8");
+      expect(edgeColors.predicted).toBe("#4C6FB9");
+    });
+
     it("uses experimental color when positiveType contains experiment", () => {
       expect(getEdgeColor({ ...baseEdge, positiveType: "experiment" })).toBe(
         edgeColors.experimental

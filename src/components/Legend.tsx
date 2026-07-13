@@ -24,8 +24,8 @@ export default function Legend() {
     }, // Other TMPs
   ];
   const edgeItems: LegendItem[] = [
-    { color: edgeColors.experimental, label: "Reported" },
-    { color: edgeColors.predicted, label: "TMPNet predicted" },
+    { color: edgeColors.experimental, label: "Additional" },
+    { color: edgeColors.predicted, label: "TMPNet" },
   ];
 
   return (
