@@ -46,7 +46,7 @@ export default function SubgraphPage() {
     target: string;
     fusionPredProb: string;
     enrichedTissue: string;
-    positiveType: string;
+    associationSource: string;
     structureStatus: string;
     structureModelId?: string;
   };
@@ -84,7 +84,7 @@ export default function SubgraphPage() {
       { key: "target", label: "Protein 2" },
       { key: "fusionPredProb", label: "Fusion Pred. Prob" },
       { key: "enrichedTissue", label: "Enriched Tissue" },
-      { key: "positiveType", label: "Positive Type" },
+      { key: "associationSource", label: "Association source" },
       {
         key: "structureStatus",
         label: "Structure",
@@ -144,7 +144,9 @@ export default function SubgraphPage() {
         : edge.target,
       fusionPredProb: edge.fusionPredProb.toFixed(3),
       enrichedTissue: edge.enrichedTissue ?? "",
-      positiveType: edge.positiveType,
+      associationSource: edge.positiveType.toLowerCase().includes("experiment")
+        ? "Additional"
+        : "TMPNet",
       structureStatus: edge.hasStructureModel ? "Available" : "N/A",
       structureModelId: edge.structureModelId,
     }));

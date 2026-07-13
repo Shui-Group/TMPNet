@@ -317,6 +317,8 @@ const scanEdges = async (edgesPath, overviewLimit, fullLimit) => {
   let headerIndex = null;
   const degreeMap = {};
   const overviewHeap = new MinHeap(overviewLimit);
+  let bestAdditionalEdge = null;
+  let bestTmpnetEdge = null;
   const fullEdges = fullLimit > 0 ? [] : null;
 
   let totalEdges = 0;
@@ -367,7 +369,7 @@ const scanEdges = async (edgesPath, overviewLimit, fullLimit) => {
       enrichedEdgeCount += 1;
     }
 
-    overviewHeap.push({
+    const overviewEdge = {
       id: edgeId,
       source,
       target,
@@ -375,7 +377,22 @@ const scanEdges = async (edgesPath, overviewLimit, fullLimit) => {
       positiveType,
       enrichedTissue: enrichedTissue === "NA" ? null : enrichedTissue,
       priority: fusionPredProb + (positiveType.includes("experiment") ? 1 : 0),
-    });
+    };
+
+    overviewHeap.push(overviewEdge);
+    if (positiveType.includes("experiment")) {
+      if (
+        !bestAdditionalEdge ||
+        overviewHeap.compare(overviewEdge, bestAdditionalEdge) > 0
+      ) {
+        bestAdditionalEdge = overviewEdge;
+      }
+    } else if (
+      !bestTmpnetEdge ||
+      overviewHeap.compare(overviewEdge, bestTmpnetEdge) > 0
+    ) {
+      bestTmpnetEdge = overviewEdge;
+    }
 
     if (fullEdges && fullEdges.length < fullLimit) {
       fullEdges.push({
@@ -389,14 +406,48 @@ const scanEdges = async (edgesPath, overviewLimit, fullLimit) => {
     }
   }
 
+  const overviewEdges = overviewHeap.values();
+  if (
+    overviewLimit >= 2 &&
+    overviewEdges.length === overviewLimit &&
+    bestAdditionalEdge &&
+    bestTmpnetEdge
+  ) {
+    const selectedCategories = new Set(
+      overviewEdges.map((edge) =>
+        edge.positiveType.includes("experiment") ? "additional" : "tmpnet"
+      )
+    );
+    const missingCategoryEdge = !selectedCategories.has("additional")
+      ? bestAdditionalEdge
+      : !selectedCategories.has("tmpnet")
+      ? bestTmpnetEdge
+      : null;
+
+    if (missingCategoryEdge) {
+      let lowestPriorityIndex = 0;
+      for (let index = 1; index < overviewEdges.length; index += 1) {
+        if (
+          overviewHeap.compare(
+            overviewEdges[index],
+            overviewEdges[lowestPriorityIndex]
+          ) < 0
+        ) {
+          lowestPriorityIndex = index;
+        }
+      }
+      overviewEdges[lowestPriorityIndex] = missingCategoryEdge;
+    }
+  }
+
   return {
     degreeMap,
     totalEdges,
     predictedEdgeCount,
     enrichedEdgeCount,
-    overviewEdges: overviewHeap
-      .values()
-      .sort((left, right) => right.priority - left.priority),
+    overviewEdges: overviewEdges.sort((left, right) =>
+      overviewHeap.compare(right, left)
+    ),
     fullEdges,
   };
 };

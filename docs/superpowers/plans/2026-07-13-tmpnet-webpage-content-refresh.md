@@ -150,7 +150,8 @@ Expected: FAIL because the current UI still says `Gene Symbol` and `gene symbols
 In `src/pages/index.tsx`, use exactly:
 
 ```tsx
-placeholder="Search by UniProt ID (e.g., P43220, P00533) or Protein Symbol (e.g., EGFR, INSR)"
+placeholder =
+  "Search by UniProt ID (e.g., P43220, P00533) or Protein Symbol (e.g., EGFR, INSR)";
 ```
 
 ```tsx
@@ -430,12 +431,14 @@ Replace the current metadata grid with:
       </span>
     </div>
   ))}
-</div>
-{networkStatisticsContent.description && (
-  <p className="text-xs leading-5 text-gray-500">
-    {networkStatisticsContent.description}
-  </p>
-)}
+</div>;
+{
+  networkStatisticsContent.description && (
+    <p className="text-xs leading-5 text-gray-500">
+      {networkStatisticsContent.description}
+    </p>
+  );
+}
 ```
 
 Keep `meta` in the prop interface because `src/pages/network.tsx` already supplies it, but do not display server timing or use meta totals for the four reviewed categories.
@@ -449,16 +452,18 @@ export default function Sidebar({ stats }: SidebarProps) {
 Replace the family mapping with:
 
 ```tsx
-{orderedFamilyCounts.map(([family, count]) => (
-  <div
-    key={family}
-    data-testid="family-row"
-    className="flex justify-between text-sm text-gray-700"
-  >
-    <span>{getFamilyLabel(family)}</span>
-    <span className="font-semibold">{count.toLocaleString()}</span>
-  </div>
-))}
+{
+  orderedFamilyCounts.map(([family, count]) => (
+    <div
+      key={family}
+      data-testid="family-row"
+      className="flex justify-between text-sm text-gray-700"
+    >
+      <span>{getFamilyLabel(family)}</span>
+      <span className="font-semibold">{count.toLocaleString()}</span>
+    </div>
+  ));
+}
 ```
 
 - [ ] **Step 9: Run focused tests**
@@ -528,7 +533,7 @@ In `tests/unit/build-network-artifacts.test.js`, make the fixture edges:
   "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,positive_type",
   "P1_P2,P1,P2,0.95,brain,prediction",
   "P2_P1,P2,P1,0.80,heart,experiment",
-].join("\n")
+].join("\n");
 ```
 
 Change `--overview-limit` from `1` to `2`, then add:
@@ -808,24 +813,26 @@ an overview before detailed table-level review.
 Replace the map title with:
 
 ```tsx
-{isMultipleMode
-  ? "Retrieved associations between two or more query proteins"
-  : "Retrieved TMP associations for a single query protein"}
+{
+  isMultipleMode
+    ? "Retrieved associations between two or more query proteins"
+    : "Retrieved TMP associations for a single query protein";
+}
 ```
 
 Replace the map description with:
 
 ```tsx
-{isMultipleMode ? (
-  // TODO(external-input:multiple-query-description): render the approved
+{
+  isMultipleMode ? // TODO(external-input:multiple-query-description): render the approved
   // sentence here after it is supplied. Omit unapproved placeholder copy.
-  null
-) : (
-  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-    The query protein is positioned at the center and connected to associated
-    TMPs, which are grouped by protein family.
-  </p>
-)}
+  null : (
+    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+      The query protein is positioned at the center and connected to associated
+      TMPs, which are grouped by protein family.
+    </p>
+  );
+}
 ```
 
 Delete the current unconditional description paragraph so no `1-hop` or `rapid` remains in rendered copy.
@@ -883,14 +890,15 @@ jest.mock(
       caption: string;
       data: any[];
       columns: Array<{ label: string }>;
-    }) => (
-      <div data-testid={caption}>
-        <span>{data.length}</span>
-        {columns.map((column) => (
-          <span key={column.label}>{column.label}</span>
-        ))}
-      </div>
-    )
+    }) =>
+      (
+        <div data-testid={caption}>
+          <span>{data.length}</span>
+          {columns.map((column) => (
+            <span key={column.label}>{column.label}</span>
+          ))}
+        </div>
+      )
 );
 ```
 
@@ -945,7 +953,7 @@ Delete `Reference Tables`, the manual-review sentence, and the built-in-filter s
 Change the first table caption only:
 
 ```tsx
-caption="TMP Information"
+caption = "TMP Information";
 ```
 
 Keep `Association Information`, `nodes.csv`, `edges.csv`, and all export object keys unchanged.

@@ -114,6 +114,66 @@ describe("build-network-artifacts defaults", () => {
     }
   });
 
+  it("retains both association source categories in a skewed limited overview", () => {
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "memppi-network-artifacts-skewed-")
+    );
+    const nodesPath = path.join(tempDir, "nodes.csv");
+    const edgesPath = path.join(tempDir, "edges.csv");
+    const outputDir = path.join(tempDir, "network");
+
+    fs.writeFileSync(
+      nodesPath,
+      [
+        "protein,entry_name,description,gene_symbol,family,expression_tissue",
+        "P1,P1_HUMAN,Protein 1,GENE1,TM,brain",
+        "P2,P2_HUMAN,Protein 2,GENE2,TM(GPCR),heart",
+      ].join("\n")
+    );
+    fs.writeFileSync(
+      edgesPath,
+      [
+        "edge,protein1,protein2,fusion_pred_prob,enriched_tissue,positive_type",
+        "A1,P1,P2,0.99,brain,experiment",
+        "A2,P1,P2,0.98,brain,experiment/prediction",
+        "A3,P1,P2,0.97,brain,experiment",
+        "T1,P1,P2,0.96,brain,prediction",
+      ].join("\n")
+    );
+
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          path.join(process.cwd(), "scripts", "build-network-artifacts.js"),
+          "--nodes",
+          nodesPath,
+          "--edges",
+          edgesPath,
+          "--output",
+          outputDir,
+          "--overview-limit",
+          "3",
+        ],
+        { stdio: "pipe" }
+      );
+
+      const overview = JSON.parse(
+        fs.readFileSync(path.join(outputDir, "overview.cyto.json"), "utf8")
+      );
+      const overviewEdges = overview.elements.filter(
+        (element) => element.data.source && element.data.target
+      );
+
+      expect(overviewEdges).toHaveLength(3);
+      expect(overviewEdges.map((element) => element.data.color)).toEqual(
+        expect.arrayContaining(["#C9DBF8", "#4C6FB9"])
+      );
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it("normalizes raw dataset family codes into legend buckets", () => {
     expect(normalizeFamily("TM")).toBe("Other TMPs");
     expect(normalizeFamily("TM(Trans)")).toBe("Transporter");

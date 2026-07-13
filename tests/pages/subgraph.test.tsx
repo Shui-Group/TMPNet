@@ -21,10 +21,12 @@ jest.mock(
       caption,
       data,
       columns,
+      exportData,
     }: {
       caption: string;
-      data: any[];
+      data: Array<Record<string, unknown>>;
       columns: Array<{ label: string }>;
+      exportData: Array<Record<string, unknown>>;
     }) =>
       (
         <div data-testid={caption}>
@@ -32,6 +34,14 @@ jest.mock(
           {columns.map((column) => (
             <span key={column.label}>{column.label}</span>
           ))}
+          <span data-testid={`${caption}-display`}>
+            {data.map((row) => (
+              <span key={String(row.id)}>{Object.values(row).join("|")}</span>
+            ))}
+          </span>
+          <span data-testid={`${caption}-export`}>
+            {JSON.stringify(exportData)}
+          </span>
         </div>
       )
 );
@@ -148,6 +158,40 @@ describe("Subgraph page", () => {
     ).not.toBeInTheDocument();
 
     expect(mockFetch).toHaveBeenCalledWith("/api/subgraph?proteins=P12345");
+  });
+
+  it("maps raw evidence to display-only association sources", async () => {
+    queryState = { proteins: "P12345" };
+    mockFetch.mockResolvedValueOnce(
+      createJsonResponse({
+        ...singleQueryData,
+        edges: [
+          singleQueryData.edges[0],
+          {
+            ...singleQueryData.edges[0],
+            id: "E2",
+            positiveType: "experiment/prediction",
+          },
+        ],
+      })
+    );
+
+    render(<SubgraphPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Association source")).toBeInTheDocument();
+    });
+
+    const displayRows = screen.getByTestId("Association Information-display");
+    expect(displayRows).toHaveTextContent("TMPNet");
+    expect(displayRows).toHaveTextContent("Additional");
+    expect(displayRows).not.toHaveTextContent("experiment/prediction");
+    expect(
+      screen.getByTestId("Association Information-export")
+    ).toHaveTextContent('"positive_type":"prediction"');
+    expect(
+      screen.getByTestId("Association Information-export")
+    ).toHaveTextContent('"positive_type":"experiment/prediction"');
   });
 
   it("renders the multiple-query title without the TMP count card", async () => {
