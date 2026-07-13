@@ -7,9 +7,9 @@ describe("networkStatisticsContent", () => {
   it("uses the reviewed network statistics and explanatory copy", () => {
     expect(networkStatisticsContent).toEqual({
       tmpnetNodes: 2953,
-      additionalNodes: 1320,
+      additionalNodes: 1318,
       tmpnetEdges: 137549,
-      additionalEdges: 45430,
+      additionalEdges: 44637,
       description:
         "Additional edges represent physical protein–protein interactions retrieved from BioGRID, STRING, or HitPredict that are not included in TMPNet.",
     });

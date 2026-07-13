@@ -38,9 +38,9 @@ describe("Sidebar", () => {
     expect(screen.getByText("TMPNet edges")).toBeInTheDocument();
     expect(screen.getByText("Additional edges")).toBeInTheDocument();
     expect(screen.getByText("2,953")).toBeInTheDocument();
-    expect(screen.getByText("1,320")).toBeInTheDocument();
+    expect(screen.getByText("1,318")).toBeInTheDocument();
     expect(screen.getByText("137,549")).toBeInTheDocument();
-    expect(screen.getByText("45,430")).toBeInTheDocument();
+    expect(screen.getByText("44,637")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Additional edges represent physical protein–protein interactions retrieved from BioGRID, STRING, or HitPredict that are not included in TMPNet."
