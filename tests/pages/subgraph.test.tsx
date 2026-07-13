@@ -95,6 +95,10 @@ describe("Subgraph page", () => {
       expect(screen.getByTestId("Association Information")).toHaveTextContent(
         "1"
       );
+      expect(screen.getByText("Additional + TMPNet")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Reported + TMPNet predicted")
+      ).not.toBeInTheDocument();
     });
 
     expect(mockFetch).toHaveBeenCalledWith("/api/subgraph?proteins=P12345");

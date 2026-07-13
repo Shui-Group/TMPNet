@@ -239,7 +239,7 @@ export default function SubgraphPage() {
       {
         label: "Associations",
         value: data.edges.length.toLocaleString(),
-        note: "Reported + TMPNet predicted",
+        note: "Additional + TMPNet",
       },
       {
         label: "Structure links",
