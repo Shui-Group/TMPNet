@@ -227,24 +227,22 @@ export default function SubgraphPage() {
       {
         label: "Queried proteins",
         value: queryProteinDetails.length.toString(),
-        note: isMultipleMode
-          ? "Shared neighborhood view"
-          : "Single-seed neighborhood",
       },
-      {
-        label: "TMPs",
-        value: data.nodes.length.toLocaleString(),
-        note: "Ranked by 1-hop association context",
-      },
+      ...(!isMultipleMode
+        ? [
+            {
+              label: "Associated TMPs",
+              value: data.nodes.length.toLocaleString(),
+            },
+          ]
+        : []),
       {
         label: "Associations",
         value: data.edges.length.toLocaleString(),
-        note: "Additional + TMPNet",
       },
       {
         label: "Structure links",
         value: structureCount.toLocaleString(),
-        note: "Edges with mapped models",
       },
     ];
   }, [data, isMultipleMode, queryProteinDetails.length, structureCount]);
@@ -419,8 +417,8 @@ export default function SubgraphPage() {
                   </h1>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     A focused TMP association view centered on the query protein
-                    set, designed for rapid overview before detailed
-                    table-level review.
+                    set, designed for an overview before detailed table-level
+                    review.
                   </p>
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
@@ -435,13 +433,9 @@ export default function SubgraphPage() {
                         <p className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
                           {card.value}
                         </p>
-                        <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                          {card.note}
-                        </p>
                       </div>
                     ))}
                   </div>
-
                 </div>
 
                 {data.truncated &&
@@ -488,14 +482,18 @@ export default function SubgraphPage() {
                       </p>
                       <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                         {isMultipleMode
-                          ? "Shared sub-network landscape"
-                          : "1-hop TMP association sub-network"}
+                          ? "Retrieved associations between two or more query proteins"
+                          : "Retrieved TMP associations for a single query protein"}
                       </h2>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                        Query proteins are fixed at the center, and 1-hop
-                        associated TMPs are arranged radially for rapid
-                        inspection of protein families and association evidence.
-                      </p>
+                      {isMultipleMode ? // TODO(external-input:multiple-query-description): render the approved
+                      // sentence here after it is supplied. Omit unapproved placeholder copy.
+                      null : (
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                          The query protein is positioned at the center and
+                          connected to associated TMPs, which are grouped by
+                          protein family.
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
@@ -538,72 +536,6 @@ export default function SubgraphPage() {
                           </div>
                         </div>
                       )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[26px] border border-white/70 bg-white/82 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur sm:p-5">
-                  <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Query Inputs
-                      </p>
-                      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
-                        Queried proteins
-                      </h2>
-                    </div>
-                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-600">
-                      {queryProteinDetails.length}
-                    </div>
-                  </div>
-
-                  <div className="-mx-1 mt-4 overflow-x-auto px-1 pb-2">
-                    <div className="flex min-w-0 gap-3">
-                      {queryProteinDetails.map((queryProtein) => (
-                        <article
-                          key={queryProtein.proteinId}
-                          className="min-w-[230px] flex-[0_0_230px] rounded-[18px] border border-slate-200/80 bg-slate-50/90 p-4 sm:min-w-[250px] sm:flex-[0_0_250px] xl:min-w-[0] xl:flex-[0_0_calc((100%_-_36px)/4)]"
-                        >
-                          <div className="flex flex-wrap items-baseline gap-2">
-                            <span className="text-lg font-semibold tracking-tight text-slate-950">
-                              {queryProtein.wasGeneSymbolSearch
-                                ? queryProtein.searchedTerm
-                                : queryProtein.proteinId}
-                            </span>
-                            {queryProtein.wasGeneSymbolSearch && (
-                              <span className="text-sm text-slate-500">
-                                ({queryProtein.proteinId})
-                              </span>
-                            )}
-                          </div>
-                          <dl className="mt-3 grid gap-2 text-sm text-slate-600">
-                            <div>
-                              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                Entry
-                              </dt>
-                              <dd className="mt-0.5 min-w-0 break-words font-medium text-slate-800">
-                                {queryProtein.entryName || "N/A"}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                Gene
-                              </dt>
-                              <dd className="mt-0.5 min-w-0 break-words font-medium text-slate-800">
-                                {queryProtein.geneSymbol || "N/A"}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                Description
-                              </dt>
-                              <dd className="mt-0.5 line-clamp-3 min-w-0 break-words leading-5 text-slate-600">
-                                {queryProtein.description || "N/A"}
-                              </dd>
-                            </div>
-                          </dl>
-                        </article>
-                      ))}
                     </div>
                   </div>
                 </div>

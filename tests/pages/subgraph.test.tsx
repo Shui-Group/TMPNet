@@ -48,6 +48,42 @@ beforeEach(() => {
   global.fetch = mockFetch;
 });
 
+const singleQueryData = {
+  query: ["P12345"],
+  queryProteins: [
+    {
+      searchedTerm: "P12345",
+      proteinId: "P12345",
+      geneSymbol: "GENE1",
+      entryName: "PROT1_HUMAN",
+      description: "Query node",
+      wasGeneSymbolSearch: false,
+    },
+  ],
+  nodes: [
+    {
+      id: "P12345",
+      label: "PROT1",
+      description: "Query node",
+      geneSymbol: "GENE1",
+      family: "TM",
+      expressionTissue: ["Brain"],
+      isQuery: true,
+    },
+  ],
+  edges: [
+    {
+      id: "E1",
+      source: "P12345",
+      target: "Q67890",
+      fusionPredProb: 0.9,
+      enrichedTissue: "Brain",
+      tissueEnrichedConfidence: "high",
+      positiveType: "prediction",
+    },
+  ],
+};
+
 describe("Subgraph page", () => {
   it("renders missing parameter message when proteins query is absent", () => {
     render(<SubgraphPage />);
@@ -57,29 +93,63 @@ describe("Subgraph page", () => {
 
   it("loads subgraph data and renders tables", async () => {
     queryState = { proteins: "P12345" };
+    mockFetch.mockResolvedValueOnce(createJsonResponse(singleQueryData));
+
+    render(<SubgraphPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Sub-network centered on GENE1 (P12345)")
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("Protein Information")).toHaveTextContent("1");
+      expect(screen.getByTestId("Association Information")).toHaveTextContent(
+        "1"
+      );
+    });
+
+    expect(
+      screen.getByText("Retrieved TMP associations for a single query protein")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The query protein is positioned at the center and connected to associated TMPs, which are grouped by protein family."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText("Associated TMPs")).toBeInTheDocument();
+    expect(screen.queryByText(/1-hop/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/rapid/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Query Inputs")).not.toBeInTheDocument();
+
+    expect(mockFetch).toHaveBeenCalledWith("/api/subgraph?proteins=P12345");
+  });
+
+  it("renders the multiple-query title without the TMP count card", async () => {
+    queryState = { proteins: "P12345,Q67890" };
     mockFetch.mockResolvedValueOnce(
       createJsonResponse({
-        query: ["P12345"],
-        nodes: [
+        ...singleQueryData,
+        query: ["P12345", "Q67890"],
+        queryProteins: [
+          singleQueryData.queryProteins[0],
           {
-            id: "P12345",
-            label: "PROT1",
-            description: "Query node",
-            geneSymbol: "GENE1",
-            family: "TM",
-            expressionTissue: ["Brain"],
-            isQuery: true,
+            searchedTerm: "Q67890",
+            proteinId: "Q67890",
+            geneSymbol: "GENE2",
+            entryName: "PROT2_HUMAN",
+            description: "Second query node",
+            wasGeneSymbolSearch: false,
           },
         ],
-        edges: [
+        nodes: [
+          ...singleQueryData.nodes,
           {
-            id: "E1",
-            source: "P12345",
-            target: "Q67890",
-            fusionPredProb: 0.9,
-            enrichedTissue: "Brain",
-            tissueEnrichedConfidence: "high",
-            positiveType: "prediction",
+            id: "Q67890",
+            label: "PROT2",
+            description: "Second query node",
+            geneSymbol: "GENE2",
+            family: "TM(GPCR)",
+            expressionTissue: ["Liver"],
+            isQuery: true,
           },
         ],
       })
@@ -89,18 +159,16 @@ describe("Subgraph page", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Sub-network centered on P12345")
+        screen.getByText(
+          "Retrieved associations between two or more query proteins"
+        )
       ).toBeInTheDocument();
-      expect(screen.getByTestId("Protein Information")).toHaveTextContent("1");
-      expect(screen.getByTestId("Association Information")).toHaveTextContent(
-        "1"
-      );
-      expect(screen.getByText("Additional + TMPNet")).toBeInTheDocument();
-      expect(
-        screen.queryByText("Reported + TMPNet predicted")
-      ).not.toBeInTheDocument();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith("/api/subgraph?proteins=P12345");
+    expect(screen.queryByText("Associated TMPs")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^TMPs$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/1-hop/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/rapid/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Query Inputs")).not.toBeInTheDocument();
   });
 });
