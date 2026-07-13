@@ -15,6 +15,25 @@ beforeEach(() => {
 });
 
 describe("SearchBar", () => {
+  it("uses Protein Symbol terminology in its user-visible copy", () => {
+    render(<SearchBar />);
+
+    const input = screen.getByLabelText("Search proteins");
+    expect(input).toHaveAttribute(
+      "placeholder",
+      "Search for Protein Symbol or UniProt ID"
+    );
+
+    fireEvent.change(input, { target: { value: "invalid-id" } });
+    fireEvent.click(screen.getByText("Search"));
+
+    expect(
+      screen.getByText(
+        "Invalid format. Please use valid Protein Symbols or UniProt IDs (alphanumeric)."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("shows validation error for invalid protein IDs", () => {
     render(<SearchBar />);
 

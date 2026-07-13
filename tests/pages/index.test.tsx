@@ -8,9 +8,16 @@ jest.mock("@/components/Header", () => () => (
 jest.mock("@/components/Legend", () => () => (
   <div data-testid="legend">Legend</div>
 ));
-jest.mock("@/components/SearchBar", () => () => (
-  <div data-testid="search">Search</div>
-));
+jest.mock(
+  "@/components/SearchBar",
+  () =>
+    ({ placeholder }: { placeholder?: string }) =>
+      (
+        <div data-testid="search" data-placeholder={placeholder}>
+          Search
+        </div>
+      )
+);
 jest.mock("@/components/NetworkGraph", () => () => (
   <div data-testid="network-graph">Graph</div>
 ));
@@ -34,5 +41,12 @@ describe("Home page", () => {
     expect(screen.getByText("22")).toBeInTheDocument();
     expect(screen.getByText(/multiple TMPs/)).toBeInTheDocument();
     expect(screen.getByText("Contact")).toBeInTheDocument();
+    expect(screen.getByTestId("search")).toHaveAttribute(
+      "data-placeholder",
+      "Search by UniProt ID (e.g., P43220, P00533) or Protein Symbol (e.g., EGFR, INSR)"
+    );
+    expect(screen.getByText("Protein Symbol")).toBeInTheDocument();
+    expect(screen.getByText(/separate protein symbols/i)).toBeInTheDocument();
+    expect(screen.queryByText("Gene Symbol")).not.toBeInTheDocument();
   });
 });

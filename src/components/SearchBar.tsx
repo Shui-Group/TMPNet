@@ -8,7 +8,7 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({
-  placeholder = "Search for Gene Symbol or Uniprot id",
+  placeholder = "Search for Protein Symbol or UniProt ID",
   className = "fixed bottom-8 left-1/2 transform -translate-x-1/2 z-10",
   initialValue = "",
 }: SearchBarProps) {
@@ -52,7 +52,7 @@ export default function SearchBar({
 
     if (!validateInput(ids)) {
       setError(
-        "Invalid format. Please use valid Gene Symbols or UniProt IDs (alphanumeric)."
+        "Invalid format. Please use valid Protein Symbols or UniProt IDs (alphanumeric)."
       );
       return;
     }

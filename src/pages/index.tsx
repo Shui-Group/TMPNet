@@ -98,7 +98,7 @@ export default function Home() {
                 <SearchBar
                   className=""
                   initialValue={searchValue}
-                  placeholder="Search by UniProt ID (e.g., P43220, P00533) or Gene Symbol (e.g., EGFR, INSR)"
+                  placeholder="Search by UniProt ID (e.g., P43220, P00533) or Protein Symbol (e.g., EGFR, INSR)"
                 />
               </div>
 
@@ -109,8 +109,8 @@ export default function Home() {
                 <span className="sm:hidden">
                   <br />
                 </span>
-                <span className="font-semibold">Gene Symbol</span> (e.g., EGFR,
-                INSR)
+                <span className="font-semibold">Protein Symbol</span> (e.g.,
+                EGFR, INSR)
               </p>
 
               {/* Examples and Guide - centered with search box */}
@@ -150,7 +150,7 @@ export default function Home() {
                   <span className="sm:hidden">
                     <br />
                   </span>{" "}
-                  separate gene symbols with (&quot;,&quot;).
+                  separate protein symbols with (&quot;,&quot;).
                 </p>
               </div>
             </div>
