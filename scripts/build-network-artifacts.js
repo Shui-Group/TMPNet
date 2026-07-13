@@ -6,7 +6,7 @@ const readline = require("readline");
 const familyBuckets = require("../src/lib/familyBuckets.json");
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
-const ARTIFACT_VERSION = "2026-06-27-network-artifact-v1";
+const ARTIFACT_VERSION = "2026-07-13-network-artifact-v1";
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DEFAULT_NODES_PATH = path.join(

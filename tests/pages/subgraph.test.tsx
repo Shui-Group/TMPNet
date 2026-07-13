@@ -137,13 +137,20 @@ describe("Subgraph page", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The query protein is positioned at the center and connected to associated TMPs, which are grouped by protein family."
+        "The query protein is positioned at the center and connected to associated TMPs, which are color-coded by protein family."
       )
     ).toBeInTheDocument();
     expect(screen.getByText("Associated TMPs")).toBeInTheDocument();
     expect(screen.queryByText(/1-hop/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/rapid/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("Query Inputs")).not.toBeInTheDocument();
+    expect(screen.getByText("Query Inputs")).toBeInTheDocument();
+    expect(screen.getAllByText("Queried proteins")).toHaveLength(2);
+    expect(screen.getByText("PROT1_HUMAN")).toBeInTheDocument();
+    expect(screen.getByText("Query node")).toBeInTheDocument();
+    expect(screen.queryByText(/^Gene$/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("A focused TMP association view", { exact: false })
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Related tables")).toBeInTheDocument();
     expect(screen.getByTestId("TMP Information")).toHaveTextContent("1");
     expect(screen.getByText("Protein Symbol")).toBeInTheDocument();
@@ -240,6 +247,12 @@ describe("Subgraph page", () => {
     expect(screen.queryByText(/^TMPs$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/1-hop/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/rapid/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("Query Inputs")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "All submitted query proteins are displayed together with any retrieved associations among them."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText("Query Inputs")).toBeInTheDocument();
+    expect(screen.getAllByText("Queried proteins")).toHaveLength(2);
   });
 });

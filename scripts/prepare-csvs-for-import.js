@@ -32,27 +32,29 @@ const NODE_COLUMN_SOURCES = {
   entry_name: ["entry_name", "Entry.Name"],
   description: ["description", "Description"],
   family: ["family", "Family", "TMP_families"],
-  gene_symbol: ["gene_symbol", "Gene.Names", "hgnc_symbol"],
+  gene_symbol: ["gene_symbol", "Gene.Names", "hgnc_symbol", "Protein symbol"],
   expression_tissue: [
     "expression_tissue",
     "Expression.tissue",
     "Detected_tissues",
+    "Tissues of expression",
   ],
 };
 
 const EDGE_COLUMN_SOURCES = {
   edge: ["edge", "Edge"],
-  protein2: ["protein2", "Protein2"],
-  protein1: ["protein1", "Protein1"],
+  protein2: ["protein2", "Protein2", "Protein2 UniProt accession"],
+  protein1: ["protein1", "Protein1", "Protein1 UniProt accession"],
   fusion_pred_prob: ["fusion_pred_prob", "Fusion_Pred_Prob", "Probability"],
   enriched_tissue: ["enriched_tissue", "Enriched_tissue", "Enriched_tissues"],
   tissue_enriched_confidence: [
     "tissue_enriched_confidence",
     "Tissue_enriched_confidence",
+    "Tissue enrichment confidence",
   ],
   positive_type: ["positive_type", "Positive_type"],
-  gene_symbol1: ["gene_symbol1", "Hgnc_symbol1"],
-  gene_symbol2: ["gene_symbol2", "Hgnc_symbol2"],
+  gene_symbol1: ["gene_symbol1", "Hgnc_symbol1", "Protein1 symbol"],
+  gene_symbol2: ["gene_symbol2", "Hgnc_symbol2", "Protein2 symbol"],
   string_combined_score: ["string_combined_score", "String_combined_score"],
   biogrid_experimental_system_type: [
     "biogrid_experimental_system_type",
@@ -241,7 +243,12 @@ async function readCsvRows(filePath) {
   return rows;
 }
 
-async function normalizeCsv(inputFile, outputFile, columnSources, transformRow) {
+async function normalizeCsv(
+  inputFile,
+  outputFile,
+  columnSources,
+  transformRow
+) {
   const sourceRows = await readCsvRows(inputFile);
   const mappedHeaders = Object.keys(columnSources);
   const normalizedRows = sourceRows.map((sourceRow) => {
@@ -374,10 +381,12 @@ async function main() {
   const config = parseArgs();
   const structureDir = config.structureDir;
   const nodeInputFile = firstExistingPath([
+    path.join(config.rawDir, "0713.Web_node.csv"),
     path.join(config.rawDir, "00.Web_node_20260627.csv"),
     path.join(config.rawDir, "node_info.csv"),
   ]);
   const edgeInputFile = firstExistingPath([
+    path.join(config.rawDir, "0713.Web_edge.csv"),
     path.join(config.rawDir, "00.Web_edge_20260627.csv"),
     path.join(config.rawDir, "edge_info.csv"),
   ]);

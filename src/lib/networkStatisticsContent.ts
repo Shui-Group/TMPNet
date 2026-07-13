@@ -1,20 +1,18 @@
 type NetworkStatisticsContent = {
   tmpnetNodes: number | null;
   additionalNodes: number | null;
-  tmpnetPairs: number | null;
-  additionalPairs: number | null;
+  tmpnetEdges: number | null;
+  additionalEdges: number | null;
   description: string | null;
 };
 
 export const networkStatisticsContent: NetworkStatisticsContent = {
-  // TODO(external-input:network-statistics): replace all four nulls only with
-  // reviewed counts supplied by the project owner. Do not derive by subtraction.
-  tmpnetNodes: null,
-  additionalNodes: null,
-  tmpnetPairs: null,
-  additionalPairs: null,
-  // TODO(external-input:network-statistics-description): insert approved copy.
-  description: null,
+  tmpnetNodes: 2953,
+  additionalNodes: 1320,
+  tmpnetEdges: 137549,
+  additionalEdges: 45430,
+  description:
+    "Additional edges represent physical protein–protein interactions retrieved from BioGRID, STRING, or HitPredict that are not included in TMPNet.",
 };
 
 export const formatNetworkStatistic = (value: number | null): string =>

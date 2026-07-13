@@ -29,14 +29,20 @@ export default function Home() {
         <main
           className="flex-1 relative flex flex-col items-center justify-center"
           style={{
-            backgroundImage: "url(/background.png)",
-            backgroundSize: "130%",
-            backgroundPosition: "center",
             backgroundColor: "#a8c4e8",
           }}
         >
+          <div
+            data-testid="hero-background"
+            aria-hidden="true"
+            className="absolute inset-0 bg-cover bg-center opacity-70"
+            style={{
+              backgroundImage: "url(/beautified_ppi_network1.svg)",
+            }}
+          />
+
           {/* Semi-transparent overlay for better text readability */}
-          <div className="absolute inset-0 bg-[#a8c4e8]/70"></div>
+          <div className="absolute inset-0 bg-[#a8c4e8]/10"></div>
 
           {/* Content */}
           <div className="relative z-10 text-center px-4 pt-14 pb-8 max-w-4xl mx-auto">
@@ -76,7 +82,7 @@ export default function Home() {
                   ASSOCIATIONS
                 </p>
                 <p className="text-xl sm:text-4xl font-bold text-white mt-1">
-                  137,510
+                  137,549
                 </p>
               </div>
               <div className="min-w-0 text-center px-2 sm:px-8">
@@ -116,7 +122,7 @@ export default function Home() {
               {/* Examples and Guide - centered with search box */}
               <div className="text-center">
                 <p className="text-sm text-gray-700">
-                  Example:{" "}
+                  <span>Examples:</span>{" "}
                   <button
                     onClick={() => handleExampleClick("EGFR")}
                     className="text-red-500 hover:underline font-medium"
@@ -170,7 +176,7 @@ export default function Home() {
           </p>
           <div className="mx-auto mt-4 max-w-5xl break-words text-sm text-gray-600">
             <p className="font-semibold text-gray-800">Contact</p>
-            <p>E-mail: shuiwq@shanghaitech.edu.cn</p>
+            <p>E-mail: waters1215@163.com</p>
             <p>
               Address: 393 Middle Huaxia Road,
               <span className="sm:hidden">

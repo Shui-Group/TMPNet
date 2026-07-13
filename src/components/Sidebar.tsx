@@ -58,8 +58,8 @@ export default function Sidebar({ stats }: SidebarProps) {
           {[
             ["TMPNet nodes", networkStatisticsContent.tmpnetNodes],
             ["Additional nodes", networkStatisticsContent.additionalNodes],
-            ["TMPNet pairs", networkStatisticsContent.tmpnetPairs],
-            ["Additional pairs", networkStatisticsContent.additionalPairs],
+            ["TMPNet edges", networkStatisticsContent.tmpnetEdges],
+            ["Additional edges", networkStatisticsContent.additionalEdges],
           ].map(([label, value]) => (
             <div key={label as string} className="flex flex-col">
               <span className="text-gray-500">{label}</span>

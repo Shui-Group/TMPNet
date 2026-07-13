@@ -5,25 +5,6 @@ interface HeaderProps {
 }
 
 export default function Header({ title = "TMPNet" }: HeaderProps) {
-  const handleDownload = () => {
-    // Trigger downloads for the latest prepared dataset files.
-    const link1 = document.createElement("a");
-    link1.href = "/20260627_nodes.csv";
-    link1.download = "20260627_nodes.csv";
-    document.body.appendChild(link1);
-    link1.click();
-    document.body.removeChild(link1);
-
-    setTimeout(() => {
-      const link2 = document.createElement("a");
-      link2.href = "/20260627_edges.csv";
-      link2.download = "20260627_edges.csv";
-      document.body.appendChild(link2);
-      link2.click();
-      document.body.removeChild(link2);
-    }, 500);
-  };
-
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-4 sm:px-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -66,8 +47,11 @@ export default function Header({ title = "TMPNet" }: HeaderProps) {
             Total network
           </Link>
           <button
-            onClick={handleDownload}
-            className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            type="button"
+            disabled
+            aria-label="Download unavailable"
+            title="Download temporarily unavailable"
+            className="cursor-not-allowed font-medium text-gray-400"
           >
             Download
           </button>

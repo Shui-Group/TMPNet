@@ -35,9 +35,17 @@ describe("Sidebar", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("TMPNet nodes")).toBeInTheDocument();
     expect(screen.getByText("Additional nodes")).toBeInTheDocument();
-    expect(screen.getByText("TMPNet pairs")).toBeInTheDocument();
-    expect(screen.getByText("Additional pairs")).toBeInTheDocument();
-    expect(screen.getAllByText("—")).toHaveLength(4);
+    expect(screen.getByText("TMPNet edges")).toBeInTheDocument();
+    expect(screen.getByText("Additional edges")).toBeInTheDocument();
+    expect(screen.getByText("2,953")).toBeInTheDocument();
+    expect(screen.getByText("1,320")).toBeInTheDocument();
+    expect(screen.getByText("137,549")).toBeInTheDocument();
+    expect(screen.getByText("45,430")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Additional edges represent physical protein–protein interactions retrieved from BioGRID, STRING, or HitPredict that are not included in TMPNet."
+      )
+    ).toBeInTheDocument();
     expect(screen.queryByText("Total nodes")).not.toBeInTheDocument();
     expect(screen.queryByText("Total edges")).not.toBeInTheDocument();
 

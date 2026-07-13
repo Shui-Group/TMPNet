@@ -37,10 +37,12 @@ describe("Home page", () => {
     expect(screen.getByText("TMPs")).toBeInTheDocument();
     expect(screen.getByText("2,953")).toBeInTheDocument();
     expect(screen.getByText("ASSOCIATIONS")).toBeInTheDocument();
-    expect(screen.getByText("137,510")).toBeInTheDocument();
+    expect(screen.getByText("137,549")).toBeInTheDocument();
     expect(screen.getByText("22")).toBeInTheDocument();
     expect(screen.getByText(/multiple TMPs/)).toBeInTheDocument();
+    expect(screen.getByText("Examples:")).toBeInTheDocument();
     expect(screen.getByText("Contact")).toBeInTheDocument();
+    expect(screen.getByText("E-mail: waters1215@163.com")).toBeInTheDocument();
     expect(screen.getByTestId("search")).toHaveAttribute(
       "data-placeholder",
       "Search by UniProt ID (e.g., P43220, P00533) or Protein Symbol (e.g., EGFR, INSR)"
@@ -48,5 +50,6 @@ describe("Home page", () => {
     expect(screen.getByText("Protein Symbol")).toBeInTheDocument();
     expect(screen.getByText(/separate protein symbols/i)).toBeInTheDocument();
     expect(screen.queryByText("Gene Symbol")).not.toBeInTheDocument();
+    expect(screen.getByTestId("hero-background")).toHaveClass("opacity-70");
   });
 });

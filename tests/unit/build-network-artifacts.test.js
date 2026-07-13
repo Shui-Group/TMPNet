@@ -45,7 +45,7 @@ describe("build-network-artifacts defaults", () => {
     expect(config.fullLimit).toBe(1000);
   });
 
-  it("writes 20260627-versioned network artifacts", () => {
+  it("writes 20260713-versioned network artifacts", () => {
     const tempDir = fs.mkdtempSync(
       path.join(os.tmpdir(), "memppi-network-artifacts-")
     );
@@ -94,13 +94,13 @@ describe("build-network-artifacts defaults", () => {
         fs.readFileSync(path.join(outputDir, "overview.cyto.json"), "utf8")
       );
 
-      expect(stats.version).toBe("2026-06-27-network-artifact-v1");
-      expect(overview.version).toBe("2026-06-27-network-artifact-v1");
+      expect(stats.version).toBe("2026-07-13-network-artifact-v1");
+      expect(overview.version).toBe("2026-07-13-network-artifact-v1");
       expect(overview.meta.artifactVersion).toBe(
-        "2026-06-27-network-artifact-v1"
+        "2026-07-13-network-artifact-v1"
       );
       expect(overview.layout.graphKey).toBe(
-        "artifact:overview:2026-06-27-network-artifact-v1"
+        "artifact:overview:2026-07-13-network-artifact-v1"
       );
       const edgeColors = Object.fromEntries(
         overview.elements
