@@ -822,17 +822,16 @@ Replace the map title with:
 
 Replace the map description with:
 
+<!-- prettier-ignore -->
 ```tsx
-{
-  isMultipleMode ? // TODO(external-input:multiple-query-description): render the approved
-  // sentence here after it is supplied. Omit unapproved placeholder copy.
-  null : (
-    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-      The query protein is positioned at the center and connected to associated
-      TMPs, which are grouped by protein family.
-    </p>
-  );
-}
+{/* TODO(external-input:multiple-query-description): render the approved
+sentence here after it is supplied. Omit unapproved placeholder copy. */}
+{!isMultipleMode && (
+  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+    The query protein is positioned at the center and connected to associated
+    TMPs, which are grouped by protein family.
+  </p>
+)}
 ```
 
 Delete the current unconditional description paragraph so no `1-hop` or `rapid` remains in rendered copy.
