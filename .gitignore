@@ -46,6 +46,9 @@ __pycache__/
 .venv/
 venv/
 
+# Local Git worktrees
+.worktrees/
+
 # Data (tracked via Git LFS; see .gitattributes)
 datasets/
 data/supabase-import/
