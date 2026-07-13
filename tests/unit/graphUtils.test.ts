@@ -90,8 +90,12 @@ describe("graphUtils", () => {
       expect(normalizeFamily("TM(Trans)")).toBe("Transporter");
       expect(normalizeFamily("TM(RTK)")).toBe("Catalytic receptors");
       expect(normalizeFamily("TM")).toBe("Other TMPs");
+      expect(normalizeFamily("Ion channel")).toBe("Ion-channels");
+      expect(normalizeFamily("Other TMP")).toBe("Other TMPs");
       expect(getFamilyColor("TM(Trans)")).toBe(familyColorMap.Transporter);
       expect(getFamilyLabel("TM(GPCR)")).toBe("GPCRs");
+      expect(getFamilyLabel("Ion channel")).toBe("Ion channels");
+      expect(getFamilyLabel("Other TMP")).toBe("Other TMPs");
     });
 
     it("falls back to Other for unknown family", () => {

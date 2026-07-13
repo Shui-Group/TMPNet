@@ -1,11 +1,42 @@
-import { getFamilyLabel } from "@/lib/graphUtils";
+import { getFamilyLabel, normalizeFamily } from "@/lib/graphUtils";
+import {
+  formatNetworkStatistic,
+  networkStatisticsContent,
+} from "@/lib/networkStatisticsContent";
 import type { NetworkMeta, NetworkStats } from "@/lib/types";
 
 interface SidebarProps {
   stats: NetworkStats;
   meta?: NetworkMeta | null;
 }
-export default function Sidebar({ stats, meta }: SidebarProps) {
+
+const FAMILY_ORDER = [
+  "GPCR",
+  "Ion-channels",
+  "Transporter",
+  "Catalytic receptors",
+  "Other TMPs",
+] as const;
+
+const orderFamilyCounts = (familyCounts: Record<string, number>) => {
+  const normalizedCounts = Object.entries(familyCounts).reduce<
+    Record<string, number>
+  >((counts, [family, count]) => {
+    const normalized = normalizeFamily(family);
+    counts[normalized] = (counts[normalized] ?? 0) + count;
+    return counts;
+  }, {});
+
+  return FAMILY_ORDER.flatMap((family) =>
+    normalizedCounts[family] === undefined
+      ? []
+      : [[family, normalizedCounts[family]] as const]
+  );
+};
+
+export default function Sidebar({ stats }: SidebarProps) {
+  const orderedFamilyCounts = orderFamilyCounts(stats.familyCounts);
+
   return (
     <aside className="w-full lg:w-80 bg-white border-r border-gray-200 p-6 space-y-6 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
       <div className="space-y-2">
@@ -20,32 +51,28 @@ export default function Sidebar({ stats, meta }: SidebarProps) {
         <h2 className="text-xl font-semibold text-gray-900">
           Network Statistics
         </h2>
-        {meta && (
-          <div
-            className="grid grid-cols-2 gap-3 text-sm text-gray-600"
-            aria-label="Network metadata"
-          >
-            <div className="flex flex-col">
-              <span className="text-gray-500">Total nodes</span>
+        <div
+          className="grid grid-cols-2 gap-3 text-sm text-gray-600"
+          aria-label="Network statistics"
+        >
+          {[
+            ["TMPNet nodes", networkStatisticsContent.tmpnetNodes],
+            ["Additional nodes", networkStatisticsContent.additionalNodes],
+            ["TMPNet pairs", networkStatisticsContent.tmpnetPairs],
+            ["Additional pairs", networkStatisticsContent.additionalPairs],
+          ].map(([label, value]) => (
+            <div key={label as string} className="flex flex-col">
+              <span className="text-gray-500">{label}</span>
               <span className="font-semibold text-gray-900">
-                {meta.totalNodes.toLocaleString()}
+                {formatNetworkStatistic(value as number | null)}
               </span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-gray-500">Total edges</span>
-              <span className="font-semibold text-gray-900">
-                {meta.totalEdges.toLocaleString()}
-              </span>
-            </div>
-            {meta.timings?.totalMs !== undefined && (
-              <div className="flex flex-col">
-                <span className="text-gray-500">Server time (ms)</span>
-                <span className="font-semibold text-gray-900">
-                  {meta.timings.totalMs.toLocaleString()}
-                </span>
-              </div>
-            )}
-          </div>
+          ))}
+        </div>
+        {networkStatisticsContent.description && (
+          <p className="text-xs leading-5 text-gray-500">
+            {networkStatisticsContent.description}
+          </p>
         )}
       </div>
 
@@ -55,21 +82,16 @@ export default function Sidebar({ stats, meta }: SidebarProps) {
         </h3>
         {Object.keys(stats.familyCounts).length > 0 ? (
           <div className="space-y-2">
-            {Object.entries(stats.familyCounts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([family, count]) => {
-                return (
-                  <div
-                    key={family}
-                    className="flex justify-between text-sm text-gray-700"
-                  >
-                    <span>{getFamilyLabel(family)}</span>
-                    <span className="font-semibold">
-                      {count.toLocaleString()}
-                    </span>
-                  </div>
-                );
-              })}
+            {orderedFamilyCounts.map(([family, count]) => (
+              <div
+                key={family}
+                data-testid="family-row"
+                className="flex justify-between text-sm text-gray-700"
+              >
+                <span>{getFamilyLabel(family)}</span>
+                <span className="font-semibold">{count.toLocaleString()}</span>
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-sm text-gray-500">No family data available</p>
