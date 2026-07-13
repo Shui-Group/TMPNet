@@ -25,14 +25,15 @@ jest.mock(
       caption: string;
       data: any[];
       columns: Array<{ label: string }>;
-    }) => (
-      <div data-testid={caption}>
-        <span>{data.length}</span>
-        {columns.map((column) => (
-          <span key={column.label}>{column.label}</span>
-        ))}
-      </div>
-    )
+    }) =>
+      (
+        <div data-testid={caption}>
+          <span>{data.length}</span>
+          {columns.map((column) => (
+            <span key={column.label}>{column.label}</span>
+          ))}
+        </div>
+      )
 );
 
 const pushMock = jest.fn();

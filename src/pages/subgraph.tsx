@@ -485,9 +485,9 @@ export default function SubgraphPage() {
                           ? "Retrieved associations between two or more query proteins"
                           : "Retrieved TMP associations for a single query protein"}
                       </h2>
-                      {isMultipleMode ? // TODO(external-input:multiple-query-description): render the approved
-                      // sentence here after it is supplied. Omit unapproved placeholder copy.
-                      null : (
+                      {/* TODO(external-input:multiple-query-description): render the approved
+                      sentence here after it is supplied. Omit unapproved placeholder copy. */}
+                      {!isMultipleMode && (
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                           The query protein is positioned at the center and
                           connected to associated TMPs, which are grouped by
