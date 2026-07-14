@@ -31,7 +31,7 @@ describe("Home page", () => {
 
     expect(
       screen.getByText(
-        "Endogenous transmembrane (TMP) protein interaction network"
+        "TMPNet: A tissue-wide transmembrane protein interaction network"
       )
     ).toBeInTheDocument();
     expect(screen.getByText("TMPs")).toBeInTheDocument();

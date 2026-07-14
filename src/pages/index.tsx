@@ -14,11 +14,11 @@ export default function Home() {
     <>
       <Head>
         <title>
-          TMPNet - Endogenous transmembrane (TMP) protein interaction network
+          TMPNet: A tissue-wide transmembrane protein interaction network
         </title>
         <meta
           name="description"
-          content="Explore the endogenous transmembrane protein interaction network"
+          content="Explore TMPNet, a tissue-wide transmembrane protein interaction network"
         />
       </Head>
 
@@ -48,23 +48,7 @@ export default function Home() {
           <div className="relative z-10 text-center px-4 pt-14 pb-8 max-w-4xl mx-auto">
             {/* Title */}
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-blue-600 mb-8 sm:mb-10">
-              Endogenous
-              <span className="sm:hidden">
-                <br />
-              </span>{" "}
-              transmembrane{" "}
-              <span className="sm:hidden">
-                <br />
-              </span>
-              (TMP) protein
-              <span className="sm:hidden">
-                <br />
-              </span>{" "}
-              interaction
-              <span className="sm:hidden">
-                <br />
-              </span>{" "}
-              network
+              TMPNet: A tissue-wide transmembrane protein interaction network
             </h1>
 
             {/* Stats Section */}
@@ -112,9 +96,7 @@ export default function Home() {
               <p className="text-sm text-gray-600 mb-3 max-w-sm text-center">
                 Search by <span className="font-semibold">UniProt ID</span>{" "}
                 (e.g., P43220, P00533) or{" "}
-                <span className="sm:hidden">
-                  <br />
-                </span>
+                <br />
                 <span className="font-semibold">Protein Symbol</span> (e.g.,
                 EGFR, INSR)
               </p>
