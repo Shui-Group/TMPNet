@@ -2,7 +2,7 @@
 
 # TMPNet
 
-### TMPNet: A tissue-wide transmembrane protein interaction network.
+### TMPNet: Proteomics-informed prediction of a tissue-wide endogenous transmembrane protein interaction network .
 
 ![Next.js 14](https://img.shields.io/badge/Next.js-14-black?logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
