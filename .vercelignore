@@ -1,5 +1,0 @@
-data/raw/
-tests/
-src/pages/api/**/*.test.ts
-src/pages/api/**/*.test.tsx
-coverage/
