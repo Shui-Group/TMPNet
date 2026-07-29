@@ -69,18 +69,6 @@ For **inference**, download the trained checkpoints for:
 - the proteomics-informed model;
 - the fusion model.
 
-## Data and pretrained models
-
-Large files are distributed through Zenodo:
-
-> https://doi.org/10.5281/zenodo.21640085
-
-For **inference**, download the trained checkpoints for:
-
-- the sequence-based model;
-- the proteomics-informed model;
-- the fusion model.
-
 For **retraining**, also download:
 
 - the protein sequence FASTA file;
@@ -159,7 +147,7 @@ python scripts/03_model_training/01_sequence_based_model/ \
   --train_percent "${TRAIN_PERCENT}"
 ```
 
-Output: `[TO BE PROVIDED: output path, filename and score-column definition]`.
+Output: results/custom_ppi_[TIMESTAMP]/
 
 #### Pretraining on the generic PPI dataset
 
@@ -227,7 +215,7 @@ python scripts/03_model_training/01_sequence_based_model/ \
 Expected checkpoint:
 
 ```text
-results/finetune_custom_ppi_[TIMESTAMP]/DL_model_finetune.pth
+results/custom_ppi_[TIMESTAMP]/DL_model_finetune.pth
 ```
 
 
@@ -277,7 +265,7 @@ The fusion model combines the sequence-based and proteomics-informed prediction 
 Example file:
 
 ```text
-example/[TO BE PROVIDED: fusion-model input filename]
+example/Fusion/inference.csv
 ```
 
 Required columns:
@@ -290,14 +278,6 @@ Required columns:
 The two prediction scores are merged based on the corresponding protein-pair identifier.
 
 Protein pairs were matched using unordered protein pairs, where (A, B) and (B, A) were considered equivalent. The merge key was generated from the two protein identifiers after sorting them alphabetically. 
-
-#### Training
-
-```bash
-python scripts/03_model_training/03_Fusion_model.py
-```
-
-Output: `[TO BE PROVIDED: trained fusion-model filename]`.
 
 #### Inference
 
@@ -316,6 +296,12 @@ The final output contains the following columns:
 | `Fusion_Pred_Prob` | Final TMPNet association probability |
 
 A higher `Fusion_Pred_Prob` indicates a higher predicted probability of a tissue-contextual protein–protein association. The high-confidence prediction threshold is 0.84.
+
+#### Training
+
+```bash
+python scripts/03_model_training/03_Fusion_model.py
+```
 
 ## Reproducibility information
 
