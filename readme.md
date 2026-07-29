@@ -44,7 +44,7 @@ This repository provides [TO BE PROVIDED: model training, evaluation and inferen
 
 ## Installation
 
-TMPNet has been tested on [TO BE PROVIDED: operating system] with Python [TO BE PROVIDED], PyTorch [TO BE PROVIDED] and CUDA [TO BE PROVIDED]. The exact dependency versions are recorded in `environment.yml`.
+TMPNet has been tested on Ubuntu 24.04.2 LTS with Python 3.9.21, PyTorch 2.6.0 and CUDA 12.4. The exact dependency versions are recorded in `environment.yml`.
 
 ```bash
 git clone https://github.com/Shui-Group/TMPNet.git
@@ -58,8 +58,6 @@ Verify the installation:
 ```bash
 python DL_model_seal_link_pred.py -h
 ```
-
-Expected installation time: [TO BE PROVIDED].
 
 ## Data and pretrained models
 
