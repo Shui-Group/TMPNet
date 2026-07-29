@@ -1,7 +1,3 @@
-# ==========================================================
-# 1. Load packages
-# ==========================================================
-
 import os
 import joblib
 import numpy as np
@@ -9,35 +5,24 @@ import pandas as pd
 
 
 # ==========================================================
-# 2. File paths
+# 1. File paths
 # ==========================================================
 
-# Trained XGBoost model
-MODEL_FILE = "XGB_1v9.joblib"
+model_file = "XGB_1v9.joblib"
+metadata_file = "XGB_1v9_metadata.joblib"
 
-# Metadata saved during model training
-# Contains feature_cols and classification_threshold
-METADATA_FILE = "XGB_1v9_metadata.joblib"
+# Only contains Protein1 and Protein2
+pair_file = "inference_pairs.csv"
 
-# Inference protein pairs:
-# Protein1, Protein2
-PAIR_FILE = "inference_pairs.csv"
+# Contains Protein1, Protein2 and all calculated features
+total_features_file = "total_features.csv"
 
-# Features calculated for inference protein pairs:
-# Protein1, Protein2, and the 17 feature columns
-FEATURE_FILE = "inference_features.csv"
-
-# Prediction result
-OUTPUT_FILE = "result/XGB_1v9_prediction.csv"
-
-# Pairs without corresponding features
-UNMATCHED_OUTPUT_FILE = "result/XGB_1v9_unmatched_pairs.csv"
+output_file = "result/XGB_1v9_prediction.csv"
+unmatched_file = "result/unmatched_pairs.csv"
 
 
 # ==========================================================
-# 3. Generate order-independent pair key
-#
-# A-B and B-A are treated as the same pair.
+# 2. Generate order-independent pair key
 # ==========================================================
 
 def add_pair_key(df):
@@ -58,9 +43,7 @@ def add_pair_key(df):
 
     df["pair_key"] = np.where(
         df["Protein1"] <= df["Protein2"],
-
         df["Protein1"] + "-" + df["Protein2"],
-
         df["Protein2"] + "-" + df["Protein1"]
     )
 
@@ -68,82 +51,35 @@ def add_pair_key(df):
 
 
 # ==========================================================
-# 4. Load model
+# 3. Load model and metadata
 # ==========================================================
 
 model = joblib.load(
-    MODEL_FILE
+    model_file
 )
 
-print(
-    "Model loaded:",
-    type(model)
+metadata = joblib.load(
+    metadata_file
 )
+
+feature_cols = metadata["feature_cols"]
+
+threshold = metadata.get(
+    "classification_threshold",
+    0.5
+)
+
+print("Model loaded:", type(model))
+print("Number of model features:", len(feature_cols))
 
 
 # ==========================================================
-# 5. Load expected feature names
-# ==========================================================
-
-if os.path.exists(METADATA_FILE):
-
-    metadata = joblib.load(
-        METADATA_FILE
-    )
-
-    feature_cols = metadata[
-        "feature_cols"
-    ]
-
-    classification_threshold = metadata.get(
-        "classification_threshold",
-        0.5
-    )
-
-    print(
-        "Feature names loaded from:",
-        METADATA_FILE
-    )
-
-else:
-
-    # Fallback: try to read feature names from XGBoost
-    feature_cols = model.get_booster().feature_names
-
-    classification_threshold = 0.5
-
-    if feature_cols is None:
-
-        raise ValueError(
-            "Feature names could not be obtained. "
-            "Please provide XGB_1v9_metadata.joblib."
-        )
-
-    print(
-        "Warning: metadata file was not found. "
-        "Feature names were read from the XGBoost model."
-    )
-
-
-print(
-    "Number of expected features:",
-    len(feature_cols)
-)
-
-print(
-    "Expected features:",
-    feature_cols
-)
-
-
-# ==========================================================
-# 6. Load inference protein-pair table
+# 4. Load pair file
 # ==========================================================
 
 pair_df = pd.read_csv(
-    PAIR_FILE
+    pair_file
 )
-
 
 required_pair_columns = {
     "Protein1",
@@ -158,28 +94,26 @@ missing_pair_columns = (
 if missing_pair_columns:
 
     raise ValueError(
-        f"{PAIR_FILE} is missing columns: "
+        f"The pair file is missing columns: "
         f"{sorted(missing_pair_columns)}"
     )
 
 
-# Keep the original input order
+# Preserve original input order
 pair_df = pair_df.reset_index(
     drop=True
 )
 
-pair_df["input_row"] = np.arange(
+pair_df["input_order"] = np.arange(
     len(pair_df)
 )
-
 
 pair_df = add_pair_key(
     pair_df
 )
 
 
-# Rename input proteins so that they are not overwritten
-# by Protein1/Protein2 from the feature table.
+# Preserve the original query direction
 pair_df = pair_df.rename(
     columns={
         "Protein1": "QueryProtein1",
@@ -188,88 +122,83 @@ pair_df = pair_df.rename(
 )
 
 
-print(
-    "Number of input protein pairs:",
-    len(pair_df)
-)
-
-
 # ==========================================================
-# 7. Load inference features
+# 5. Load total feature table
 # ==========================================================
 
-feature_df = pd.read_csv(
-    FEATURE_FILE
+total_features = pd.read_csv(
+    total_features_file
 )
-
 
 required_feature_columns = {
     "Protein1",
     "Protein2"
 }
 
-missing_basic_feature_columns = (
+missing_basic_columns = (
     required_feature_columns
-    - set(feature_df.columns)
+    - set(total_features.columns)
 )
 
-if missing_basic_feature_columns:
+if missing_basic_columns:
 
     raise ValueError(
-        f"{FEATURE_FILE} is missing columns: "
-        f"{sorted(missing_basic_feature_columns)}"
+        f"The total feature file is missing columns: "
+        f"{sorted(missing_basic_columns)}"
     )
 
 
-feature_df = add_pair_key(
-    feature_df
+total_features = add_pair_key(
+    total_features
 )
 
 
-# Check whether one unordered pair appears multiple times
-duplicated_feature_pairs = feature_df[
-    feature_df.duplicated(
-        subset="pair_key",
-        keep=False
-    )
-]
+# ==========================================================
+# 6. Check feature columns
+# ==========================================================
 
-if len(duplicated_feature_pairs) > 0:
-
-    os.makedirs(
-        os.path.dirname(UNMATCHED_OUTPUT_FILE),
-        exist_ok=True
-    )
-
-    duplicated_feature_pairs.to_csv(
-        "result/duplicated_inference_feature_pairs.csv",
-        index=False
-    )
-
-    raise ValueError(
-        "Duplicated unordered protein pairs were found "
-        "in the inference feature table. See "
-        "result/duplicated_inference_feature_pairs.csv"
-    )
-
-
-# Confirm that all model features exist
 missing_model_features = [
-    feature
-    for feature in feature_cols
-    if feature not in feature_df.columns
+    column
+    for column in feature_cols
+    if column not in total_features.columns
 ]
 
 if missing_model_features:
 
     raise ValueError(
-        "The inference feature table is missing model features:\n"
-        f"{missing_model_features}"
+        "The following model features are missing from "
+        f"total_features.csv:\n{missing_model_features}"
     )
 
 
-# Rename feature-table protein IDs
-feature_df = feature_df.rename(
+# Check duplicated unordered pairs
+duplicated_pairs = total_features[
+    total_features.duplicated(
+        subset="pair_key",
+        keep=False
+    )
+]
+
+if len(duplicated_pairs) > 0:
+
+    os.makedirs(
+        "result",
+        exist_ok=True
+    )
+
+    duplicated_pairs.to_csv(
+        "result/duplicated_total_feature_pairs.csv",
+        index=False
+    )
+
+    raise ValueError(
+        "Duplicated unordered pairs were found in total_features.csv. "
+        "See result/duplicated_total_feature_pairs.csv"
+    )
+
+
+# Keep the orientation used for feature calculation
+total_features = total_features.rename(
     columns={
         "Protein1": "FeatureProtein1",
         "Protein2": "FeatureProtein2"
@@ -278,11 +207,11 @@ feature_df = feature_df.rename(
 
 
 # ==========================================================
-# 8. Merge inference pairs with calculated features
+# 7. Map pair file to total_features
 # ==========================================================
 
-merged_df = pair_df.merge(
-    feature_df,
+mapped_df = pair_df.merge(
+    total_features,
     on="pair_key",
     how="left",
     validate="many_to_one",
@@ -290,132 +219,96 @@ merged_df = pair_df.merge(
 )
 
 
-# ==========================================================
-# 9. Save unmatched pairs
-# ==========================================================
+print("Input pairs:", len(pair_df))
 
-unmatched_df = merged_df[
-    merged_df["_merge"] != "both"
-].copy()
+print(
+    "Matched pairs:",
+    (mapped_df["_merge"] == "both").sum()
+)
 
+print(
+    "Unmatched pairs:",
+    (mapped_df["_merge"] != "both").sum()
+)
+
+
+# ==========================================================
+# 8. Save unmatched pairs
+# ==========================================================
 
 os.makedirs(
-    os.path.dirname(OUTPUT_FILE),
+    os.path.dirname(output_file),
     exist_ok=True
 )
 
+unmatched_df = mapped_df[
+    mapped_df["_merge"] != "both"
+].copy()
 
 if len(unmatched_df) > 0:
 
     unmatched_df[
         [
-            "input_row",
             "QueryProtein1",
             "QueryProtein2",
             "pair_key"
         ]
     ].to_csv(
-        UNMATCHED_OUTPUT_FILE,
+        unmatched_file,
         index=False
     )
 
     print(
-        f"Warning: {len(unmatched_df)} protein pairs "
-        "do not have calculated features."
-    )
-
-    print(
         "Unmatched pairs saved:",
-        UNMATCHED_OUTPUT_FILE
+        unmatched_file
     )
 
 
-# Keep successfully matched pairs
-prediction_df = merged_df[
-    merged_df["_merge"] == "both"
+# ==========================================================
+# 9. Keep matched pairs
+# ==========================================================
+
+prediction_df = mapped_df[
+    mapped_df["_merge"] == "both"
 ].copy()
 
-
 prediction_df = prediction_df.sort_values(
-    "input_row"
+    "input_order"
 ).reset_index(
     drop=True
 )
 
-
 if len(prediction_df) == 0:
 
     raise ValueError(
-        "None of the inference protein pairs matched "
-        "the feature table."
+        "No input protein pairs were matched to total_features.csv."
     )
 
 
-print(
-    "Number of matched protein pairs:",
-    len(prediction_df)
-)
-
-
 # ==========================================================
-# 10. Prepare model input
-#
-# Feature order must be exactly the same as during training.
+# 10. Prepare features
 # ==========================================================
 
+# Must use the same features and feature order as training
 X = prediction_df[
     feature_cols
 ].copy()
 
-
-# Convert all feature columns to numeric values
 X = X.apply(
     pd.to_numeric,
     errors="coerce"
 )
 
-
-# XGBoost supports NaN but does not accept infinity
 X = X.replace(
     [np.inf, -np.inf],
     np.nan
 )
 
 
-missing_value_number = X.isna().sum().sum()
-
 print(
-    "Number of missing feature values:",
-    missing_value_number
+    "Missing feature values:",
+    X.isna().sum().sum()
 )
-
-
-# Check rows for which every feature is missing
-all_missing_rows = X.isna().all(
-    axis=1
-)
-
-if all_missing_rows.any():
-
-    all_missing_output = prediction_df.loc[
-        all_missing_rows,
-        [
-            "QueryProtein1",
-            "QueryProtein2",
-            "pair_key"
-        ]
-    ]
-
-    all_missing_output.to_csv(
-        "result/all_features_missing_pairs.csv",
-        index=False
-    )
-
-    raise ValueError(
-        f"{all_missing_rows.sum()} protein pairs have "
-        "no valid feature values. See "
-        "result/all_features_missing_pairs.csv"
-    )
 
 
 # ==========================================================
@@ -426,12 +319,9 @@ prediction_probability = model.predict_proba(
     X
 )[:, 1]
 
-
 prediction_label = (
-    prediction_probability
-    >= classification_threshold
+    prediction_probability >= threshold
 ).astype(int)
-
 
 prediction_truth = np.where(
     prediction_label == 1,
@@ -441,7 +331,7 @@ prediction_truth = np.where(
 
 
 # ==========================================================
-# 12. Build output table
+# 12. Build output
 # ==========================================================
 
 result_df = pd.DataFrame(
@@ -460,7 +350,7 @@ result_df = pd.DataFrame(
             + prediction_df["QueryProtein2"]
         ),
 
-        # The orientation used when calculating the features
+        # Protein order used when features were calculated
         "FeatureProtein1": prediction_df[
             "FeatureProtein1"
         ],
@@ -485,31 +375,19 @@ result_df = pd.DataFrame(
 
 
 # ==========================================================
-# 13. Save prediction result
+# 13. Save result
 # ==========================================================
 
 result_df.to_csv(
-    OUTPUT_FILE,
+    output_file,
     index=False
 )
 
+print("Prediction result saved:", output_file)
+
+print("\nPrediction distribution:")
 
 print(
-    "Prediction result saved:",
-    OUTPUT_FILE
-)
-
-print(
-    "Classification threshold:",
-    classification_threshold
-)
-
-print(
-    "Prediction distribution:"
-)
-
-print(
-    result_df[
-        "prediction_Truth"
-    ].value_counts()
+    result_df["prediction_Truth"]
+    .value_counts()
 )
