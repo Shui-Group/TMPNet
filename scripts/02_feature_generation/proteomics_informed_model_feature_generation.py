@@ -661,13 +661,9 @@ if __name__=="__main__":
     extract_features(
 
         expr_file=
-        "/home/luoht/ppi_label/feature_extract/raw_ave.csv",
+        "example/ML/input/raw_ave.csv",
 
         pair_file=pair_file,
-
-        output_file=
-        output_dir+
-        "raw_features.csv",
 
         prefix="raw",
 
@@ -685,13 +681,9 @@ if __name__=="__main__":
     extract_features(
 
         expr_file=
-        "/home/luoht/ppi_label/feature_extract/impseq_ave.csv",
+        "example/ML/input/impseq_ave.csv",
 
         pair_file=pair_file,
-
-        output_file=
-        output_dir+
-        "imp_features.csv",
 
         prefix="imp",
 
@@ -705,18 +697,6 @@ if __name__=="__main__":
     # -----------------------------
     # merge final 17 features
     # -----------------------------
-    raw=pd.read_csv(
-        output_dir+
-        "raw_features.csv"
-    )
-
-
-    imp=pd.read_csv(
-        output_dir+
-        "imp_features.csv"
-    )
-
-
     final=pd.merge(
         imp,
         raw,
@@ -741,7 +721,7 @@ if __name__=="__main__":
     final.to_csv(
 
         output_dir+
-        "final_features.csv",
+        "example/ML/output/final_features.csv",
 
         index=False
 
