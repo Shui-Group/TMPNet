@@ -54,8 +54,20 @@ conda activate TMPNet
 Verify the installation:
 
 ```bash
-python DL_model_seal_link_pred.py -h
+python scripts/03_model_training/01_sequence_based_model/DL_model_seal_link_pred.py -h
 ```
+
+## Data and pretrained models
+
+Large files are distributed through Zenodo:
+
+> https://doi.org/10.5281/zenodo.21640085
+
+For **inference**, download the trained checkpoints for:
+
+- the sequence-based model;
+- the proteomics-informed model;
+- the fusion model.
 
 ## Data and pretrained models
 
@@ -73,17 +85,30 @@ For **retraining**, also download:
 
 - the protein sequence FASTA file;
 - the precomputed ESM-2 3B embeddings;
-- the generic PPI pretraining dataset;
-- the TMP-specific fine-tuning dataset;
-- [TO BE PROVIDED: any additional training files].
+- the generic PPI pretraining checkpoint;
+- the TMP-specific fine-tuning checkpoint;
+- the proteomics-informed model checkpoint;
+- the fusion framework checkpoint;
 
-Place the downloaded files in:
+Place the downloaded ESM-2 3B embedding files in:
 
 ```text
 /example/TEMP/esm_model/
 ```
 
 Precomputed ESM-2 3B embeddings are recommended because regenerating them requires substantial computational time and GPU memory.
+
+Place the downloaded sequence-based model checkpoint files in:
+
+```text
+/example/DL_result/finetune_custom_ppi_20260411144433/
+```
+
+Place the downloaded proteomics-informed model checkpoint and fusion framework checkpoint files in:
+
+```text
+/example/checkpoint/
+```
 
 ## Usage
 
@@ -99,25 +124,6 @@ Example file:
 example/[TO BE PROVIDED: sequence-model input filename]
 ```
 
-Required columns:
-
-| Column | Description |
-|---|---|
-| `Interactor.A` | Protein A identifier |
-| `Interactor.B` | Protein B identifier |
-
-Example:
-
-| Interactor.A | Interactor.B |
-|---|---|
-| O60906 | Q14392 |
-| O60906 | P00167 |
-| O60906 | Q9H8J5 |
-
-Protein identifiers should be UniProt accession IDs.
-
-Protein pairs are treated as unordered pairs; therefore, `(A, B)` and `(B, A)` represent the same interaction.
-
 #### Inference
 
 ```bash
@@ -129,12 +135,12 @@ EVAL_STEPS=1
 RUNS=1
 TRAIN_PERCENT=100
 
-FINETUNED_MODEL="results/finetune_custom_ppi_20250718104155/DL_model_finetune.pth"
+FINETUNED_MODEL="example/DL_result/finetune_custom_ppi_20260411144433/DL_model_finetune.pth"
 INFERENCE_BATCH_SIZE=32
 INFERENCE_EPOCHS=751
 INFERENCE_CONTINUE_FROM=50
 
-python DL_model_seal_link_pred.py \
+python scripts/03_model_training/01_sequence_based_model/ \
   --dataset "${TMP_DATASET}" \
   --only_pred_finetunenodes \
   --num_workers "${NUM_WORKERS}" \
@@ -169,7 +175,7 @@ GENERIC_DATASET="custom_ppi"
 PRETRAIN_BATCH_SIZE=128
 PRETRAIN_EPOCHS=150
 
-python DL_model_seal_link_pred.py \
+python scripts/03_model_training/01_sequence_based_model/ \
   --dataset "${GENERIC_DATASET}" \
   --num_workers "${NUM_WORKERS}" \
   --num_subdatasets "${NUM_SUBDATASETS}" \
@@ -195,12 +201,12 @@ results/custom_ppi_[TIMESTAMP]/
 
 ```bash
 TMP_DATASET="finetune_custom_ppi"
-PRETRAINED_RUN_DIR="results/custom_ppi_20250710144146"
+PRETRAINED_RUN_DIR="/example/DL_result/finetune_custom_ppi_20260411144433" #pretrain model checkpoint path
 FINETUNE_BATCH_SIZE=128
 FINETUNE_EPOCHS=100
 FINETUNE_CONTINUE_FROM=100
 
-python DL_model_seal_link_pred.py \
+python scripts/03_model_training/01_sequence_based_model/ \
   --dataset "${TMP_DATASET}" \
   --num_workers "${NUM_WORKERS}" \
   --num_subdatasets "${NUM_SUBDATASETS}" \
