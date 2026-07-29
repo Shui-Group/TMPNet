@@ -1,4 +1,4 @@
-<img width="1728" height="216" alt="image" src="https://github.com/user-attachments/assets/d4b4a995-17b7-4cf9-8df3-f79bb32d488d" /># TMPNet
+# TMPNet
 
 **Proteomics-informed prediction of a tissue-wide endogenous transmembrane protein association network**
 
