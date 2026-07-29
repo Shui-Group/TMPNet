@@ -4,8 +4,6 @@
 
 - **Code:** https://github.com/Shui-Group/TMPNet
 - **Data and model files:** https://doi.org/10.5281/zenodo.21640085
-- **Version corresponding to the manuscript:** [TO BE PROVIDED: release tag or commit hash]
-- **Manuscript:** [TO BE PROVIDED: title, journal/preprint, year and DOI]
 
 ## Overview
 
