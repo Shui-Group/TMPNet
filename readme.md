@@ -1,4 +1,4 @@
-# TMPNet
+<img width="1728" height="216" alt="image" src="https://github.com/user-attachments/assets/d4b4a995-17b7-4cf9-8df3-f79bb32d488d" /># TMPNet
 
 **Proteomics-informed prediction of a tissue-wide endogenous transmembrane protein association network**
 
@@ -22,23 +22,25 @@ TMPNet consists of three components:
 ```text
 TMPNet/
 ├── README.md
+├── LICENSE
 ├── environment.yml
-├── DL_model_seal_link_pred.py
-├── example/                                      # Example input files
+├── docs/
+│   └── TMPNet_workflow.png
+├── example/
+│   ├── DL_dataset/custom_ppi_example
+│   ├── DL_result/finetune_custom_ppi_20260411144432
+│   └── Fusion
+│   └── ML
 ├── scripts/
+│   ├── 01_data_preprocessing/
 │   ├── 02_feature_generation/
-│   │   └── proteomics_informed_model_feature_generation.py
 │   ├── 03_model_training/
-│   │   ├── 02_proteomics_informed_XGB.py
-│   │   └── 03_Fusion_model.py
-│   └── 04_TMPNet_construction/
-│       ├── 02_ML_model_infer.py
-│       └── 03_fusion_model_infer.py
-├── results/                                      # Checkpoints and predictions
-└── [TO BE PROVIDED: remaining folders in the released repository]
+│   ├── 04_TMPNet_construction/
 ```
 
-This repository provides [TO BE PROVIDED: model training, evaluation and inference code]. [TO BE PROVIDED: State whether downstream statistical analyses and manuscript figure-generation scripts are included.]
+The repository contains a small example dataset that can be used to examine the required input format and test the analysis workflow. It also contains an example fine-tuned model checkpoint and the files required to demonstrate the proteomics-informed and fusion-model analyses.
+
+The example files are intended for software testing and workflow demonstration rather than reproduction of the complete TMPNet network. Large files, including the complete datasets, precomputed protein sequence embeddings and full trained model checkpoints, are distributed separately through Zenodo as described in the Data and pretrained models section.
 
 ## Installation
 
@@ -109,7 +111,7 @@ Example inputs are provided in `example/`. Replace all example paths with the pa
 Example file:
 
 ```text
-example/[TO BE PROVIDED: sequence-model input filename]
+example/DL_dataset/custom_ppi_example
 ```
 
 #### Inference
@@ -228,33 +230,31 @@ The proteomics-informed model calculates pairwise features from tissue-resolved 
 Example file:
 
 ```text
-example/[TO BE PROVIDED: proteomics-model input filename]
+example/ML/input
 ```
 #### Feature generation
 
 To generate tissue-context features from protein abundance profiles, run:
 
 ```bash
-python scripts/02_feature_generation/proteomics_informed_model_feature_generation.py
+scripts/02_feature_generation/proteomics_informed_model_feature_generation.py
 ```
 
-Output: `[TO BE PROVIDED: generated feature-file path and columns]`.
+Test output: `example/ML/output/total_features.csv`.
 
 #### Training
 
 ```bash
-python scripts/03_model_training/02_proteomics_informed_XGB.py
+scripts/03_model_training/02_proteomics_informed_XGB.py
 ```
-
-Output: `[TO BE PROVIDED: trained XGBoost model filename]`.
 
 #### Inference
 
 ```bash
-python scripts/04_TMPNet_construction/02_ML_model_infer.py
+scripts/04_TMPNet_construction/02_ML_model_infer.py
 ```
 
-Output: `[TO BE PROVIDED: proteomics-informed prediction filename and score-column definition]`.
+Output: `example/ML/output/XGB_1v9_prediction.csv`.
 
 ### 3. Fusion framework
 
@@ -282,10 +282,10 @@ Protein pairs were matched using unordered protein pairs, where (A, B) and (B, A
 #### Inference
 
 ```bash
-python scripts/04_TMPNet_construction/03_fusion_model_infer.py
+scripts/04_TMPNet_construction/03_fusion_model_infer.py
 ```
 
-Final output: `[TO BE PROVIDED: final TMPNet prediction filename and directory]`.
+Final output: `example/Fusion/output.csv`.
 
 The final output contains the following columns:
 
@@ -315,7 +315,6 @@ Before release, provide:
 - model-selection metric;
 - expected evaluation metrics and numerical tolerance;
 - hardware used for the manuscript analysis;
-- [TO BE PROVIDED: whether all downstream analysis and figure scripts are included].
 
 ## Data and code availability
 
@@ -333,9 +332,8 @@ In addition, we developed a publicly accessible TMPNet database containing tissu
 
 ## License
 
-[TO BE PROVIDED: license name]. See `LICENSE` for details.
+TMPNet is released under the MIT License. See LICENSE for details.
 
 ## Contact
 
-- Code and data: [TO BE PROVIDED: name, affiliation and email]
-- Corresponding author: [TO BE PROVIDED: name, affiliation and email]
+- Code and data: Shui lab, waters1215@163.com
