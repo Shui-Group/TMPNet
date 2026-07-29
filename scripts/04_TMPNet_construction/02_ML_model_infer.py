@@ -12,13 +12,13 @@ model_file = "XGB_1v9.joblib"
 metadata_file = "XGB_1v9_metadata.joblib"
 
 # Only contains Protein1 and Protein2
-pair_file = "inference_pairs.csv"
+pair_file = "example/ML/input/inference_pairs.csv"
 
 # Contains Protein1, Protein2 and all calculated features
-total_features_file = "total_features.csv"
+total_features_file = "example/ML/output/total_features.csv"
 
-output_file = "result/XGB_1v9_prediction.csv"
-unmatched_file = "result/unmatched_pairs.csv"
+output_file = "example/ML/output/XGB_1v9_prediction.csv"
+unmatched_file = "example/ML/output/unmatched_pairs.csv"
 
 
 # ==========================================================
