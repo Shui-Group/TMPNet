@@ -30,15 +30,15 @@ from sklearn.metrics import (
 
 # Training PPI labels:
 # Truth, pairs, Protein1, Protein2
-TRAIN_LABEL_FILE = "training_label.csv"
+TRAIN_LABEL_FILE = "example/ML/input/training_label.csv"
 
 # Testing PPI labels:
 # Truth, pairs, Protein1, Protein2
-TEST_LABEL_FILE = "testing_label.csv"
+TEST_LABEL_FILE = "example/ML/input/testing_label.csv"
 
 # Feature table:
 # Protein1, Protein2, and feature columns
-FEATURE_FILE = "final_features.csv"
+FEATURE_FILE = "example/ML/output/final_features.csv"
 
 
 # Output merged datasets
