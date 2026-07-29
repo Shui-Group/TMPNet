@@ -82,10 +82,10 @@ For **retraining**, also download:
 Place the downloaded files in:
 
 ```text
-[TO BE PROVIDED: local directory and exact filenames]
+/example/TEMP/esm_model/
 ```
 
-Precomputed ESM-2 3B embeddings are recommended because regenerating them requires substantial computational time and GPU memory. The embedding-generation procedure is [TO BE PROVIDED: script or instructions].
+Precomputed ESM-2 3B embeddings are recommended because regenerating them requires substantial computational time and GPU memory.
 
 ## Usage
 
@@ -105,12 +105,20 @@ Required columns:
 
 | Column | Description |
 |---|---|
-| `[TO BE PROVIDED]` | Protein A identifier |
-| `[TO BE PROVIDED]` | Protein B identifier |
-| `[TO BE PROVIDED]` | Interaction label, for training only |
-| `[TO BE PROVIDED]` | Additional required field |
+| `Interactor.A` | Protein A identifier |
+| `Interactor.B` | Protein B identifier |
 
-Protein identifiers use [TO BE PROVIDED: UniProt accessions or another identifier]. State whether `(A, B)` and `(B, A)` are treated as the same pair.
+Example:
+
+| Interactor.A | Interactor.B |
+|---|---|
+| O60906 | Q14392 |
+| O60906 | P00167 |
+| O60906 | Q9H8J5 |
+
+Protein identifiers should be UniProt accession IDs.
+
+Protein pairs are treated as unordered pairs; therefore, `(A, B)` and `(B, A)` represent the same interaction.
 
 #### Inference
 
@@ -218,7 +226,6 @@ Expected checkpoint:
 results/finetune_custom_ppi_[TIMESTAMP]/DL_model_finetune.pth
 ```
 
-[TO BE PROVIDED: Describe the positive and negative labels, training/validation/test split, random seeds and checkpoint-selection rule.]
 
 ### 2. Proteomics-informed model
 
@@ -231,19 +238,9 @@ Example file:
 ```text
 example/[TO BE PROVIDED: proteomics-model input filename]
 ```
-
-Required information:
-
-| Field | Description |
-|---|---|
-| `[TO BE PROVIDED]` | Protein-pair identifier |
-| `[TO BE PROVIDED]` | Tissue-resolved abundance values |
-| `[TO BE PROVIDED]` | Tissue names and replicate information |
-| `[TO BE PROVIDED]` | Label, for training only |
-
-[TO BE PROVIDED: Document the tissue list, normalization, missing-value handling, replicate aggregation and definitions of the 17 pairwise descriptors.]
-
 #### Feature generation
+
+To generate tissue-context features from protein abundance profiles, run:
 
 ```bash
 python scripts/02_feature_generation/proteomics_informed_model_feature_generation.py
@@ -283,12 +280,12 @@ Required columns:
 
 | Column | Description |
 |---|---|
-| `[TO BE PROVIDED]` | Protein-pair identifier |
-| `[TO BE PROVIDED]` | Sequence-based prediction score |
-| `[TO BE PROVIDED]` | Proteomics-informed prediction score |
-| `[TO BE PROVIDED]` | Label, for training only |
+| `DL_score` | Sequence-based prediction score |
+| `ML_score` | Proteomics-informed prediction score |
 
-[TO BE PROVIDED: State the merge key, missing-score handling and any score normalization.]
+The two prediction scores are merged based on the corresponding protein-pair identifier.
+
+Protein pairs were matched using unordered protein pairs, where (A, B) and (B, A) were considered equivalent. The merge key was generated from the two protein identifiers after sorting them alphabetically. 
 
 #### Training
 
@@ -306,36 +303,15 @@ python scripts/04_TMPNet_construction/03_fusion_model_infer.py
 
 Final output: `[TO BE PROVIDED: final TMPNet prediction filename and directory]`.
 
-The final output should define at least:
+The final output contains the following columns:
 
 | Column | Description |
 |---|---|
-| `[TO BE PROVIDED]` | Protein A identifier |
-| `[TO BE PROVIDED]` | Protein B identifier |
-| `[TO BE PROVIDED]` | Sequence-based score |
-| `[TO BE PROVIDED]` | Proteomics-informed score |
-| `[TO BE PROVIDED]` | Final TMPNet association score |
+| `DL_score` | Sequence-based prediction score |
+| `ML_score` | Proteomics-informed prediction score |
+| `Fusion_Pred_Prob` | Final TMPNet association probability |
 
-A higher final score indicates [TO BE PROVIDED: exact interpretation]. The high-confidence threshold is [TO BE PROVIDED].
-
-## Example run and runtime
-
-The demo inference can be run on a standard desktop CPU.
-
-```bash
-[TO BE PROVIDED: one complete command that runs the demo]
-```
-
-| Task | Hardware | Approximate runtime |
-|---|---|---|
-| Demo inference | Standard desktop CPU | [TO BE PROVIDED] |
-| Sequence-model pretraining | [TO BE PROVIDED] | [TO BE PROVIDED] |
-| Sequence-model fine-tuning | [TO BE PROVIDED] | [TO BE PROVIDED] |
-| Proteomics-model training | [TO BE PROVIDED] | [TO BE PROVIDED] |
-| Fusion-model training | [TO BE PROVIDED] | [TO BE PROVIDED] |
-| Full TMPNet inference | [TO BE PROVIDED] | [TO BE PROVIDED] |
-
-The demo is intended to verify installation and execution; it is not intended to reproduce the complete TMPNet network.
+A higher `Fusion_Pred_Prob` indicates a higher predicted probability of a tissue-contextual protein–protein association. The high-confidence prediction threshold is 0.84.
 
 ## Reproducibility information
 
@@ -361,19 +337,9 @@ The TMPNet source code is available at:
 
 > https://github.com/Shui-Group/TMPNet
 
-[TO BE PROVIDED: Add a separate archived software DOI if the GitHub release is deposited independently from the data and checkpoint record.]
+In addition, we developed a publicly accessible TMPNet database containing tissue-contextualized association predictions for 2,953 transmembrane proteins, comprising 137,510 predicted protein–protein associations, available at:
 
-## Citation
-
-```bibtex
-@article{[TO_BE_PROVIDED_CITATION_KEY],
-  title   = {[TO BE PROVIDED: manuscript title]},
-  author  = {[TO BE PROVIDED: authors]},
-  journal = {[TO BE PROVIDED: journal or preprint server]},
-  year    = {[TO BE PROVIDED: year]},
-  doi     = {[TO BE PROVIDED: manuscript DOI]}
-}
-```
+> https://shuilab.ihuman.shanghaitech.edu.cn/TMPNet
 
 ## License
 
