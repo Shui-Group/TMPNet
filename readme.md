@@ -46,6 +46,8 @@ The example files are intended for software testing and workflow demonstration r
 
 TMPNet has been tested on Ubuntu 24.04.2 LTS with Python 3.9.21, PyTorch 2.6.0 and CUDA 12.4. The exact dependency versions are recorded in `environment.yml`.
 
+On a desktop computer running Ubuntu 24.04 with an 8-core CPU, 32 GB of RAM and a standard broadband connection, cloning the repository and creating the Conda environment typically takes approximately 30 min.
+
 ```bash
 git clone https://github.com/Shui-Group/TMPNet.git
 cd TMPNet
@@ -103,6 +105,7 @@ Place the downloaded proteomics-informed model checkpoint and fusion framework c
 ## Usage
 
 Example inputs are provided in `example/`. Replace all example paths with the paths to your own data.
+Using the example dataset, pretrained checkpoints and precomputed ESM-2 embeddings, the complete inference demo takes approximately 40-60 min on a desktop computer with an 8-core CPU and 32 GB of RAM. This estimate excludes installation, data download, embedding generation and model retraining.
 
 ### 1. Sequence-based model
 
